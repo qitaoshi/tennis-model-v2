@@ -93,7 +93,10 @@ def main() -> None:
     print(f"corrections in force: {cp}")
 
     # --- fit on FIT+TUNE ---------------------------------------------------
-    train = P.build(splits=("fit", "tune"), venue_params=vp)
+    # The burned first TEST window is legitimate FITTING data now that the
+    # boundary has moved past it — it was spent as a test set, not poisoned —
+    # and it is named here rather than folded silently into TUNE.
+    train = P.build(splits=("fit", "tune", "burned_test"), venue_params=vp)
     train = train.sample(min(len(train), 20_000), random_state=C.MC_SEED)
     print(f"fitting maps on {len(train):,} FIT+TUNE matches")
     samples = collect(train, cp)

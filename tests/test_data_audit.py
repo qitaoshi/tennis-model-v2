@@ -35,7 +35,8 @@ def test_holdout_files_never_opened() -> None:
 
 def test_no_holdout_dates(m: pd.DataFrame) -> None:
     assert max(m["date"]) < C.HOLDOUT_CUTOFF
-    assert set(m["split"]) == {"fit", "tune", "test", "reserve"}
+    assert set(m["split"]) <= {"fit", "tune", "burned_test", "test", "reserve"}
+    assert {"fit", "tune", "test"} <= set(m["split"])
 
 
 def test_both_tours_present(m: pd.DataFrame) -> None:

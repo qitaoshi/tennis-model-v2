@@ -70,7 +70,8 @@ FITTED_PARAMS_PATH: Path = REPO_ROOT / "fitted_params.json"
 # Four-way split (ground rule 1)
 # --------------------------------------------------------------------------
 
-Split = Literal["pre_data", "fit", "tune", "test", "reserve", "holdout"]
+Split = Literal["pre_data", "fit", "tune", "burned_test", "test", "reserve",
+                "holdout"]
 
 DATA_START: date = date(2010, 1, 1)
 FIT_END: date = date(2020, 12, 31)
@@ -87,11 +88,12 @@ BURNED_TEST_WINDOWS: tuple[tuple[date, date], ...] = (
 
 TEST_START: date = date(2023, 7, 1)
 TEST_END: date = date(2023, 12, 31)
-#: No reserve remains. A second Stage 8 failure cannot be answered with
-#: another replacement window inside the pre-holdout data, and that would be a
-#: finding to report rather than a reason to move the holdout cutoff.
-RESERVE_START: date = date(2023, 12, 31)
-RESERVE_END: date = date(2023, 12, 31)
+#: No reserve remains: the window is empty by construction, so ``split_of``
+#: can never return "reserve". A further Stage 8 failure cannot be answered
+#: with another replacement window inside the pre-holdout data — that is a
+#: finding to report, never a reason to move the holdout cutoff.
+RESERVE_START: date = date(2024, 1, 1)
+RESERVE_END: date = date(2024, 1, 1)
 
 #: PERMANENTLY FIXED. Everything on or after this date is HOLDOUT.
 HOLDOUT_CUTOFF: date = date(2024, 1, 1)
@@ -136,13 +138,22 @@ RATE_ITER_MAX: int = 50
 
 
 def split_of(d: date) -> Split:
-    """Return which split a match date belongs to."""
+    """Return which split a match date belongs to.
+
+    A burned TEST window keeps its own label rather than falling back into
+    TUNE. It is legitimate FITTING data once the boundary has moved past it —
+    it was only ever spent as a *test* set — but silently merging it into TUNE
+    would hide that a hyperparameter had been selected on it.
+    """
     if d >= HOLDOUT_CUTOFF:
         return "holdout"
     if d >= RESERVE_START:
         return "reserve"
     if d >= TEST_START:
         return "test"
+    for lo, hi in BURNED_TEST_WINDOWS:
+        if lo <= d <= hi:
+            return "burned_test"
     if d >= TUNE_START:
         return "tune"
     if d >= DATA_START:

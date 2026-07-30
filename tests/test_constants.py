@@ -16,18 +16,34 @@ BOUNDARIES = [
     (C.DATA_START, C.FIT_END, "fit"),
     (C.TUNE_START, C.TUNE_END, "tune"),
     (C.TEST_START, C.TEST_END, "test"),
-    (C.RESERVE_START, C.RESERVE_END, "reserve"),
 ]
 
 
-def test_boundaries_ordered_and_contiguous() -> None:
-    prev_end = None
+def test_boundaries_ordered_and_cover_everything_to_the_cutoff() -> None:
+    """Windows are ordered, and burned windows fill the gaps left behind."""
     for start, end, _ in BOUNDARIES:
         assert start <= end
-        if prev_end is not None:
-            assert start == prev_end + timedelta(days=1), (prev_end, start)
-        prev_end = end
-    assert C.HOLDOUT_CUTOFF == prev_end + timedelta(days=1)
+    assert C.FIT_END < C.TUNE_START <= C.TUNE_END < C.TEST_START <= C.TEST_END
+    assert C.TEST_END < C.HOLDOUT_CUTOFF
+
+    # every day from DATA_START to the cutoff maps to exactly one split
+    d = C.DATA_START
+    seen = set()
+    while d < C.HOLDOUT_CUTOFF:
+        seen.add(C.split_of(d))
+        d += timedelta(days=1)
+    assert seen <= {"fit", "tune", "burned_test", "test", "reserve"}
+    assert {"fit", "tune", "test"} <= seen
+
+
+def test_burned_windows_keep_their_own_label() -> None:
+    """A spent TEST window must never quietly become TUNE."""
+    assert C.BURNED_TEST_WINDOWS
+    for lo, hi in C.BURNED_TEST_WINDOWS:
+        assert C.split_of(lo) == "burned_test"
+        assert C.split_of(hi) == "burned_test"
+        assert hi < C.TEST_START
+        assert C.split_of(lo) != "tune"
 
 
 @pytest.mark.parametrize("start,end,name", BOUNDARIES)
