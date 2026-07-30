@@ -1,5 +1,5 @@
 {
-  "current_stage": "stage_4",
+  "current_stage": "stage_5",
   "human_checkpoints_pending": [],
   "stages": {
     "constants.py": {
@@ -27,8 +27,8 @@
       "notes": "Surface Elo. Selected on TUNE (144-setting grid): K=48, Challenger K x0.75, surface blend 0.3, inactivity half-life 1095d, new-player level gap 100, cross-level offset 0. GATE PASSED: decile calibration max |gap| 0.0170 and mean |gap| 0.0085 against pre-set criteria 0.05/0.025; Brier 0.22483 vs rankings-baseline 0.22993 (log-loss 0.63977 vs 0.65107) on 11,225 TUNE matches. CROSS-LEVEL CHECK reported: Challenger-built vs tour-rated, n=2,883, predicted 0.4243 vs observed 0.4131, gap -0.0112 = 1.2 SE, within noise, so no level offset fitted. FIT rolling-origin gain mean +0.00833 std 0.00268, TUNE gain +0.01130, excess 0.00297 < envelope 0.00536 - no overfit signal. Ledger frozen."
     },
     "stage_4": {
-      "gate_passed": false,
-      "notes": ""
+      "gate_passed": true,
+      "notes": "Blend of serve gap and Elo gap; level taken from Stage 2, split blended. Elo win prob converted to a serve gap by inverting the Stage 1 engine on a 26x81 (level,gap) grid, round-tripped to 0.01 in tests. GATE PASSED: per-bucket w TUNE log-loss 0.63470 vs w=0 0.67107 and w=1 0.63655 on 10,622 TUNE matches. Selected w: overall 0.80; both-well-sampled 0.80, one-thin 0.85, both-thin 0.90 (thin threshold 1000 effective serve points) - thin data wants more Elo, as the spec expected. Disagreement metadata: mean abs 11.64pp, p90 24.50pp, 47.5% of matches above 10pp; carried out per match, not absorbed. FIT rolling-origin gain mean +0.00243 std 0.00097, TUNE gain +0.00185 - below FIT gain, no overfit signal."
     },
     "stage_5": {
       "gate_passed": false,

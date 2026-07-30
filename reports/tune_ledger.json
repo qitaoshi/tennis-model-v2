@@ -130,5 +130,68 @@
   "frozen": true,
   "notes": "gate passed; frozen for downstream stages",
   "tune_brier": 0.22482763863774108
+ },
+ {
+  "stage": "stage_4",
+  "run_id": "20260730T044326Z-de377db",
+  "metric": "match_winner_logloss",
+  "baseline": "w=1",
+  "selected": {
+   "w": 0.8,
+   "w_both_well": 0.8,
+   "w_one_thin": 0.85,
+   "w_both_thin": 0.9,
+   "thin_n": 1000.0,
+   "w_fitted_on_fit": 0.85
+  },
+  "tune_gain": 0.0018544769395998362,
+  "tune_metric_value": 0.6346958806089784,
+  "fit_rolling_origin_gain_folds": [
+   0.0012231550432203475,
+   0.0016518803018371608,
+   0.003598871143315696,
+   0.0027739732812182005,
+   0.0029164130367872465
+  ],
+  "fit_rolling_origin_gain_mean": 0.0024328585612757303,
+  "fit_rolling_origin_gain_std": 0.000972506962408936,
+  "baselines": {
+   "w0_logloss": 0.6710661760377138,
+   "w1_logloss": 0.6365503575485782,
+   "overall_w_logloss": 0.634746779501643
+  },
+  "frozen": false,
+  "notes": "blend weight, overall and per sample-size bucket"
+ },
+ {
+  "stage": "stage_4",
+  "run_id": "20260730T044326Z-de377db",
+  "metric": "match_winner_logloss",
+  "baseline": "w=1",
+  "selected": {
+   "w": 0.8,
+   "w_both_well": 0.8,
+   "w_one_thin": 0.85,
+   "w_both_thin": 0.9,
+   "thin_n": 1000.0,
+   "w_fitted_on_fit": 0.85
+  },
+  "tune_gain": 0.0018544769395998362,
+  "tune_metric_value": 0.6346958806089784,
+  "fit_rolling_origin_gain_folds": [
+   0.0012231550432203475,
+   0.0016518803018371608,
+   0.003598871143315696,
+   0.0027739732812182005,
+   0.0029164130367872465
+  ],
+  "fit_rolling_origin_gain_mean": 0.0024328585612757303,
+  "fit_rolling_origin_gain_std": 0.000972506962408936,
+  "baselines": {
+   "w0_logloss": 0.6710661760377138,
+   "w1_logloss": 0.6365503575485782
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen for downstream stages"
  }
 ]
