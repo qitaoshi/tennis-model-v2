@@ -1,0 +1,4 @@
+ATP match data (c) TennisMyLife, https://stats.tennismylife.org
+License: MIT. Live source; GitHub mirror (Tennismylife/TML-Database) lags
+and is not used. Vendored via the site's /api/download-all endpoint,
+retrieved 2026-07-13. See data/PROVENANCE.md.

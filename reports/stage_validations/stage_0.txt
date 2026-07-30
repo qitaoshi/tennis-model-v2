@@ -1,11 +1,15 @@
-loaded 27,458 matches, 2012-12-31 .. 2023-11-19
-outcomes: {'completed': 26485, 'retired': 796, 'walkover': 172, 'other': 5}
-suspect: 24
-  match_id       date                                tournament surface      winner       loser score_string   outcome  score_string_suspect split
-2013_00501 2013-02-20 U.S. National Indoor Tennis Championships    Hard    Young D.  Malisse X.          5-1   retired                  True   fit
-2013_01040 2013-05-05                             Portugal Open    Clay Wawrinka S.   Ferrer D.  6-1 6-4 2-0 completed                  True   fit
-2013_01358 2013-06-16                          Gerry Weber Open   Grass  Federer R.  Youzhny M.  6-7 6-3 6-4 completed                  True   fit
-2013_01710 2013-07-21                       Claro Open Colombia    Clay Karlovic I.    Falla A.      6-3 7-6 completed                  True   fit
-2014_01656 2014-07-13                Hall of Fame Championships   Grass   Hewitt L. Karlovic I.  6-3 6-7 7-6 completed                  True   fit
-....................                                                     [100%]
-20 passed in 3.63s
+loaded 100,658 matches, 2010-01-03 .. 2023-11-27
+tours: {'chall': 61062, 'atp': 39596}
+outcomes: {'completed': 96804, 'retired': 3342, 'walkover': 502, 'default': 9, 'unknown': 1}
+serve_stats_valid: 92,800
+score_string_suspect: 285
+
+first 5 suspect rows:
+           match_id       date            tourney_name surface      winner_name            loser_name          score   outcome                  score_suspect_reason
+2010-2010-615-1-atp 2010-05-16 World Team Championship    Clay Horacio Zeballos      Filip Krajinovic        6-1 6-4 completed score games 17 disagree with SvGms 33
+2010-2010-615-3-atp 2010-05-16 World Team Championship    Clay   Lleyton Hewitt            John Isner        6-2 6-4 completed score games 18 disagree with SvGms 33
+2010-2010-615-4-atp 2010-05-16 World Team Championship    Clay        Jan Hajek  Daniel Gimeno-Traver        6-2 6-2 completed score games 16 disagree with SvGms 33
+2010-2010-615-5-atp 2010-05-16 World Team Championship    Clay    Jeremy Chardy Philipp Kohlschreiber        6-2 6-4 completed score games 18 disagree with SvGms 33
+2010-2010-615-7-atp 2010-05-16 World Team Championship    Clay      Juan Monaco        Viktor Troicki 1-6 6-3 7-6(3) completed score games 29 disagree with SvGms 33
+........................                                                 [100%]
+24 passed in 1.37s

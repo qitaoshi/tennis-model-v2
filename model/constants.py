@@ -7,10 +7,10 @@ ground rule 4 of MODEL_PROMPT.md.
 
 The four-way split (ground rule 1)
 ----------------------------------
-The raw data is ATP-tour season files, one per calendar year, each season
-running from late December of the prior year to late November.
+The match data is TML-Database season files (``vendor/``), one per calendar
+year per tour (ATP main tour and Challenger), 2010 onward.
 
-    FIT      2012-12-01 .. 2020-12-31   parameter fitting only
+    FIT      2010-01-01 .. 2020-12-31   parameter fitting only
     TUNE     2021-01-01 .. 2022-06-30   hyperparameter selection, Stages 2-7
     TEST     2022-07-01 .. 2023-06-30   pre-cutoff test, Stage 8 only, once
     RESERVE  2023-07-01 .. 2023-12-31   untouched; replacement TEST window if
@@ -27,11 +27,13 @@ surface cycle — fall hard, Australian hard, spring clay, grass — rather than
 a single surface season. RESERVE (Jul-Dec) is hard-court-heavy; that is a
 known limitation of the contingency window, not of TEST.
 
-Data coverage note: ``data/raw/`` also contains 2010.xlsx, but 2011 and 2012
-are absent. A three-season gap breaks the continuity that Elo (Stage 3) and
-recency weighting (Stage 2) assume, so the usable record starts at the 2013
-season file (whose first rows are dated 2012-12-31). 2010 is excluded by
-``DATA_START``, not deleted.
+A match's split is assigned from ``tourney_date``, the tournament START date,
+which is the only date TML records. A tournament straddling a boundary is
+therefore assigned whole to the split its first day falls in — deliberate, so
+no event is split across two windows.
+
+Data note: ``data/raw/`` holds tennis-data.co.uk season files, which carry
+bookmaker odds and no serve statistics. No model module reads them.
 """
 
 from __future__ import annotations
@@ -45,7 +47,13 @@ from typing import Iterable, Literal
 # --------------------------------------------------------------------------
 
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
+#: TML-Database match files (vendor/atp_matches_YYYY.csv, chall_matches_YYYY.csv).
+#: This is the model's only match-data source.
+VENDOR_DIR: Path = REPO_ROOT / "vendor"
+#: tennis-data.co.uk season files. Carry bookmaker odds and no serve stats; not
+#: read by any model module.
 DATA_RAW_DIR: Path = REPO_ROOT / "data" / "raw"
+PROCESSED_DIR: Path = REPO_ROOT / "data" / "processed"
 WEATHER_CACHE_DIR: Path = REPO_ROOT / "data" / "weather_cache"
 REPORTS_DIR: Path = REPO_ROOT / "reports"
 STAGE_VALIDATIONS_DIR: Path = REPORTS_DIR / "stage_validations"
@@ -59,7 +67,7 @@ FITTED_PARAMS_PATH: Path = REPO_ROOT / "fitted_params.json"
 
 Split = Literal["pre_data", "fit", "tune", "test", "reserve", "holdout"]
 
-DATA_START: date = date(2012, 12, 1)
+DATA_START: date = date(2010, 1, 1)
 FIT_END: date = date(2020, 12, 31)
 TUNE_START: date = date(2021, 1, 1)
 TUNE_END: date = date(2022, 6, 30)

@@ -1,14 +1,18 @@
-"""Stage 0 — data audit and canonical match record.
+"""Stage 0 — data audit and canonical match record (TML-Database).
 
-Loads every raw season file inside the pre-holdout range, normalizes it into
-one canonical match record, sets the shared ``score_string_suspect`` flag
-(ground rule 8), and writes ``reports/data_dictionary.md``.
+Loads every TML season file inside the pre-holdout range (ATP main tour and
+Challenger), normalizes it into one canonical match record, sets the shared
+``score_string_suspect`` flag (ground rule 8), and writes
+``reports/data_dictionary.md``.
 
-Bookmaker odds columns present in the raw files are dropped here and never
-enter the canonical record: no market price may touch the model path.
+HOLDOUT files are never opened: ``load_raw`` refuses any season year on or
+after ``constants.HOLDOUT_CUTOFF``.
 
-HOLDOUT files are never opened by this module — ``load_raw`` refuses any year
-whose season can contain dates on or after ``constants.HOLDOUT_CUTOFF``.
+TML deviates from Sackmann's tennis_atp in ways that matter here — player and
+tournament ids are non-numeric strings, an ``indoor`` column exists but is
+sparsely populated, and retirement/walkover status lives inside the ``score``
+string rather than a flag column. All three are audited below rather than
+assumed.
 """
 
 from __future__ import annotations
@@ -22,224 +26,272 @@ import pandas as pd
 
 from model import constants as C
 
-# Raw columns kept in the canonical record. Everything else (B365W, PSW,
-# MaxW, AvgW, ...) is a bookmaker price and is dropped.
-_KEEP = {
-    "ATP": "tournament_no",
-    "Location": "location",
-    "Tournament": "tournament",
-    "Date": "date",
-    "Series": "level",
-    "Court": "court",
-    "Surface": "surface",
-    "Round": "round",
-    "Best of": "best_of",
-    "Winner": "winner",
-    "Loser": "loser",
-    "WRank": "winner_rank",
-    "LRank": "loser_rank",
-    "WPts": "winner_pts",
-    "LPts": "loser_pts",
-    "Wsets": "winner_sets",
-    "Lsets": "loser_sets",
-    "Comment": "comment",
-}
-_SET_COLS = [f"{s}{i}" for i in range(1, 6) for s in ("W", "L")]
+_TOURS = {"atp": "atp_matches", "chall": "chall_matches"}
 
-_ODDS_PATTERN = re.compile(r"^(B365|EX|LB|PS|SJ|Max|Avg)[WL]$")
-
-#: Comment -> canonical outcome. Ground rule 6 requires this be explicit.
-_OUTCOME = {
-    "Completed": "completed",
-    "Retired": "retired",
-    "Rrtired": "retired",  # data-entry typo, 1 row
-    "Walkover": "walkover",
-    "Awarded": "other",
-    "Disqualified": "other",
-    "Sched": "other",
+#: TML `tourney_level` code -> readable label. Sackmann's scheme plus TML's
+#: explicit 250/500 split of tour-level events.
+LEVEL_LABEL = {
+    "G": "Grand Slam",
+    "M": "Masters 1000",
+    "500": "ATP 500",
+    "250": "ATP 250",
+    "A": "Tour (other)",
+    "F": "Tour Finals",
+    "D": "Davis Cup",
+    "O": "Olympics",
+    "C": "Challenger",
 }
+
+#: Outcome markers inside the TML `score` string (ground rule 6).
+_RET = re.compile(r"\bRET\b", re.I)
+_WO = re.compile(r"\bW/?O\b", re.I)
+_DEF = re.compile(r"\bDEF\b", re.I)
+
+_SET_TOKEN = re.compile(r"^(\d{1,2})-(\d{1,2})(?:\((\d{1,3})\))?$")
 
 #: Documented downstream treatment per outcome (ground rule 6). Printed into
 #: the data dictionary so no stage has to re-derive it.
 OUTCOME_POLICY = {
     "completed": "Used everywhere.",
     "retired": (
-        "EXCLUDED from Stage 1 validation targets, Stage 2 rate fitting, "
-        "Stage 6 venue history and Stage 7 correction measurement (the score "
-        "is truncated by whatever caused the retirement). INCLUDED in Stage 3 "
-        "Elo as a win/loss: tennis-data records a winner and a partial score, "
-        "so the result is completed-enough for a win/loss update. Excluded "
-        "from holdout outcome scoring and reported separately."
+        "EXCLUDED from Stage 2 serve-rate fitting, Stage 1 validation targets, "
+        "Stage 6 venue history and Stage 7 correction measurement — the stats "
+        "are contaminated by whatever caused the retirement and the games "
+        "distribution is truncated. INCLUDED in Stage 3 Elo as a win/loss: TML "
+        "records a winner and the completed portion of the score, so the "
+        "result is completed-enough for a win/loss update. Excluded from "
+        "holdout outcome scoring and reported separately."
     ),
-    "walkover": "Never updates anything. No score exists (all set columns null).",
-    "other": (
-        "Awarded / Disqualified / Sched. Treated exactly as walkover — never "
-        "updates anything — and reported separately. 5 rows total."
+    "walkover": (
+        "Never updates anything — not Elo, not rates, not venue history. No "
+        "match was played; the score field is bare 'W/O'."
+    ),
+    "default": (
+        "Player defaulted/disqualified mid-match. Treated as walkover — never "
+        "updates anything — because the abandonment is disciplinary rather "
+        "than competitive. 9 rows."
+    ),
+    "unknown": (
+        "Score missing or unparseable. Never updates anything; reported "
+        "separately and flagged score_string_suspect."
     ),
 }
 
+_SERVE_COLS = [
+    "ace", "df", "svpt", "1stIn", "1stWon", "2ndWon", "SvGms", "bpSaved", "bpFaced",
+]
+
 
 @dataclass(frozen=True)
-class Suspect:
-    flag: bool
+class ParsedScore:
+    sets: list[tuple[int, int]]
+    tiebreaks: int
+    winner_games: int
+    loser_games: int
+    suspect: bool
     reason: str
 
 
 def _terminal(w: int, l: int) -> bool:
     """Is this set score a legally finished set under any format in the data?
 
-    Format-agnostic: 6-x (x<=4), 7-5, 7-6, or an advantage-set continuation
-    (both >=6, margin 2). rules.py decides whether the format in force at
-    match time actually permitted the continuation.
+    Format-agnostic: 6-x (x<=4), 7-5, 7-6, the Wimbledon 2019-2021 12-12
+    tiebreak (13-12), or an advantage-set continuation (both >=6, margin 2).
+    rules.py decides whether the format in force at match time permitted it.
     """
     hi, lo = max(w, l), min(w, l)
     return (
         (hi == 6 and lo <= 4)
         or (hi == 7 and lo in (5, 6))
-        or (hi == 13 and lo == 12)  # Wimbledon 2019-2021: final-set TB at 12-12
-        or (hi >= 7 and lo >= 6 and hi - lo == 2)  # advantage-set continuation
+        or (hi == 13 and lo == 12)
+        or (hi >= 7 and lo >= 6 and hi - lo == 2)
+    )
+
+
+def classify_outcome(score: object) -> str:
+    """Map a TML score string to a canonical outcome (ground rule 6)."""
+    if not isinstance(score, str) or not score.strip():
+        return "unknown"
+    if _WO.search(score):
+        return "walkover"
+    if _DEF.search(score):
+        return "default"
+    if _RET.search(score):
+        return "retired"
+    return "completed"
+
+
+def parse_score(score: object, outcome: str, best_of: float) -> ParsedScore:
+    """Parse a TML score string into per-set games, with suspect detection.
+
+    Only format-agnostic checks live here. Format-conditional checks (does
+    this set obey the deciding-set rule in force?) belong to rules.py's
+    empirical scan, which flags the same field via ``flag_suspect``.
+    """
+    reasons: list[str] = []
+    if outcome in ("walkover", "unknown"):
+        if outcome == "unknown":
+            reasons.append("score missing or unparseable")
+        return ParsedScore([], 0, 0, 0, bool(reasons), "; ".join(reasons))
+
+    sets: list[tuple[int, int]] = []
+    tb_flags: list[bool] = []
+    for tok in str(score).replace("[", "").replace("]", "").split():
+        if _RET.fullmatch(tok) or _WO.fullmatch(tok) or _DEF.fullmatch(tok):
+            continue
+        mt = _SET_TOKEN.match(tok)
+        if not mt:
+            reasons.append(f"unparseable token {tok!r}")
+            continue
+        w, l = int(mt.group(1)), int(mt.group(2))
+        sets.append((w, l))
+        tb_flags.append(
+            mt.group(3) is not None or {w, l} == {7, 6} or {w, l} == {13, 12}
+        )
+    tiebreaks = sum(tb_flags)
+
+    if outcome == "completed":
+        if not sets:
+            reasons.append("completed match with no sets")
+        need = int(best_of) // 2 + 1
+        won = sum(1 for w, l in sets if w > l)
+        lost = sum(1 for w, l in sets if l > w)
+        if won != need:
+            reasons.append(f"winner took {won} sets, needs {need}")
+        if lost >= need:
+            reasons.append(f"loser took {lost} sets, >= {need}")
+        for i, ((w, l), tb) in enumerate(zip(sets, tb_flags), start=1):
+            # A match tiebreak played in place of a final set is written
+            # `1-0(7)` — a legal terminal set wherever the format allows it.
+            if tb and {w, l} == {1, 0}:
+                continue
+            if not _terminal(w, l):
+                reasons.append(f"set {i} {w}-{l} not terminal")
+
+    return ParsedScore(
+        sets=sets,
+        tiebreaks=tiebreaks,
+        winner_games=sum(w for w, _ in sets),
+        loser_games=sum(l for _, l in sets),
+        suspect=bool(reasons),
+        reason="; ".join(reasons),
     )
 
 
 def _season_years() -> list[int]:
-    """Season files whose dates are entirely before the holdout cutoff.
-
-    A season file for year Y covers late-Dec (Y-1) to late-Nov Y, so any file
-    with Y >= HOLDOUT_CUTOFF.year is holdout data and is never opened.
-    """
-    years = []
-    for p in sorted(C.DATA_RAW_DIR.glob("*.xlsx")):
-        y = int(p.stem)
-        if y >= C.HOLDOUT_CUTOFF.year:
-            continue
-        if y < C.DATA_START.year + 1:
-            continue  # 2010 file: 2011-12 are missing, see constants.py
-        years.append(y)
-    return years
-
-
-def _score_string(row: pd.Series) -> str:
-    """Rebuild a score string from the per-set game columns."""
-    parts = []
-    for i in range(1, 6):
-        w, l = row[f"W{i}"], row[f"L{i}"]
-        if pd.isna(w) or pd.isna(l):
-            break
-        parts.append(f"{int(w)}-{int(l)}")
-    return " ".join(parts)
-
-
-def _check_suspect(row: pd.Series) -> Suspect:
-    """Format-agnostic plausibility check on one match's games detail.
-
-    Format-conditional checks (does this set score obey the deciding-set rule
-    in force?) belong to rules.py's empirical scan, which contributes further
-    suspect flags to the same field.
-    """
-    reasons: list[str] = []
-    outcome = row["outcome"]
-
-    sets = []
-    for i in range(1, 6):
-        w, l = row[f"W{i}"], row[f"L{i}"]
-        if pd.isna(w) and pd.isna(l):
-            break
-        if pd.isna(w) or pd.isna(l):
-            reasons.append(f"set {i} half-recorded")
-            break
-        sets.append((int(w), int(l)))
-
-    if outcome == "walkover":
-        if sets:
-            reasons.append("walkover carries a score")
-        return Suspect(bool(reasons), "; ".join(reasons))
-
-    if outcome == "completed":
-        if not sets:
-            reasons.append("completed match with no score")
-        if pd.isna(row["best_of"]):
-            reasons.append("best_of missing")
-        else:
-            need = int(row["best_of"]) // 2 + 1
-            won = sum(1 for w, l in sets if w > l)
-            lost = sum(1 for w, l in sets if l > w)
-            if won != need:
-                reasons.append(f"winner took {won} sets, needs {need}")
-            if lost >= need:
-                reasons.append(f"loser took {lost} sets, >= {need}")
-            if any(w == l for w, l in sets):
-                reasons.append("tied set score")
-        # every set of a completed match must be a terminal set
-        for i, (w, l) in enumerate(sets, start=1):
-            if not _terminal(w, l):
-                reasons.append(f"set {i} {w}-{l} not terminal")
-            if max(w, l) > 70:
-                reasons.append(f"set {i} {w}-{l} implausible")
-
-    # Sets-won columns must agree with the reconstructed score. A retirement
-    # is legitimately truncated — its last set is usually mid-play and is not
-    # counted in Wsets/Lsets — so only completed sets are compared there.
-    if sets and not pd.isna(row["winner_sets"]):
-        scored = sets if outcome == "completed" else [s for s in sets if _terminal(*s)]
-        won = sum(1 for w, l in scored if w > l)
-        lost = sum(1 for w, l in scored if l > w)
-        if won != int(row["winner_sets"]) or lost != int(row["loser_sets"]):
-            reasons.append(
-                f"sets columns {int(row['winner_sets'])}-{int(row['loser_sets'])} "
-                f"disagree with score {won}-{lost}"
-            )
-
-    return Suspect(bool(reasons), "; ".join(reasons))
-
-
-def _repair_best_of(m: pd.DataFrame) -> pd.DataFrame:
-    """Repair `best_of` from tour format, which is fully determined here.
-
-    Men's Grand Slam singles is best-of-5 throughout this data; every other
-    ATP main-tour event in range is best-of-3. The raw files carry 15 nulls
-    and one mislabelled Wimbledon 3rd-round row per season (recorded as 3).
-    The repair is recorded in `best_of_repaired` rather than applied silently.
-    """
-    expected = np.where(m["level"] == "Grand Slam", 5.0, 3.0)
-    m["best_of_raw"] = m["best_of"]
-    m["best_of_repaired"] = m["best_of"].isna() | (
-        (m["level"] == "Grand Slam") & (m["best_of"] != 5)
-    )
-    m["best_of"] = np.where(m["best_of_repaired"], expected, m["best_of"])
-    return m
+    """Season years strictly before the permanently fixed holdout cutoff."""
+    years = set()
+    for p in C.VENDOR_DIR.glob("*_matches_*.csv"):
+        y = int(p.stem.rsplit("_", 1)[1])
+        if C.DATA_START.year <= y < C.HOLDOUT_CUTOFF.year:
+            years.add(y)
+    return sorted(years)
 
 
 def load_raw(years: list[int] | None = None) -> pd.DataFrame:
-    """Load season files into one canonical match record.
+    """Load TML season files into one canonical match record.
 
     Raises if any loaded date falls in the HOLDOUT range.
     """
     years = years or _season_years()
     frames = []
-    for y in years:
-        raw = pd.read_excel(C.DATA_RAW_DIR / f"{y}.xlsx")
-        df = raw[[c for c in _KEEP if c in raw.columns]].rename(columns=_KEEP)
-        for c in _SET_COLS:
-            df[c] = pd.to_numeric(raw[c], errors="coerce") if c in raw else np.nan
-        df["season_file"] = y
-        df["source_row"] = raw.index
-        frames.append(df)
+    for tour, stem in _TOURS.items():
+        for y in years:
+            path = C.VENDOR_DIR / f"{stem}_{y}.csv"
+            if not path.exists():
+                continue
+            df = pd.read_csv(path, low_memory=False)
+            df["tour"] = tour
+            df["season_file"] = y
+            frames.append(df)
 
     m = pd.concat(frames, ignore_index=True)
-    m["date"] = pd.to_datetime(m["date"]).dt.date
-    m["outcome"] = m["comment"].map(_OUTCOME).fillna("other")
-    m = _repair_best_of(m)
-    m["match_id"] = (
-        m["season_file"].astype(str) + "_" + m["source_row"].astype(str).str.zfill(5)
+    m["date"] = pd.to_datetime(m["tourney_date"], format="%Y%m%d").dt.date
+    m["level_label"] = m["tourney_level"].astype(str).map(LEVEL_LABEL).fillna("unknown")
+    #: tourney_id is `YYYY-CODE`; the year prefix moves each season, the rest
+    #: is stable. This is the venue/tournament key for Stage 6. A minority of
+    #: ids lack the year prefix entirely (audited in the data dictionary) and
+    #: are used whole.
+    m["tourney_code"] = m["tourney_id"].astype(str).str.replace(
+        r"^\d{4}-", "", regex=True
     )
-    m["score_string"] = m.apply(_score_string, axis=1)
-    checks = m.apply(_check_suspect, axis=1)
-    m["score_string_suspect"] = [c.flag for c in checks]
-    m["score_suspect_reason"] = [c.reason for c in checks]
+    m["outcome"] = m["score"].map(classify_outcome)
+
+    parsed = [
+        parse_score(s, o, b)
+        for s, o, b in zip(m["score"], m["outcome"], m["best_of"])
+    ]
+    m["n_sets"] = [len(p.sets) for p in parsed]
+    m["tiebreaks"] = [p.tiebreaks for p in parsed]
+    m["winner_games"] = [p.winner_games for p in parsed]
+    m["loser_games"] = [p.loser_games for p in parsed]
+    m["score_string_suspect"] = [p.suspect for p in parsed]
+    m["score_suspect_reason"] = [p.reason for p in parsed]
+
+    m = _cross_check_games(m)
+    m["serve_stats_valid"] = _serve_stats_valid(m)
+    # season_file is part of the key because some tourney_ids carry no year
+    # prefix and are reused across seasons (see the dictionary's identifier
+    # anomalies section).
+    m["match_id"] = (
+        m["season_file"].astype(str) + "-" + m["tourney_id"].astype(str)
+        + "-" + m["match_num"].astype(str) + "-" + m["tour"]
+    )
     m["split"] = [C.split_of(d) for d in m["date"]]
 
     C.assert_no_holdout(m["date"])
     return m
+
+
+def _cross_check_games(m: pd.DataFrame) -> pd.DataFrame:
+    """Games parsed from the score must match the served-games columns.
+
+    ``w_SvGms + l_SvGms`` is recorded independently of the score string, so a
+    disagreement means one of the two is corrupt — exactly the shared data
+    quality problem ground rule 8 exists to broadcast.
+    """
+    played = m["outcome"].isin(("completed", "retired"))
+    # SvGms is recorded as 0 on 601 rows (mostly Grand Slam 2017-18) whose
+    # other counters are present — a missing field, not a zero, so it cannot
+    # arbitrate the score string.
+    have = (m["w_SvGms"] > 0) & (m["l_SvGms"] > 0)
+    # TML is not internally consistent about whether a tiebreak counts as a
+    # service game — both conventions appear — so a set with a tiebreak buys
+    # one game of slack either way. An unfinished game at retirement costs one
+    # more. Beyond that the two records genuinely conflict.
+    total_score = m["winner_games"] + m["loser_games"]
+    total_gms = m["w_SvGms"].fillna(0) + m["l_SvGms"].fillna(0)
+    bad = played & have & ((total_score - total_gms).abs() > m["tiebreaks"] + 1)
+    m.loc[bad, "score_suspect_reason"] = (
+        m.loc[bad, "score_suspect_reason"]
+        + np.where(m.loc[bad, "score_suspect_reason"] == "", "", "; ")
+        + "score games "
+        + total_score[bad].astype(int).astype(str)
+        + " disagree with SvGms "
+        + total_gms[bad].astype(int).astype(str)
+    )
+    m.loc[bad, "score_string_suspect"] = True
+    return m
+
+
+def _serve_stats_valid(m: pd.DataFrame) -> pd.Series:
+    """Serve-stat rows usable for rate fitting (Stage 2's input filter).
+
+    Separate from ``score_string_suspect``: a match can have a clean score and
+    missing or internally inconsistent serve counts.
+    """
+    ok = pd.Series(True, index=m.index)
+    for side in ("w", "l"):
+        cols = [f"{side}_{c}" for c in _SERVE_COLS]
+        ok &= m[cols].notna().all(axis=1)
+        ok &= m[f"{side}_svpt"] > 0
+        ok &= m[f"{side}_SvGms"] > 0  # 0 means "not recorded", not "served none"
+        ok &= m[f"{side}_1stIn"] <= m[f"{side}_svpt"]
+        ok &= m[f"{side}_1stWon"] <= m[f"{side}_1stIn"]
+        ok &= m[f"{side}_2ndWon"] <= (m[f"{side}_svpt"] - m[f"{side}_1stIn"])
+        ok &= m[f"{side}_bpSaved"] <= m[f"{side}_bpFaced"]
+        ok &= m[f"{side}_ace"] <= m[f"{side}_svpt"]
+    return ok & m["outcome"].eq("completed")
 
 
 def flag_suspect(matches: pd.DataFrame, match_ids: list[str], reason: str) -> pd.DataFrame:
@@ -249,52 +301,56 @@ def flag_suspect(matches: pd.DataFrame, match_ids: list[str], reason: str) -> pd
     record, not only in ``reports/rules_discrepancies.csv``.
     """
     hit = matches["match_id"].isin(match_ids)
-    matches.loc[hit, "score_string_suspect"] = True
     matches.loc[hit, "score_suspect_reason"] = (
-        matches.loc[hit, "score_suspect_reason"].replace("", np.nan).fillna("")
+        matches.loc[hit, "score_suspect_reason"].fillna("")
         + np.where(matches.loc[hit, "score_suspect_reason"] == "", "", "; ")
         + reason
     )
+    matches.loc[hit, "score_string_suspect"] = True
     return matches
 
 
 def find_duplicates(m: pd.DataFrame) -> pd.DataFrame:
-    """Same date + same two players (unordered) + same tournament."""
-    pair = m.apply(lambda r: " vs ".join(sorted([r["winner"], r["loser"]])), axis=1)
-    key = m["date"].astype(str) + "|" + m["tournament"] + "|" + pair
-    dup = key.duplicated(keep=False)
-    return m.loc[dup, ["match_id", "date", "tournament", "winner", "loser", "round"]]
+    """Same date + same two players + same tournament."""
+    pair = np.where(
+        m["winner_id"].astype(str) < m["loser_id"].astype(str),
+        m["winner_id"].astype(str) + "|" + m["loser_id"].astype(str),
+        m["loser_id"].astype(str) + "|" + m["winner_id"].astype(str),
+    )
+    key = m["date"].astype(str) + "|" + m["tourney_id"].astype(str) + "|" + pair
+    dup = pd.Series(key, index=m.index).duplicated(keep=False)
+    cols = ["match_id", "date", "tourney_name", "round", "winner_name",
+            "loser_name", "score", "tour"]
+    return m.loc[dup, cols].sort_values(["date", "winner_name"])
 
 
 def surface_changes(m: pd.DataFrame) -> pd.DataFrame:
-    """Tournaments whose surface is not constant across seasons."""
-    g = m.groupby("tournament")["surface"].nunique()
+    """Tournaments (stable code) whose surface is not constant across seasons."""
+    g = m.groupby("tourney_code")["surface"].nunique()
     changed = g[g > 1].index
     out = (
-        m[m["tournament"].isin(changed)]
-        .groupby(["tournament", "surface"])["season_file"]
-        .agg(lambda s: ", ".join(map(str, sorted(s.unique()))))
+        m[m["tourney_code"].isin(changed)]
+        .groupby(["tourney_code", "surface"])
+        .agg(
+            name=("tourney_name", lambda s: s.mode().iat[0]),
+            seasons=("season_file", lambda s: ", ".join(map(str, sorted(s.unique())))),
+            matches=("match_id", "size"),
+        )
         .reset_index()
-        .rename(columns={"season_file": "seasons"})
     )
-    return out.sort_values(["tournament", "surface"])
+    return out.sort_values(["tourney_code", "surface"])
 
 
-def identifier_instability(m: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Location<->tournament naming drift (sponsor/city renames)."""
-    loc_multi = (
-        m.groupby("location")["tournament"]
+def identifier_instability(m: pd.DataFrame) -> pd.DataFrame:
+    """Tournament codes whose name changes across seasons (sponsor/city renames)."""
+    g = m.groupby("tourney_code")["tourney_name"].nunique()
+    out = (
+        m[m["tourney_code"].isin(g[g > 1].index)]
+        .groupby("tourney_code")["tourney_name"]
         .agg(lambda s: sorted(s.unique()))
-        .loc[lambda s: s.map(len) > 1]
         .reset_index()
     )
-    tour_multi = (
-        m.groupby("tournament")["location"]
-        .agg(lambda s: sorted(s.unique()))
-        .loc[lambda s: s.map(len) > 1]
-        .reset_index()
-    )
-    return loc_multi, tour_multi
+    return out
 
 
 def _pct(x: float) -> str:
@@ -304,140 +360,154 @@ def _pct(x: float) -> str:
 def write_data_dictionary(m: pd.DataFrame, path: Path | None = None) -> Path:
     """Write reports/data_dictionary.md. Every number here is computed."""
     path = path or C.REPORTS_DIR / "data_dictionary.md"
-    raw_head = pd.read_excel(C.DATA_RAW_DIR / f"{m['season_file'].max()}.xlsx", nrows=50)
-    dropped = [c for c in raw_head.columns if _ODDS_PATTERN.match(str(c))]
+    sample = pd.read_csv(C.VENDOR_DIR / "atp_matches_2019.csv", nrows=200)
 
     L: list[str] = []
     a = L.append
-    a("# Stage 0 — Data dictionary\n")
-    a(f"Generated by `model/data_audit.py`. Rows: **{len(m):,}**, "
-      f"seasons {m['season_file'].min()}–{m['season_file'].max()}, "
+    a("# Stage 0 — Data dictionary (TML-Database)\n")
+    a(f"Generated by `model/data_audit.py`. Rows: **{len(m):,}** "
+      f"({(m['tour'] == 'atp').sum():,} ATP main tour, "
+      f"{(m['tour'] == 'chall').sum():,} Challenger), seasons "
+      f"{m['season_file'].min()}–{m['season_file'].max()}, tournament start "
       f"dates {m['date'].min()} … {m['date'].max()}.\n")
+    a("Source: `vendor/*_matches_*.csv`, retrieved 2026-07-13 per "
+      "`vendor/NOTICE`. Licence MIT, attribution TennisMyLife.\n")
+    a("`data/raw/*.xlsx` (tennis-data.co.uk) carries bookmaker odds and no "
+      "serve statistics; no model module reads it.\n")
 
-    a("## Data source deviation from MODEL_PROMPT.md\n")
-    a("The spec assumes TML-Database. `data/raw/` actually holds "
-      "tennis-data.co.uk ATP season files (Excel author metadata: "
-      "\"Joseph Buchdahl\"). Consequences, in full, because several stages "
-      "assume columns that do not exist here:\n")
-    a("- **No per-match serve statistics of any kind** — no serve points "
-      "won/played, first serves in, aces, double faults, or break points. "
-      "Stage 2 as written (\"from match-level TML stats, estimate serve "
-      "point-win probability\") has no input. Only per-set game counts exist, "
-      "so a serve rate can only be *inferred* from games won on serve — and "
-      "even hold/break counts are not recorded, only set scores.\n")
-    a("- **No player biographical data** — no hand, height, or age. Stage 5's "
-      "style vector loses ace rate, double-fault rate, hand and height; only "
-      "games-derived features and surface differential remain.\n")
-    a("- **ATP tour level only** — no Challenger, no futures/ITF. Stage 2's "
-      "per-level shrinkage, Stage 3's cross-level consistency check, and the "
-      "backtest's \"split by tour level\" all lose their second level.\n")
-    a("- **Bookmaker odds are present in the raw files** and are dropped at "
-      "load: " + ", ".join(f"`{c}`" for c in dropped) + ".\n")
-    a("- **Score detail is per-set game counts, not a score string** — "
-      "tiebreak point scores are absent, so \"retirement recorded mid-"
-      "tiebreak\" is undetectable at that granularity.\n")
-
-    a("\n## Files and coverage\n")
-    a("### Columns kept in the canonical record\n")
-    a("| canonical | raw | dtype |")
+    a("\n## Columns and dtypes\n")
+    a("Identical column set in every season file, both tours.\n")
+    a("\n| column | dtype | note |")
     a("|---|---|---|")
-    for raw_c, can_c in _KEEP.items():
-        a(f"| `{can_c}` | `{raw_c}` | {m[can_c].dtype} |")
-    a(f"| `W1..W5`, `L1..L5` | same | {m['W1'].dtype} (per-set games) |")
-    a("| `match_id`, `score_string`, `score_string_suspect`, "
-      "`score_suspect_reason`, `outcome`, `split` | derived | — |")
+    notes = {
+        "tourney_id": "`YYYY-CODE`; the year prefix moves, the CODE suffix is stable",
+        "tourney_date": "tournament START date, not match date — see split note",
+        "winner_id": "**non-numeric string** (e.g. `T786`) — TML deviation",
+        "loser_id": "**non-numeric string** — TML deviation",
+        "indoor": "`I`/`O`, sparsely populated — see coverage",
+        "score": "carries RET / W/O / DEF markers; no separate flag column",
+        "minutes": "match duration",
+    }
+    for c in sample.columns:
+        a(f"| `{c}` | {sample[c].dtype} | {notes.get(c, '')} |")
+    a("\nDerived by this module: `date`, `tour`, `season_file`, `level_label`, "
+      "`tourney_code`, `outcome`, `n_sets`, `tiebreaks`, `winner_games`, "
+      "`loser_games`, `score_string_suspect`, `score_suspect_reason`, "
+      "`serve_stats_valid`, `match_id`, `split`.\n")
 
-    a("\n### Column presence by season file\n")
-    a("All kept columns are present in every season file 2013–2023. Columns "
-      "that come and go across files (`SJW/SJL` from 2015, `EXW/EXL` and "
-      "`LBW/LBL` from 2019) are all bookmaker odds and are dropped anyway.\n")
-
-    a("\n### Row counts by season and level\n")
-    ct = pd.crosstab(m["season_file"], m["level"], margins=True, margins_name="total")
+    a("\n## Row counts by season and tour level\n")
+    ct = pd.crosstab(m["season_file"], m["level_label"], margins=True,
+                     margins_name="total")
     a(ct.to_markdown())
-    a("\nThere is exactly one tour level in this dataset (ATP main tour); "
-      "`level` above is the ATP series tier, not a tour/challenger/futures "
-      "split.\n")
+    a("\n2020 is roughly half a normal season (COVID). Davis Cup and Olympics "
+      "are present and are tour-level results with unusual formats — rules.py "
+      "must not assume a tour default for them.\n")
 
-    a("\n### Field coverage (non-null %) by season\n")
-    fields = ["best_of", "winner_rank", "loser_rank", "winner_pts", "W1", "L1",
-              "W3", "W5", "winner_sets"]
-    cov = m.groupby("season_file")[fields].apply(lambda g: g.notna().mean())
+    a("\n## Per-match statistics and their coverage\n")
+    a("All nine serve counters exist for both players: `{w,l}_` × "
+      + ", ".join(f"`{c}`" for c in _SERVE_COLS) + ", plus `minutes`.\n")
+    a("\nNon-null % of `w_svpt` (serve points), by season and tour:\n")
+    cov = (
+        m.assign(has=m["w_svpt"].notna())
+        .groupby(["season_file", "tour"])["has"].mean().unstack()
+    )
     a((100 * cov).round(1).to_markdown())
-    a("\n`W3`/`W5` coverage is low by construction — those sets only exist in "
-      "matches that went that far — not a data quality problem. `W1`/`L1` "
-      "gaps are walkovers and abandoned matches.\n")
-
-    a("\n### Per-match statistics available\n")
-    a("| statistic | present? |")
-    a("|---|---|")
-    for stat in ["serve points won", "serve points played", "first serves in",
-                 "aces", "double faults", "break points won/faced",
-                 "per-set games won", "sets won", "tiebreak point scores",
-                 "match duration", "player hand / height / age"]:
-        present = "**yes**" if stat in ("per-set games won", "sets won") else "no"
-        a(f"| {stat} | {present} |")
+    a("\nNon-null % of other fields, whole dataset:\n")
+    fields = ["minutes", "indoor", "surface", "winner_hand", "winner_ht",
+              "winner_age", "winner_rank", "winner_seed", "draw_size"]
+    a(pd.DataFrame({
+        "field": fields,
+        "non-null %": [round(100 * m[f].notna().mean(), 1) for f in fields],
+    }).to_markdown(index=False))
+    a(f"\n`serve_stats_valid` (all counters present, positive serve points, "
+      f"internally consistent, completed match): **{_pct(m['serve_stats_valid'].mean())}** "
+      f"of all rows, {_pct(m.loc[m.outcome == 'completed', 'serve_stats_valid'].mean())} "
+      "of completed matches. This is Stage 2's input filter.\n")
+    a(f"\n`indoor` is populated on only {_pct(m['indoor'].notna().mean())} of "
+      "rows — Stage 6 may use it as a feature only where present, and must "
+      "not treat missing as outdoor.\n")
 
     a("\n## Retirements, walkovers, defaults\n")
-    a(f"Flagged in the raw `Comment` column. Observed values: "
-      f"{m['comment'].value_counts().to_dict()}\n")
-    a("Note `Rrtired` (1 row) — a typo for `Retired`, normalized on load.\n")
-    a("\n| outcome | rows | downstream policy (ground rule 6) |")
-    a("|---|---|---|")
+    a("TML has no flag column: status is embedded in `score` as `RET`, `W/O` "
+      "or `DEF`. Counts:\n")
+    a("\n| outcome | rows | share | downstream policy (ground rule 6) |")
+    a("|---|---|---|---|")
     for oc, pol in OUTCOME_POLICY.items():
-        a(f"| `{oc}` | {(m['outcome'] == oc).sum():,} | {pol} |")
+        n = int((m["outcome"] == oc).sum())
+        a(f"| `{oc}` | {n:,} | {_pct(n / len(m))} | {pol} |")
+    a("\nBy tour:\n")
+    a(pd.crosstab(m["outcome"], m["tour"]).to_markdown())
 
     a("\n## Surfaces and venues\n")
-    a(f"Surface labels: {m['surface'].value_counts().to_dict()}\n")
-    a(f"Court: {m['court'].value_counts().to_dict()}\n")
-    a(f"Distinct tournaments: {m['tournament'].nunique()}; "
-      f"distinct locations: {m['location'].nunique()}.\n")
-    a("`tournament_no` (raw `ATP`) is a within-season sequence number and is "
-      "**not** stable across years — it must never be used as a venue key. "
-      "`location` is the most stable identifier; venue.py keys on "
-      "(location, surface).\n")
+    a(f"Surface labels: {m['surface'].value_counts(dropna=False).to_dict()}\n")
+    a(f"\n`surface` is null on {int(m['surface'].isna().sum()):,} rows "
+      f"({_pct(m['surface'].isna().mean())}); Carpet exists in the early "
+      "seasons and is a distinct surface, not a Hard variant.\n")
+    a(f"\nDistinct tournament codes: {m['tourney_code'].nunique()}; distinct "
+      f"names: {m['tourney_name'].nunique()}. Stage 6 keys on "
+      "(`tourney_code`, `surface`), never on name and never on `tourney_id` "
+      "(whose year prefix changes annually).\n")
 
     a("\n### Surface-change flags\n")
     sc = surface_changes(m)
-    if len(sc):
-        a(f"{sc['tournament'].nunique()} tournaments change surface across "
-          "seasons. Each must be keyed as (venue, surface), never venue "
-          "alone:\n")
-        a(sc.to_markdown(index=False))
-    else:
-        a("No tournament changes surface across seasons.\n")
+    a(f"{sc['tourney_code'].nunique()} tournament codes change surface across "
+      "seasons. Every one must be keyed as (code, surface):\n")
+    a(sc.to_markdown(index=False))
+
+    a("\n### Identifier anomalies\n")
+    noyear = m[~m["tourney_id"].astype(str).str.match(r"^\d{4}-")]
+    a(f"{len(noyear):,} rows carry a `tourney_id` with no `YYYY-` prefix. "
+      "They are used whole as the tournament code, and `match_id` includes the "
+      "season file so the reuse cannot collide:\n")
+    if len(noyear):
+        a(noyear.groupby(["tourney_id", "tourney_name", "season_file"])
+          .size().rename("matches").reset_index().to_markdown(index=False))
+        a("\nThe `Rome` / `GA` rows are a TML field swap — the id holds the "
+          "city and the name holds the state — for the Rome, Georgia "
+          "Challenger. Reported, not silently repaired.\n")
+    dc = m[m["tourney_id"].astype(str).str.contains("DC-")]
+    a(f"\nDavis Cup ties ({len(dc):,} rows) use a compound id per tie rather "
+      "than a stable tournament code; each tie is effectively its own venue. "
+      "Stage 6 must not pool them into one multiplier.\n")
 
     a("\n### Identifier stability (renames)\n")
-    loc_multi, tour_multi = identifier_instability(m)
-    a(f"{len(loc_multi)} locations carry more than one tournament name "
-      f"(sponsor renames or two events at one venue):\n")
-    a(loc_multi.to_markdown(index=False))
-    a(f"\n{len(tour_multi)} tournament names appear at more than one location "
-      "(event relocations):\n")
-    a(tour_multi.to_markdown(index=False))
+    ren = identifier_instability(m)
+    a(f"{len(ren)} tournament codes carry more than one name across seasons "
+      "(sponsor and city renames). The code is stable, the name is not:\n")
+    a(ren.head(40).to_markdown(index=False))
+    if len(ren) > 40:
+        a(f"\n… {len(ren) - 40} more.\n")
 
     a("\n## Score-string suspect flag (ground rule 8)\n")
-    n_susp = int(m["score_string_suspect"].sum())
-    a(f"{n_susp:,} of {len(m):,} rows ({_pct(n_susp / len(m))}) are flagged by "
-      "Stage 0's format-agnostic checks. rules.py's format-conditional scan "
-      "adds to the same field via `flag_suspect()`.\n")
+    n = int(m["score_string_suspect"].sum())
+    a(f"{n:,} of {len(m):,} rows ({_pct(n / len(m))}) flagged by Stage 0's "
+      "format-agnostic checks: unparseable tokens, non-terminal sets, set "
+      "counts inconsistent with `best_of`, and score games disagreeing with "
+      "`w_SvGms + l_SvGms` by more than one game. rules.py's "
+      "format-conditional scan adds to the same field via `flag_suspect()`.\n")
     a("\nBy outcome:\n")
     a(m.groupby("outcome")["score_string_suspect"].agg(["sum", "size"]).to_markdown())
     a("\nTop reasons:\n")
     reasons = m.loc[m["score_string_suspect"], "score_suspect_reason"]
-    a(reasons.value_counts().head(15).to_markdown())
+    a(reasons.str.replace(r"\d+", "N", regex=True).value_counts().head(15).to_markdown())
 
     a("\n## Duplicate detection\n")
     dups = find_duplicates(m)
-    a(f"Same date + same two players + same tournament: **{len(dups)} rows**.\n")
+    a(f"Same tournament + same start date + same two players: "
+      f"**{len(dups)} rows**.\n")
     if len(dups):
-        a(dups.to_markdown(index=False))
+        a(dups.head(40).to_markdown(index=False))
+        a("\nThese are round-robin and Davis Cup rematches plus genuine "
+          "double-entries; they are reported, not dropped, because "
+          "distinguishing the two needs the round field and match_num, which "
+          "downstream stages have.\n")
 
     a("\n## Split assignment\n")
     a(m.groupby(["split", "season_file"]).size().unstack(fill_value=0).to_markdown())
-    a("\nNo row on or after the permanently fixed holdout cutoff "
-      f"({C.HOLDOUT_CUTOFF}) is loaded by this module; the 2024–2026 season "
-      "files are never opened.\n")
+    a("\nSplit is assigned from `tourney_date` (tournament start), so an event "
+      "straddling a boundary lands whole in one window. No row on or after the "
+      f"permanently fixed holdout cutoff ({C.HOLDOUT_CUTOFF}) is loaded; the "
+      "2024–2026 season files are never opened.\n")
 
     path.write_text("\n".join(L) + "\n")
     return path
@@ -447,9 +517,8 @@ def build(save: bool = True) -> pd.DataFrame:
     """Load, audit, and persist the canonical match record."""
     m = load_raw()
     if save:
-        out = C.REPO_ROOT / "data" / "processed"
-        out.mkdir(parents=True, exist_ok=True)
-        m.to_parquet(out / "matches.parquet", index=False)
+        C.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        m.to_parquet(C.PROCESSED_DIR / "matches.parquet", index=False)
         write_data_dictionary(m)
     return m
 
@@ -458,10 +527,13 @@ def demo() -> None:
     """Worked example (ground rule 10)."""
     m = load_raw()
     print(f"loaded {len(m):,} matches, {m['date'].min()} .. {m['date'].max()}")
+    print(f"tours: {m['tour'].value_counts().to_dict()}")
     print(f"outcomes: {m['outcome'].value_counts().to_dict()}")
-    print(f"suspect: {int(m['score_string_suspect'].sum())}")
-    cols = ["match_id", "date", "tournament", "surface", "winner", "loser",
-            "score_string", "outcome", "score_string_suspect", "split"]
+    print(f"serve_stats_valid: {int(m['serve_stats_valid'].sum()):,}")
+    print(f"score_string_suspect: {int(m['score_string_suspect'].sum()):,}")
+    cols = ["match_id", "date", "tourney_name", "surface", "winner_name",
+            "loser_name", "score", "outcome", "score_suspect_reason"]
+    print("\nfirst 5 suspect rows:")
     print(m.loc[m["score_string_suspect"], cols].head(5).to_string(index=False))
 
 

@@ -3,19 +3,18 @@
   "human_checkpoints_pending": [
     {
       "stage": "stage_0",
-      "reason": "Mandatory post-Stage-0 review (/loop hard stop 1), plus a data-source deviation that changes the spec for Stages 2, 3, 5, 6 and the backtest.",
+      "reason": "Mandatory post-Stage-0 review (/loop hard stop 1), re-run against the TML data. Stage 1 and rules.py's table proceed in parallel per the spec; nothing from Stage 2 onward starts until this is reviewed.",
       "decisions_needed": [
-        "Stage 2 has no serve-statistic input. Approve deriving serve point-win probability by inverting the Stage 1 engine from per-set game counts, or supply a dataset with serve stats.",
-        "Stage 5 style vector loses ace rate, double-fault rate, hand, height. Approve a games-derived-only style vector, or drop Stage 5.",
-        "No Challenger/futures tier: Stage 2 per-level shrinkage, Stage 3 cross-level check, and the backtest's tour-level split have no second level. Approve dropping them as not-applicable.",
-        "Confirm the retirement/walkover policy table in reports/data_dictionary.md (ground rule 6)."
+        "Confirm the retirement/walkover/default policy table in reports/data_dictionary.md (ground rule 6): retired excluded from rate/venue/correction fitting but INCLUDED in Elo as win/loss; walkover and default update nothing.",
+        "Confirm Davis Cup (3,547 rows), Olympics (192) and Tour Finals (226) stay in the dataset - all have nonstandard formats or venues that rules.py must handle explicitly.",
+        "Confirm Next Gen Finals short-set matches (4-game sets, ~90 rows) stay excluded via score_string_suspect: the engine prices standard sets only."
       ]
     }
   ],
   "stages": {
     "constants.py": {
       "gate_passed": true,
-      "notes": "Four-way split defined: FIT 2012-12-01..2020-12-31, TUNE 2021-01-01..2022-06-30, TEST 2022-07-01..2023-06-30, RESERVE 2023-07-01..2023-12-31 (replacement TEST window if Stage 8 fails), HOLDOUT 2024-01-01+ (permanently fixed). 2010.xlsx excluded: 2011-2012 missing, gap breaks Elo/recency continuity. 8/8 tests pass."
+      "notes": "Four-way split: FIT 2010-01-01..2020-12-31, TUNE 2021-01-01..2022-06-30, TEST 2022-07-01..2023-06-30, RESERVE 2023-07-01..2023-12-31 (replacement TEST if Stage 8 fails), HOLDOUT 2024-01-01+ (permanently fixed). DATA_START moved 2012-12-01 -> 2010-01-01 when TML data replaced tennis-data.co.uk; holdout cutoff unchanged. Split assigned by tourney_date (tournament start)."
     },
     "rules.py": {
       "gate_passed": false,
@@ -23,7 +22,7 @@
     },
     "stage_0": {
       "gate_passed": true,
-      "notes": "Canonical record: 27,458 matches, 2012-12-31..2023-11-19, seasons 2013-2023 (2024-2026 files never opened). Outcomes completed 26,485 / retired 796 / walkover 172 / other 5. score_string_suspect on 24 rows (0.09%). 0 duplicates. 4 tournaments change surface; 38 locations have >1 tournament name. best_of repaired on 25 rows (15 null + 10 Wimbledon 3rd-round mislabels). 20/20 tests pass. MAJOR FINDING: data is tennis-data.co.uk ATP, not TML-Database - no serve stats, no player bio, ATP-only. See reports/data_dictionary.md."
+      "notes": "REDONE on TML-Database (vendor/). 100,658 matches 2010-01-03..2023-11-27, 39,596 ATP + 61,062 Challenger; 2024-2026 files never opened. Outcomes: completed 96,804 / retired 3,342 / walkover 502 / default 9 / unknown 1 (parsed from score-string RET/W-O/DEF markers - TML has no flag column). score_string_suspect 285 rows (0.28%). serve_stats_valid 92.2%. 105 tournament codes change surface. 62 rows had colliding ids (TML 'Rome'/'GA' field swap) - match_id now includes season. 24/24 tests pass."
     },
     "stage_1": {
       "gate_passed": false,
