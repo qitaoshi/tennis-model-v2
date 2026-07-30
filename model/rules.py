@@ -333,7 +333,8 @@ def review_candidates(matches: pd.DataFrame, disc: pd.DataFrame) -> pd.DataFrame
     return flagged.sort_values("rate", ascending=False).reset_index()
 
 
-def build(save: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
+def build(save: bool = True, parquet: str = "matches.parquet"
+          ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build the inferred table, run the scan, and flag conflicts on the record.
 
     A score that conflicts with its assigned format sets
@@ -342,7 +343,7 @@ def build(save: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     from model import data_audit  # local import: data_audit does not need rules
 
-    matches = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
+    matches = pd.read_parquet(C.PROCESSED_DIR / parquet)
     global _INFERRED_CACHE
     _INFERRED_CACHE = build_inferred_table(matches, save=save)
     disc = empirical_scan(matches, save=save)
@@ -350,7 +351,7 @@ def build(save: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
         matches, disc["match_id"].tolist(), "rules.py: score conflicts assigned format"
     )
     if save:
-        matches.to_parquet(C.PROCESSED_DIR / "matches.parquet", index=False)
+        matches.to_parquet(C.PROCESSED_DIR / parquet, index=False)
     return matches, disc
 
 

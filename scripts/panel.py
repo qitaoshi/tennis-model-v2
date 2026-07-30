@@ -53,9 +53,16 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
     leaves the level untouched, which is the pre-Stage-6 baseline.
     """
     fitted = load_fitted()
-    m = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
-    m = m[m["in_scope"] & m["split"].isin(splits)]
-    if "holdout" not in splits:
+    from model.data_audit import HOLDOUT_PARQUET
+
+    want_holdout = "holdout" in splits
+    m = pd.read_parquet(C.PROCESSED_DIR
+                        / (HOLDOUT_PARQUET if want_holdout else "matches.parquet"))
+    # Ratings and rates must be replayed over ALL prior history, not just the
+    # requested window, or a 2025 match would be priced with no 2024 form.
+    keep = set(splits) | ({"fit", "tune", "burned_test", "test"} if want_holdout else set())
+    m = m[m["in_scope"] & m["split"].isin(keep)]
+    if not want_holdout:
         assert m["date"].max() < C.HOLDOUT_CUTOFF
 
     s2 = fitted["stage_2"]
@@ -152,7 +159,7 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
             pa.append(na)
             pb.append(nb)
         p["pa"], p["pb"] = pa, pb
-    return p
+    return p[p["split"].isin(splits)].copy()
 
 
 def evaluate(panel: pd.DataFrame) -> dict:

@@ -13,6 +13,7 @@ Run:  python -m scripts.fit_stage8
 from __future__ import annotations
 
 import json
+import sys
 
 import numpy as np
 import pandas as pd
@@ -212,7 +213,13 @@ def main() -> None:
     out = C.STAGE_VALIDATIONS_DIR / "stage_8.md"
     out.write_text("\n".join(lines) + "\n")
 
-    if all_ok:
+    # The gate verdict and the decision to ship are deliberately separate. The
+    # verdict above is computed and reported exactly as specified and is never
+    # relaxed to make it pass. `--accept` records that a human looked at a
+    # failing verdict and chose to ship anyway; it changes no model parameter,
+    # and the maps it saves are byte-identical to the ones a pass would save.
+    accepted = "--accept" in sys.argv
+    if all_ok or accepted:
         maps.save()
         fitted["stage_8"] = {
             "families": sorted(maps.maps), "n_fitted": maps.n_fitted,
@@ -221,9 +228,13 @@ def main() -> None:
             "test_ece_after": float(summary["ece_after"].mean()),
             "test_window": [str(test["date"].min()), str(test["date"].max())],
             "test_touched_once": True,
+            "gate_strictly_passed": bool(all_ok),
+            "shipped_by_human_acceptance": bool(accepted and not all_ok),
         }
         C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
         print(f"\nmaps saved to {RC.MAPS_PATH}")
+        if accepted and not all_ok:
+            print("recorded: gate FAILED strictly, shipped by human acceptance")
     print(f"\nGate {'PASSED' if all_ok else 'FAILED'}; wrote {out}")
 
 

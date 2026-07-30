@@ -178,22 +178,32 @@ def parse_score(score: object, outcome: str, best_of: float) -> ParsedScore:
     )
 
 
-def _season_years() -> list[int]:
-    """Season years strictly before the permanently fixed holdout cutoff."""
+def _season_years(include_holdout: bool = False) -> list[int]:
+    """Season years available for loading.
+
+    Holdout years are excluded unless explicitly requested, which only the
+    final backtest does. Every other caller gets a dataset that physically
+    cannot contain post-cutoff data.
+    """
     years = set()
     for p in C.VENDOR_DIR.glob("*_matches_*.csv"):
         y = int(p.stem.rsplit("_", 1)[1])
-        if C.DATA_START.year <= y < C.HOLDOUT_CUTOFF.year:
-            years.add(y)
+        if y < C.DATA_START.year:
+            continue
+        if y >= C.HOLDOUT_CUTOFF.year and not include_holdout:
+            continue
+        years.add(y)
     return sorted(years)
 
 
-def load_raw(years: list[int] | None = None) -> pd.DataFrame:
+def load_raw(years: list[int] | None = None,
+             include_holdout: bool = False) -> pd.DataFrame:
     """Load TML season files into one canonical match record.
 
-    Raises if any loaded date falls in the HOLDOUT range.
+    Raises if any loaded date falls in the HOLDOUT range, unless
+    ``include_holdout`` is set — which only the final backtest does.
     """
-    years = years or _season_years()
+    years = years or _season_years(include_holdout)
     frames = []
     for tour, stem in _TOURS.items():
         for y in years:
@@ -206,6 +216,13 @@ def load_raw(years: list[int] | None = None) -> pd.DataFrame:
             frames.append(df)
 
     m = pd.concat(frames, ignore_index=True)
+    # TML writes some counters as text in some season files (l_bpFaced in the
+    # 2024+ files), which turns a whole column to object dtype once concatenated
+    # and makes every numeric comparison against it fail.
+    for side in ("w", "l"):
+        for col in [f"{side}_{c}" for c in _SERVE_COLS] + [f"{side}_svpt"]:
+            if col in m.columns:
+                m[col] = pd.to_numeric(m[col], errors="coerce")
     m["date"] = pd.to_datetime(m["tourney_date"], format="%Y%m%d").dt.date
     m["level_label"] = m["tourney_level"].astype(str).map(LEVEL_LABEL).fillna("unknown")
     #: tourney_id is `YYYY-CODE`; the year prefix moves each season, the rest
@@ -240,7 +257,8 @@ def load_raw(years: list[int] | None = None) -> pd.DataFrame:
     )
     m["split"] = [C.split_of(d) for d in m["date"]]
 
-    C.assert_no_holdout(m["date"])
+    if not include_holdout:
+        C.assert_no_holdout(m["date"])
     return m
 
 
@@ -551,13 +569,21 @@ def write_data_dictionary(m: pd.DataFrame, path: Path | None = None) -> Path:
     return path
 
 
-def build(save: bool = True) -> pd.DataFrame:
+#: The holdout-inclusive record lives in its own file so no ordinary caller
+#: can reach post-cutoff data by accident.
+HOLDOUT_PARQUET = "matches_with_holdout.parquet"
+
+
+def build(save: bool = True, include_holdout: bool = False) -> pd.DataFrame:
     """Load, audit, and persist the canonical match record."""
-    m = load_raw()
+    m = load_raw(include_holdout=include_holdout)
     if save:
         C.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-        m.to_parquet(C.PROCESSED_DIR / "matches.parquet", index=False)
-        write_data_dictionary(m)
+        if include_holdout:
+            m.to_parquet(C.PROCESSED_DIR / HOLDOUT_PARQUET, index=False)
+        else:
+            m.to_parquet(C.PROCESSED_DIR / "matches.parquet", index=False)
+            write_data_dictionary(m)
     return m
 
 
