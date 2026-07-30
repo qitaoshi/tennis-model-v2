@@ -1,22 +1,6 @@
 {
-  "current_stage": "stage_8",
-  "human_checkpoints_pending": [
-    {
-      "stage": "stage_8",
-      "reason": "Stage 8's gate fails on one family by 0.0003 Brier, and both pre-cutoff TEST windows are now spent. The remaining decision cannot be made from TEST numbers without selecting on the test set.",
-      "state": [
-        "Stages 0-7 all passed and frozen. price.py prices 396 selections across 7 markets with full metadata. scripts/backtest.py is written and refuses to run without .backtest_approved plus every gate passed.",
-        "The pre-registered eligibility rule (FIT+TUNE only) selected match_winner and totals_under_high for calibration.",
-        "On the replacement TEST window totals_under_high improved on all three metrics; match_winner improved ECE and lost 0.0003 Brier."
-      ],
-      "decision_needed": [
-        "A: accept the gate as met in substance - the isotonic map does what it is for (calibration) and the Brier loss is a sharpness rounding - save both maps and run the holdout backtest.",
-        "B: ship only the totals_under_high map, which improves every metric, and drop match_winner's. NOTE: choosing this BECAUSE of the TEST result would be selection on the test set; it is only legitimate if justified on the FIT+TUNE evidence.",
-        "C: treat the gate as genuinely failed and stop before the backtest."
-      ],
-      "hard_stop": "The HOLDOUT backtest has NOT been run and will not be without explicit confirmation."
-    }
-  ],
+  "current_stage": "backtest",
+  "human_checkpoints_pending": [],
   "stages": {
     "constants.py": {
       "gate_passed": true,
@@ -59,8 +43,8 @@
       "notes": "GATE PASSED on the THIRD attempt. Attempts 1 and 2 are recorded below; the third exceeded the loop's two-attempt limit and was taken under the human's standing /goal directive to continue to completion, after the diagnosis pointed at a fix INSIDE Stage 7's mandate rather than outside it. ATTEMPT 1: one-sided inflation grid could not express the measured gap's sign; nothing moved. ATTEMPT 2: two-sided grid hit its edge at -0.06 and closed 37% of the gap. ATTEMPT 3 (the fix): the variance correction was wobbling the LEVEL. The spec says 'a variance-widening mix over (pa, pb)', and the lever that matters is the SPLIT: a real match's skill gap varies within the match, producing lopsided sets that iid points at a fixed split cannot. The mixture re-solves its centre split so it reproduces the uncorrected match-win probability - without that, wobbling drags every favourite toward even money and destroys the match-winner calibration Stages 3-4 earned. RESULT on TUNE (6,000 matches): tiebreak occurrence gap -0.0817 -> -0.0006 (criterion |gap| < 0.01); total-games PIT deviation 0.02873 -> 0.00697 and central-80% coverage 0.733 -> 0.807 (criterion 0.75-0.85); neither correction degraded the other. Selected: split_sigma 0.08, tiebreak_inflation -0.02 (a DEFLATION - the engine over-predicts tiebreaks on this data, the opposite of the spec's assumed direction), provenance scheme 'pooled'. All three provenance schemes were measured; documented-only has just 483 of 6,000 matches and worse calibration (-0.0229 residual gap). FIT rolling-origin gains: tiebreak +0.07704 +/-0.00925 vs TUNE +0.08117; PIT +0.01756 +/-0.00565 vs TUNE +0.02170. No overfit signal. Both ledger entries frozen. Engine change: match_distribution memoized (the mixture re-evaluates the same triples thousands of times)."
     },
     "stage_8": {
-      "gate_passed": false,
-      "notes": "RUN ONCE PER WINDOW, BOTH PRE-CUTOFF TEST WINDOWS NOW SPENT. FIRST TEST WINDOW (2022-07-01..2023-06-30): maps fitted on every family. Two of five improved - totals_under_high ECE 0.0322->0.0039, totals_under_mid 0.0189->0.0119 - while match_winner (0.0160->0.0209) and set_score (0.0065->0.0097) got worse, because isotonic cannot improve a family already calibrated inside a percent and just fits noise there. Gate failed. Ledger diagnostic per the Stage 8 protocol: overfit_flags() returned NONE; every stage's TUNE gain sits inside its FIT-internal envelope and five of seven are BELOW their FIT gain, so no stage fit TUNE-set noise. FIX, CHOSEN WITHOUT CONSULTING TEST RESULTS: a family gets a map only if one helps on a held-out last fifth of FIT+TUNE. Window 1 was then recorded burned in constants.py and the TUNE/TEST boundary moved forward into the reserve, exactly as MODEL_PROMPT.md's failure protocol prescribes. The HOLDOUT cutoff did not move. SECOND TEST WINDOW (2023-07-01..2023-12-31, 3,799 matches): eligibility selected match_winner and totals_under_high. Results: totals_under_high ECE 0.0349->0.0110 with Brier and log-loss both improving; the three unmapped families pass through unchanged; match_winner ECE improved 0.0182->0.0169 but Brier worsened by 0.0003 (0.239806->0.240125). My gate requires every family to improve on BOTH metrics, so it reads FAILED on that one family. The gate was NOT weakened to pass. NO RESERVE REMAINS - a third pre-holdout test window does not exist, and per ground rule 1 that is a finding to report, never a reason to move the holdout cutoff. Calibration maps were NOT saved, so price.py currently ships uncalibrated."
+      "gate_passed": true,
+      "notes": "SHIPPED BY HUMAN ACCEPTANCE, NOT A STRICT PASS. The gate as written required every eligible family to improve on BOTH ECE and Brier. On the replacement TEST window (2023-07-03..2023-11-27, 3,799 matches): totals_under_high improved on all three metrics (ECE 0.0349->0.0110, Brier 0.20895->0.20781, log-loss 0.60852->0.60591); match_winner improved ECE 0.0182->0.0169 but lost 0.0003 Brier (0.23981->0.24013), so the strict verdict is FAILED and reports/stage_validations/stage_8.md still says FAILED. The human reviewed the numbers and chose option A on 2026-07-30: accept, on the grounds that the isotonic map does what it exists for (calibration) and the Brier delta is a sharpness rounding on an already well-calibrated family. No model parameter changed; the saved maps are identical to those a strict pass would have saved. fitted_params.json records gate_strictly_passed=false and shipped_by_human_acceptance=true. Map ELIGIBILITY was decided on FIT+TUNE only, before TEST was opened. TEST touched once per window; the first window (2022-07-01..2023-06-30) is recorded burned in constants.py. The holdout cutoff never moved."
     },
     "backtest": {
       "gate_passed": false,

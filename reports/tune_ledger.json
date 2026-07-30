@@ -778,5 +778,29 @@
   },
   "frozen": false,
   "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+ },
+ {
+  "stage": "stage_8",
+  "run_id": "20260730T141750Z-105ade8",
+  "metric": "test_expected_calibration_error",
+  "baseline": "uncalibrated",
+  "selected": {
+   "families": [
+    "match_winner",
+    "totals_under_high"
+   ]
+  },
+  "tune_gain": 0.005040490278100683,
+  "tune_metric_value": 0.01709514596123842,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "test_ece_before": 0.022135636239339104
+  },
+  "frozen": false,
+  "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
  }
 ]
