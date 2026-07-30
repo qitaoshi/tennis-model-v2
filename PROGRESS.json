@@ -1,0 +1,54 @@
+{
+  "current_stage": "stage_0",
+  "human_checkpoints_pending": [],
+  "stages": {
+    "constants.py": {
+      "gate_passed": true,
+      "notes": "Four-way split defined: FIT 2012-12-01..2020-12-31, TUNE 2021-01-01..2022-06-30, TEST 2022-07-01..2023-06-30, RESERVE 2023-07-01..2023-12-31 (replacement TEST window if Stage 8 fails), HOLDOUT 2024-01-01+ (permanently fixed). 2010.xlsx excluded: 2011-2012 missing, gap breaks Elo/recency continuity. 8/8 tests pass."
+    },
+    "rules.py": {
+      "gate_passed": false,
+      "notes": "Deferred until after stage_0: the empirical discrepancy scan needs stage_0's canonical match record/loader. Table + spot-checks buildable independently."
+    },
+    "stage_0": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_1": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_2": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_3": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_4": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_5": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_6": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_7": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "stage_8": {
+      "gate_passed": false,
+      "notes": ""
+    },
+    "backtest": {
+      "gate_passed": false,
+      "notes": ""
+    }
+  }
+}

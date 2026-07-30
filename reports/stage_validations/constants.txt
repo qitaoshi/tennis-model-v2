@@ -1,0 +1,21 @@
+Four-way split:
+  FIT      2012-12-01 .. 2020-12-31
+  TUNE     2021-01-01 .. 2022-06-30
+  TEST     2022-07-01 .. 2023-06-30
+  RESERVE  2023-07-01 .. 2023-12-31
+  HOLDOUT  2024-01-01 .. open (permanently fixed cutoff)
+
+split_of() spot checks:
+  2012-12-31 -> fit
+  2020-12-31 -> fit
+  2021-01-01 -> tune
+  2022-06-30 -> tune
+  2022-07-01 -> test
+  2023-06-30 -> test
+  2023-07-01 -> reserve
+  2024-01-01 -> holdout
+
+assert_no_holdout() on a holdout date:
+  raised as expected: HOLDOUT data touched outside the final backtest: 1 rows on/after 2024-01-01 (first 2024-05-01)
+........                                                                 [100%]
+8 passed in 0.00s
