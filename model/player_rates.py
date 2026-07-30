@@ -267,17 +267,26 @@ def rate_from_state(ss_won: float, ss_pl: float, sa_won: float, sa_pl: float,
                 level, surface)
 
 
-def serve_rates(asof: pd.DataFrame, params: RateParams) -> pd.DataFrame:
+def serve_rates(asof: pd.DataFrame, params: RateParams,
+                prior_override: dict[str, np.ndarray] | None = None) -> pd.DataFrame:
     """Serve rate for both sides of every match, as of that match.
 
     Vectorized form of :func:`rate_from_state` — the grid search calls this
     once per hyperparameter combination, and a test pins the two together.
+
+    ``prior_override`` replaces the flat tour-level prior per side, which is
+    how Stage 5 substitutes a cohort prior for thin players. Non-finite
+    entries fall back to the tour-level prior, so a partial override is safe.
     """
     out = asof[["match_id", "date", "t", "surface", "level_group",
                 "winner_id", "loser_id", "w_spw", "l_spw",
                 "w_svpt", "l_svpt", "league", "w_ret", "l_ret"]].copy()
-    prior = np.where(np.isfinite(asof["league"]), asof["league"], 0.62)
+    league_prior = np.where(np.isfinite(asof["league"]), asof["league"], 0.62)
     for side in ("w", "l"):
+        prior = league_prior
+        if prior_override is not None and side in prior_override:
+            ov = np.asarray(prior_override[side], dtype=float)
+            prior = np.where(np.isfinite(ov), ov, league_prior)
         ss_won = asof[f"{side}_ss_won"].to_numpy()
         ss_pl = asof[f"{side}_ss_pl"].to_numpy()
         sa_won = asof[f"{side}_sa_won"].to_numpy()

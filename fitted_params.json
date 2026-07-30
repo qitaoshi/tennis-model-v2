@@ -39,5 +39,18 @@
   "selected_on": "tune",
   "tune_logloss": 0.6346958806089784,
   "disagreement_pp_mean_abs": 11.642862561020682
+ },
+ "stage_5": {
+  "k": 5,
+  "opponent_vs_cohort_n0": 0.0,
+  "thin_n": 1000.0,
+  "well_sampled_n": 3000.0,
+  "snapshot_days": 91,
+  "enabled": true,
+  "selected_on": "tune",
+  "tune_logloss": 0.6388255290499125,
+  "tune_crps": 3.7112666560712846,
+  "baseline_logloss": 0.63938745936996,
+  "baseline_crps": 3.7191313112955338
  }
 }
