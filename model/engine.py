@@ -114,12 +114,19 @@ class SetOutcome:
 
 def set_distribution(pa: float, pb: float, spec: FormatSpec,
                      a_serves_first: bool = True,
-                     deciding: bool = False) -> SetOutcome:
+                     deciding: bool = False,
+                     close_inflation: float = 0.0) -> SetOutcome:
     """Exact distribution over set scores by DP over game states.
 
     The deciding set uses the format's deciding-set rule — advantage
     continuation or a tiebreak at the format's game score, to the format's
     point target — rather than a global flag.
+
+    ``close_inflation`` raises BOTH players' hold probability once the set is
+    close (both at ``games_to_win_set - 1`` or beyond). This is Stage 7's
+    tiebreak-frequency correction: iid points understate how often a set
+    reaches 6-6 because servers raise their level there. Applying it
+    symmetrically means it moves tiebreak frequency without moving who wins.
     """
     hold_a, hold_b = p_hold(pa), p_hold(pb)
     target = spec.games_to_win_set
@@ -139,7 +146,10 @@ def set_distribution(pa: float, pb: float, spec: FormatSpec,
         nxt: dict[tuple[int, int], float] = {}
         for (ga, gb), prob in states.items():
             server_is_a = ((ga + gb) % 2 == 0) == a_serves_first
-            p_a_game = hold_a if server_is_a else 1.0 - hold_b
+            close = close_inflation and ga >= target - 1 and gb >= target - 1
+            h_a = min(max(hold_a + close_inflation, 0.001), 0.999) if close else hold_a
+            h_b = min(max(hold_b + close_inflation, 0.001), 0.999) if close else hold_b
+            p_a_game = h_a if server_is_a else 1.0 - h_b
             for won_by_a, p_game in ((True, p_a_game), (False, 1.0 - p_a_game)):
                 na, nb = (ga + 1, gb) if won_by_a else (ga, gb + 1)
                 mass = prob * p_game
@@ -206,11 +216,15 @@ class MatchDistribution:
 
 
 def match_distribution(pa: float, pb: float, spec: FormatSpec,
-                       a_serves_first: bool = True) -> MatchDistribution:
+                       a_serves_first: bool = True,
+                       close_inflation: float = 0.0) -> MatchDistribution:
     """Exact joint distribution over sets, games and tiebreak occurrence.
 
     Who serves first in a set depends on the parity of the previous set's
     total games, so that is carried through the DP rather than assumed.
+
+    ``close_inflation`` is Stage 7's tiebreak correction; see
+    :func:`set_distribution`.
     """
     need = spec.best_of // 2 + 1
     # per-set distributions, cached by (serves first, is deciding)
@@ -218,7 +232,8 @@ def match_distribution(pa: float, pb: float, spec: FormatSpec,
 
     def sets_out(first: bool, deciding: bool) -> SetOutcome:
         if (first, deciding) not in cache:
-            cache[(first, deciding)] = set_distribution(pa, pb, spec, first, deciding)
+            cache[(first, deciding)] = set_distribution(
+                pa, pb, spec, first, deciding, close_inflation)
         return cache[(first, deciding)]
 
     # state: (sets_a, sets_b, games_a, games_b, a_serves_first, any_tb)

@@ -497,5 +497,111 @@
   },
   "frozen": true,
   "notes": "gate passed; frozen"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T052043Z-287b98f",
+  "metric": "tiebreak_occurrence_gap",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "tiebreak_inflation": 0.0,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.0,
+  "tune_metric_value": 0.0819467139199066,
+  "fit_rolling_origin_gain_folds": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": 0.0,
+  "baselines": {
+   "uncorrected_gap": -0.0819467139199066
+  },
+  "frozen": false,
+  "notes": "tiebreak-frequency correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T052043Z-287b98f",
+  "metric": "total_games_pit_deviation",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "level_sigma": 0.0,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.0,
+  "tune_metric_value": 0.028600000000000004,
+  "fit_rolling_origin_gain_folds": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": 0.0,
+  "baselines": {
+   "uncorrected_pit_dev": 0.028600000000000004,
+   "uncorrected_coverage80": 0.7331666666666666
+  },
+  "frozen": false,
+  "notes": "total-games variance correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T053330Z-287b98f",
+  "metric": "tiebreak_occurrence_gap",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "tiebreak_inflation": -0.06,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.03069750364187418,
+  "tune_metric_value": 0.05124921027803242,
+  "fit_rolling_origin_gain_folds": [
+   0.03074743145527642,
+   0.03197649338936198,
+   0.03235198542662132,
+   0.032289813932082634,
+   0.03263595400871144
+  ],
+  "fit_rolling_origin_gain_mean": 0.03200033564241076,
+  "fit_rolling_origin_gain_std": 0.0007385464294265191,
+  "baselines": {
+   "uncorrected_gap": -0.0819467139199066
+  },
+  "frozen": false,
+  "notes": "tiebreak-frequency correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T053330Z-287b98f",
+  "metric": "total_games_pit_deviation",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "level_sigma": 0.0,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.0005000000000000074,
+  "tune_metric_value": 0.028099999999999997,
+  "fit_rolling_origin_gain_folds": [
+   0.00023850085178874977,
+   0.0003262642740619985,
+   0.0009950248756218846,
+   0.0005733558178752096,
+   0.0013201320132013201
+  ],
+  "fit_rolling_origin_gain_mean": 0.0006906555665098325,
+  "fit_rolling_origin_gain_std": 0.00045822085405259044,
+  "baselines": {
+   "uncorrected_pit_dev": 0.028600000000000004,
+   "uncorrected_coverage80": 0.7331666666666666
+  },
+  "frozen": false,
+  "notes": "total-games variance correction"
  }
 ]
