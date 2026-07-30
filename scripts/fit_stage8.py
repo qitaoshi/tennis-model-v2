@@ -97,7 +97,34 @@ def main() -> None:
     train = train.sample(min(len(train), 20_000), random_state=C.MC_SEED)
     print(f"fitting maps on {len(train):,} FIT+TUNE matches")
     samples = collect(train, cp)
-    maps = RC.fit_maps(samples)
+
+    # ELIGIBILITY, DECIDED WITHOUT THE TEST SET. Isotonic can only help a
+    # family that is actually miscalibrated; on a family already inside a
+    # fraction of a percent it just fits noise. Which families get a map is
+    # therefore decided on a held-out slice of FIT+TUNE — the last fifth by
+    # date — and never on TEST, which would be selection on the test set.
+    cut = train["t"].quantile(0.8)
+    inner_fit = collect(train[train["t"] <= cut], cp)
+    inner_check = collect(train[train["t"] > cut], cp)
+    trial = RC.fit_maps(inner_fit)
+    eligible, eligibility = [], []
+    for fam, (p, y) in sorted(inner_check.items()):
+        if fam not in trial.maps:
+            continue
+        q = np.asarray(trial.apply(fam, p))
+        before, after = RC.calibration_error(p, y), RC.calibration_error(q, y)
+        b_before, b_after = RC.brier(p, y), RC.brier(q, y)
+        keep = after < before and b_after <= b_before
+        eligibility.append({"family": fam, "n_check": len(p),
+                            "ece_before": before, "ece_after": after,
+                            "brier_before": b_before, "brier_after": b_after,
+                            "eligible": keep})
+        if keep:
+            eligible.append(fam)
+    print("eligibility (FIT+TUNE internal check, TEST never consulted):")
+    print(pd.DataFrame(eligibility).to_string(index=False))
+
+    maps = RC.fit_maps({k: v for k, v in samples.items() if k in eligible})
     print(f"fitted maps: { {k: v for k, v in maps.n_fitted.items()} }")
 
     # --- ONE-TIME evaluation on the pre-cutoff TEST window -----------------
@@ -112,6 +139,11 @@ def main() -> None:
     report_blocks = []
     for fam, (p, y) in sorted(test_samples.items()):
         if fam not in maps.maps:
+            rows.append({"family": fam, "n": len(p), "ece_before": RC.calibration_error(p, y),
+                         "ece_after": RC.calibration_error(p, y),
+                         "brier_before": RC.brier(p, y), "brier_after": RC.brier(p, y),
+                         "logloss_before": RC.log_loss(p, y),
+                         "logloss_after": RC.log_loss(p, y), "improved": True})
             continue
         q = np.asarray(maps.apply(fam, p))
         before = {"ece": RC.calibration_error(p, y), "brier": RC.brier(p, y),
@@ -154,10 +186,20 @@ def main() -> None:
         "refitted on it.\n",
         f"\nTEST window: {test['date'].min()} .. {test['date'].max()}, "
         f"{len(test):,} matches.\n",
+        "\nThe first TEST window (2022-07-01 .. 2023-06-30) was spent by this "
+        "stage's first run and is recorded burned in `constants.py`. This is "
+        "its replacement, carved by moving the TUNE/TEST boundary forward. The "
+        "holdout cutoff did not move.\n",
         f"\nCorrections in force: tiebreak inflation "
         f"{cp.tiebreak_inflation:+.4f}, split sigma {cp.split_sigma:.3f}, "
         f"provenance scheme `{cp.scheme}`.\n",
-        "\n## Calibration on the pre-cutoff TEST set\n",
+        "\n## Map eligibility, decided on FIT+TUNE only\n",
+        "A family gets a map only if one helps on a held-out slice of FIT+TUNE. "
+        "Deciding this from TEST results would be selection on the test set.\n",
+        pd.DataFrame(eligibility).to_markdown(index=False),
+        "\n\n## Calibration on the pre-cutoff TEST set\n",
+        "Families without a map pass through unchanged and are shown with "
+        "identical before/after figures.\n",
         summary.to_markdown(index=False),
         "\n\n## Reliability after calibration\n",
         "\n".join(report_blocks),

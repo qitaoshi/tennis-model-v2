@@ -12,11 +12,16 @@ year per tour (ATP main tour and Challenger), 2010 onward.
 
     FIT      2010-01-01 .. 2020-12-31   parameter fitting only
     TUNE     2021-01-01 .. 2022-06-30   hyperparameter selection, Stages 2-7
-    TEST     2022-07-01 .. 2023-06-30   pre-cutoff test, Stage 8 only, once
-    RESERVE  2023-07-01 .. 2023-12-31   untouched; replacement TEST window if
-                                        and only if Stage 8 fails and the
-                                        TUNE/TEST boundary must move
+    TEST     2023-07-01 .. 2023-12-31   pre-cutoff test, Stage 8 only, once
     HOLDOUT  2024-01-01 ..              final backtest only
+
+    burned   2022-07-01 .. 2023-06-30   spent by Stage 8's first run
+
+Stage 8 failed on its first TEST window. Per MODEL_PROMPT.md's failure
+protocol the window is burned, the TUNE/TEST boundary moves forward into what
+was held in reserve, and the fix that prompted the move was chosen without
+consulting the burned window's results. Nothing else moved — in particular
+``HOLDOUT_CUTOFF`` is exactly where it was on the day it was first written.
 
 ``HOLDOUT_CUTOFF`` IS PERMANENTLY FIXED. It never moves, including after a
 Stage 8 failure. The only boundary that may move during iteration is the
@@ -71,9 +76,21 @@ DATA_START: date = date(2010, 1, 1)
 FIT_END: date = date(2020, 12, 31)
 TUNE_START: date = date(2021, 1, 1)
 TUNE_END: date = date(2022, 6, 30)
-TEST_START: date = date(2022, 7, 1)
-TEST_END: date = date(2023, 6, 30)
-RESERVE_START: date = date(2023, 7, 1)
+
+#: TEST windows already spent. Stage 8's first run consumed 2022-07-01 ..
+#: 2023-06-30; per MODEL_PROMPT.md's Stage 8 failure protocol that window is
+#: burned and the TUNE/TEST boundary moves forward into what was RESERVE. The
+#: HOLDOUT cutoff below did not move and never will.
+BURNED_TEST_WINDOWS: tuple[tuple[date, date], ...] = (
+    (date(2022, 7, 1), date(2023, 6, 30)),
+)
+
+TEST_START: date = date(2023, 7, 1)
+TEST_END: date = date(2023, 12, 31)
+#: No reserve remains. A second Stage 8 failure cannot be answered with
+#: another replacement window inside the pre-holdout data, and that would be a
+#: finding to report rather than a reason to move the holdout cutoff.
+RESERVE_START: date = date(2023, 12, 31)
 RESERVE_END: date = date(2023, 12, 31)
 
 #: PERMANENTLY FIXED. Everything on or after this date is HOLDOUT.
