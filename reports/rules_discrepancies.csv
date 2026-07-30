@@ -1,0 +1,17 @@
+match_id,tourney_code,year,assigned_format,provenance,score,conflict
+2010-2010-D049-1-atp,D049,2010,bo3/advantage,inferred,6-4 1-6 4-6 7-6(6) 8-6,set 8-6 exceeds tiebreak at 6-6
+2010-2010-D049-2-atp,D049,2010,bo3/advantage,inferred,7-6(4) 6-2 7-6(5),tiebreak final set 7-6 under advantage rules
+2010-2010-D049-3-atp,D049,2010,bo3/advantage,inferred,6-1 1-6 7-6(3),tiebreak final set 7-6 under advantage rules
+2010-2010-D056-2-atp,D056,2010,bo3/advantage,inferred,5-7 6-2 3-6 7-6(3) 9-7,set 9-7 exceeds tiebreak at 6-6
+2012-2012-D008-1-atp,D008,2012,bo3/advantage,inferred,6-2 4-6 4-6 6-1 9-7,set 9-7 exceeds tiebreak at 6-6
+2014-2014-D033-2-atp,D033,2014,bo3/advantage,inferred,6-7(4) 7-6(3) 1-6 6-2 9-7,set 9-7 exceeds tiebreak at 6-6
+2014-2014-D055-2-atp,D055,2014,bo3/advantage,inferred,6-4 6-7(4) 6-3 4-6 8-6,set 8-6 exceeds tiebreak at 6-6
+2015-2015-D001-1-atp,D001,2015,bo3/advantage,inferred,7-6(4) 2-6 6-7(1) 6-2 10-8,set 10-8 exceeds tiebreak at 6-6
+2015-2015-D001-2-atp,D001,2015,bo3/advantage,inferred,6-4 7-5 7-6(4),tiebreak final set 7-6 under advantage rules
+2015-2015-D039-1-atp,D039,2015,bo3/advantage,inferred,4-6 6-7(3) 6-1 7-6(2) 10-8,set 10-8 exceeds tiebreak at 6-6
+2018-2018-M-DC-2018-WG-M-KAZ-SUI-01-4-atp,M-DC-2018-WG-M-KAZ-SUI-01,2018,bo5/tiebreak@6to7,inferred,7-6(5) 1-6 10-6,set 10-6 exceeds tiebreak at 6-6
+2018-2018-M-DC-2018-G2-AM-M-BOL-PER-01-4-atp,M-DC-2018-G2-AM-M-BOL-PER-01,2018,bo3/tiebreak@6to7,inferred,6-3 3-6 10-8,set 10-8 exceeds tiebreak at 6-6
+2018-2018-M-DC-2018-G2-EPA-M-IRL-DEN-01-4-atp,M-DC-2018-G2-EPA-M-IRL-DEN-01,2018,bo3/tiebreak@6to7,inferred,2-6 6-2 10-8,set 10-8 exceeds tiebreak at 6-6
+2018-2018-M-DC-2018-WG-M-FRA-ESP-01-3-atp,M-DC-2018-WG-M-FRA-ESP-01,2018,bo5/tiebreak@6to7,inferred,1-6 6-4 12-14,set 12-14 exceeds tiebreak at 6-6
+2018-2018-M-DC-2018-WG-M-FRA-ESP-01-4-atp,M-DC-2018-WG-M-FRA-ESP-01,2018,bo5/tiebreak@6to7,inferred,6-7(2) 6-3 11-13,set 11-13 exceeds tiebreak at 6-6
+2020-2020-M-DC-2020-WG2-PO-POL-HKG-01-3-atp,M-DC-2020-WG2-PO-POL-HKG-01,2020,bo3/tiebreak@6to7,inferred,1-6 6-2 10-3,set 10-3 exceeds tiebreak at 6-6

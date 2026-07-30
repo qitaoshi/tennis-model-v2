@@ -1,5 +1,5 @@
 {
-  "current_stage": "rules.py",
+  "current_stage": "stage_1",
   "human_checkpoints_pending": [
     {
       "stage": "stage_0",
@@ -17,8 +17,8 @@
       "notes": "Four-way split: FIT 2010-01-01..2020-12-31, TUNE 2021-01-01..2022-06-30, TEST 2022-07-01..2023-06-30, RESERVE 2023-07-01..2023-12-31 (replacement TEST if Stage 8 fails), HOLDOUT 2024-01-01+ (permanently fixed). DATA_START moved 2012-12-01 -> 2010-01-01 when TML data replaced tennis-data.co.uk; holdout cutoff unchanged. Split assigned by tourney_date (tournament start)."
     },
     "rules.py": {
-      "gate_passed": false,
-      "notes": "Deferred until after stage_0: the empirical discrepancy scan needs stage_0's canonical match record/loader. Table + spot-checks buildable independently."
+      "gate_passed": true,
+      "notes": "Documented entries: 4 majors (full rule histories), Tour Finals, Olympics, Next Gen (short sets, supported=False). Everything else inferred per (tourney_code, season) from deciding-set score patterns: 3,807 tournament-year entries, 70 inferred as advantage. Inference independently recovers the documented advantage eras at RG/Wimbledon/AO. Empirical scan: 16 conflicts in 96,804 completed matches (0.017%), all Davis Cup ties (per-tie ids give almost no inference evidence); all flagged score_string_suspect. review_candidates() = 0 tournament-years above the 3%/30-match manual-review threshold, so the rules.py human checkpoint does not trigger. 15/15 tests pass incl. Isner-Mahut 70-68 legal under its assigned rules."
     },
     "stage_0": {
       "gate_passed": true,

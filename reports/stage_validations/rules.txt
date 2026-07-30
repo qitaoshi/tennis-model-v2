@@ -1,0 +1,12 @@
+Wimbledon 2010 (Isner-Mahut era)     bo5  final: advantage              [documented] Wimbledon advantage final set through 2018
+Wimbledon 2019                       bo5  final: TB to 7 at 12-12       [documented] Wimbledon final-set tiebreak at 12-12, 2019-2021
+Wimbledon 2023                       bo5  final: TB to 10 at 6-6        [documented] Wimbledon 10-point tiebreak at 6-6 from 2022
+Roland Garros 2021                   bo5  final: advantage              [documented] Roland Garros advantage final set through 2021
+Roland Garros 2022                   bo5  final: TB to 10 at 6-6        [documented] Roland Garros 10-point tiebreak from 2022
+US Open 2015                         bo5  final: TB to 7 at 6-6         [documented] US Open 7-point deciding-set tiebreak
+Australian Open 2019                 bo5  final: TB to 10 at 6-6        [documented] AO 10-point deciding-set tiebreak from 2019
+Next Gen Finals 2019                 bo5  final: TB to 7 at 3-3         [documented] Next Gen Finals short sets, first to 4
+Brisbane 2019                        bo3  final: TB to 7 at 6-6         [inferred] no advantage-set score in 27 matches; 2 deciding tiebreak(s)
+Karshi Challenger 2012               bo3  final: TB to 7 at 6-6         [inferred] no advantage-set score in 28 matches; 1 deciding tiebreak(s)
+...............                                                          [100%]
+15 passed in 1.10s
