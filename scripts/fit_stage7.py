@@ -4,7 +4,7 @@ Two separate failures, two separate corrections, validated separately:
 
 (a) tiebreak frequency — fit the close-set hold inflation that closes the
     measured gap between observed and predicted tiebreak occurrence;
-(b) total-games variance — fit the level wobble that makes the games
+(b) total-games variance — fit the split wobble that makes the games
     distribution's PIT uniform.
 
 The provenance-weighting question is RESOLVED here, not left open: both
@@ -37,8 +37,16 @@ from scripts import panel as P
 #: out to OVER-predict tiebreaks — real matches produce more breaks than iid
 #: points do — so the fitted value is a deflation, not the inflation the spec
 #: anticipated.
-INFLATIONS = [-0.06, -0.05, -0.04, -0.03, -0.02, -0.01, 0.0, 0.01]
-SIGMAS = [0.0, 0.01, 0.02, 0.03, 0.05, 0.08]
+INFLATIONS = [-0.03, -0.02, -0.01, 0.0, 0.01]
+#: Wobble of the SPLIT. This is the variance correction that matters: a real
+#: match's skill gap varies within the match, which produces lopsided sets
+#: that iid points at a fixed split cannot.
+SIGMAS = [0.0, 0.04, 0.06, 0.08, 0.10, 0.12]
+
+#: Rounding of (pa, pb) for the sweeps. Coarser than pricing, because each
+#: evaluation re-solves the mixture's centre split; price.py uses the exact
+#: values.
+FIT_ROUND = 2
 
 #: Gate criteria, fixed before the run.
 MAX_TB_GAP = 0.01          # 1 percentage point of tiebreak occurrence
@@ -56,7 +64,7 @@ def _corrected(pa: float, pb: float, key: tuple, infl: float, sigma: float):
                       final_tb_to=key[6], provenance="documented", source="s7")
     return CR.corrected_distribution(pa, pb, spec,
                                      CR.CorrectionParams(tiebreak_inflation=infl,
-                                                         level_sigma=sigma))
+                                                         split_sigma=sigma))
 
 
 def predict(pan: pd.DataFrame, infl: float, sigma: float) -> dict[str, np.ndarray]:
@@ -64,7 +72,8 @@ def predict(pan: pd.DataFrame, infl: float, sigma: float) -> dict[str, np.ndarra
     p_tb, cdf_at, cdf_before = [], [], []
     for pa, pb, key, actual in zip(pan["pa"], pan["pb"], pan["spec_key"],
                                    pan["total_games"]):
-        d = _corrected(round(float(pa), 3), round(float(pb), 3), key, infl, sigma)
+        d = _corrected(round(float(pa), FIT_ROUND), round(float(pb), FIT_ROUND),
+                       key, infl, sigma)
         p_tb.append(d.tiebreak_any)
         pmf = d.total_games_pmf()
         xs = np.array(sorted(pmf))
@@ -105,9 +114,12 @@ def main() -> None:
     prov = tune["format_provenance"].to_numpy()
     print(f"provenance: {pd.Series(prov).value_counts().to_dict()}")
 
-    # --- (a) tiebreak frequency, per scheme -------------------------------
-    tb_runs = {infl: predict(tune, infl, 0.0) for infl in INFLATIONS}
-    print("tiebreak sweep done")
+    # --- (b) total-games variance first ------------------------------------
+    # The split wobble is the dominant lever for both symptoms, so it is
+    # fitted first and the tiebreak correction then sized against whatever gap
+    # remains. The two are still measured and gated separately.
+    sigma_runs = {sigma: predict(tune, 0.0, sigma) for sigma in SIGMAS}
+    print("variance sweep done")
 
     chosen: dict[str, dict] = {}
     for scheme in CR.SCHEMES:
@@ -115,32 +127,31 @@ def main() -> None:
             scheme=scheme, inferred_weight=0.5))
         if w.sum() == 0:
             continue
-        rows = {infl: measure(tune, tb_runs[infl], w) for infl in INFLATIONS}
-        best_infl = min(rows, key=lambda i: abs(rows[i]["tb_gap"]))
-        chosen[scheme] = {"inflation": best_infl, "tb": rows[best_infl],
-                          "tb_uncorrected": rows[0.0], "weights": w,
-                          "tb_rows": rows}
-        print(f"  {scheme:20s} inflation {best_infl:.4f} "
-              f"gap {rows[0.0]['tb_gap']:+.4f} -> {rows[best_infl]['tb_gap']:+.4f}")
+        rows = {s: measure(tune, sigma_runs[s], w) for s in SIGMAS}
+        best_sigma = min(rows, key=lambda s: rows[s]["pit_dev"])
+        chosen[scheme] = {"sigma": best_sigma, "weights": w,
+                          "sigma_rows": rows, "sigma_alone": rows[best_sigma],
+                          "uncorrected": rows[0.0]}
+        print(f"  {scheme:20s} sigma {best_sigma:.3f} PIT dev "
+              f"{rows[0.0]['pit_dev']:.5f} -> {rows[best_sigma]['pit_dev']:.5f}, "
+              f"coverage {rows[0.0]['coverage80']:.3f} -> "
+              f"{rows[best_sigma]['coverage80']:.3f}")
 
-    # --- (b) total-games variance, per scheme -----------------------------
+    # --- (a) tiebreak frequency, on top of the fitted variance -------------
     for scheme, info in chosen.items():
         w = info["weights"]
-        rows = {}
-        for sigma in SIGMAS:
-            pred = predict(tune, info["inflation"], sigma)
-            rows[sigma] = (measure(tune, pred, w), pred)
-        best_sigma = min(rows, key=lambda s: rows[s][0]["pit_dev"])
-        info["sigma"] = best_sigma
-        info["both"] = rows[best_sigma][0]
-        info["sigma_rows"] = {s: r[0] for s, r in rows.items()}
-        # variance correction alone, to check it did not need the other
-        alone = measure(tune, predict(tune, 0.0, best_sigma), w)
-        info["sigma_alone"] = alone
-        print(f"  {scheme:20s} sigma {best_sigma:.3f} "
-              f"PIT dev {rows[0.0][0]['pit_dev']:.5f} -> "
-              f"{rows[best_sigma][0]['pit_dev']:.5f}, "
-              f"coverage {rows[best_sigma][0]['coverage80']:.3f}")
+        rows = {infl: measure(tune, predict(tune, infl, info["sigma"]), w)
+                for infl in INFLATIONS}
+        best_infl = min(rows, key=lambda i: abs(rows[i]["tb_gap"]))
+        info["inflation"] = best_infl
+        info["tb_rows"] = rows
+        info["both"] = rows[best_infl]
+        info["tb_uncorrected"] = info["uncorrected"]
+        # tiebreak correction alone, to check it did not need the other
+        info["tb_alone"] = measure(tune, predict(tune, best_infl, 0.0), w)
+        print(f"  {scheme:20s} inflation {best_infl:+.4f} tiebreak gap "
+              f"{info['uncorrected']['tb_gap']:+.4f} -> "
+              f"{rows[best_infl]['tb_gap']:+.4f}")
 
     # --- select the provenance scheme by TUNE calibration -----------------
     def score(info: dict) -> float:
@@ -149,7 +160,7 @@ def main() -> None:
     sel_scheme = min(chosen, key=lambda s: score(chosen[s]))
     sel = chosen[sel_scheme]
     params = CR.CorrectionParams(tiebreak_inflation=sel["inflation"],
-                                 level_sigma=sel["sigma"],
+                                 split_sigma=sel["sigma"],
                                  inferred_weight=0.5 if sel_scheme == "downweight_inferred" else 1.0,
                                  scheme=sel_scheme)
     print(f"\nselected scheme: {sel_scheme} -> {params}")
@@ -168,7 +179,7 @@ def main() -> None:
             continue
         before = measure(sub, predict(sub, 0.0, 0.0), ws)
         after = measure(sub, predict(sub, params.tiebreak_inflation,
-                                     params.level_sigma), ws)
+                                     params.split_sigma), ws)
         tb_folds.append(abs(before["tb_gap"]) - abs(after["tb_gap"]))
         pit_folds.append(before["pit_dev"] - after["pit_dev"])
 
@@ -186,7 +197,7 @@ def main() -> None:
         frozen=False, notes="tiebreak-frequency correction")
     ledger.append(
         stage="stage_7", metric="total_games_pit_deviation",
-        selected={"level_sigma": params.level_sigma, "scheme": sel_scheme},
+        selected={"split_sigma": params.split_sigma, "scheme": sel_scheme},
         tune_gain=before_tune["pit_dev"] - after_tune["pit_dev"],
         fit_rolling_origin_gains=pit_folds, baseline="uncorrected_engine",
         tune_metric_value=after_tune["pit_dev"],
@@ -199,7 +210,7 @@ def main() -> None:
              and abs(after_tune["tb_gap"]) < abs(before_tune["tb_gap"]))
     pit_ok = (after_tune["pit_dev"] < before_tune["pit_dev"]
               and COVERAGE_BAND[0] <= after_tune["coverage80"] <= COVERAGE_BAND[1])
-    tb_alone = sel["tb_rows"][params.tiebreak_inflation]
+    tb_alone = sel["tb_alone"]
     no_degrade = (
         abs(after_tune["tb_gap"]) <= abs(tb_alone["tb_gap"]) + NO_DEGRADE_TOL
         and after_tune["pit_dev"] <= sel["sigma_alone"]["pit_dev"] + NO_DEGRADE_TOL
@@ -213,8 +224,8 @@ def main() -> None:
         "matches.\n",
         f"\nSelected provenance scheme: **{sel_scheme}** "
         f"(inferred weight {params.inferred_weight}). Tiebreak inflation "
-        f"**{params.tiebreak_inflation:.4f}**, level sigma "
-        f"**{params.level_sigma:.3f}**.\n",
+        f"**{params.tiebreak_inflation:+.4f}**, split sigma "
+        f"**{params.split_sigma:.3f}**.\n",
         "\n## (a) Tiebreak occurrence\n",
         "| | observed | predicted | gap |",
         "|---|---|---|---|",
@@ -222,7 +233,7 @@ def main() -> None:
         f"{before_tune['tb_gap']:+.4f} |",
         f"| after | {after_tune['obs_tb']:.4f} | {after_tune['pred_tb']:.4f} | "
         f"**{after_tune['tb_gap']:+.4f}** |",
-        "\n### Inflation sweep (selected scheme)\n",
+        "\n### Inflation sweep (selected scheme, at the fitted split sigma)\n",
         "| inflation | tiebreak gap |",
         "|---|---|",
     ]
@@ -235,8 +246,8 @@ def main() -> None:
         f"| before | {before_tune['pit_dev']:.5f} | {before_tune['coverage80']:.4f} |",
         f"| after | **{after_tune['pit_dev']:.5f}** | "
         f"**{after_tune['coverage80']:.4f}** |",
-        "\n### Sigma sweep (selected scheme, at the chosen inflation)\n",
-        "| level sigma | PIT deviation | coverage80 |",
+        "\n### Split-sigma sweep (selected scheme)\n",
+        "| split sigma | PIT deviation | coverage80 |",
         "|---|---|---|",
     ]
     for sigma, row in sel["sigma_rows"].items():
@@ -281,7 +292,7 @@ def main() -> None:
              abs(before_tune["tb_gap"]) - abs(after_tune["tb_gap"]), tb_folds,
              abs(after_tune["tb_gap"])),
             ("total_games_pit_deviation",
-             {"level_sigma": params.level_sigma, "scheme": sel_scheme},
+             {"split_sigma": params.split_sigma, "scheme": sel_scheme},
              before_tune["pit_dev"] - after_tune["pit_dev"], pit_folds,
              after_tune["pit_dev"]),
         ):
@@ -291,7 +302,8 @@ def main() -> None:
                           frozen=True, notes="gate passed; frozen")
         fitted["stage_7"] = {
             "tiebreak_inflation": params.tiebreak_inflation,
-            "level_sigma": params.level_sigma, "n_mix": params.n_mix,
+            "split_sigma": params.split_sigma, "level_sigma": params.level_sigma,
+            "recenter": params.recenter, "n_mix": params.n_mix,
             "provenance_scheme": sel_scheme,
             "inferred_weight": params.inferred_weight,
             "selected_on": "tune",

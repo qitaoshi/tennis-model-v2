@@ -134,8 +134,8 @@ def _match_frame(matches: pd.DataFrame) -> pd.DataFrame:
     return ok.sort_values(["t", "match_id"]).reset_index(drop=True)
 
 
-def _sweep(f: pd.DataFrame, params: RateParams,
-           adjust: np.ndarray | None) -> dict[str, np.ndarray]:
+def _sweep(f: pd.DataFrame, params: RateParams, adjust: np.ndarray | None,
+           return_state: bool = False) -> dict[str, np.ndarray]:
     """One forward pass in date order, producing as-of state for every match.
 
     ``adjust`` is the per-side opponent correction from the previous sweep
@@ -186,7 +186,44 @@ def _sweep(f: pd.DataFrame, params: RateParams,
         ret_all.add(lid, t, (1 - wspw) * wpts, wpts)
         league.add(lg, t, wspw * wpts + lspw * lpts, wpts + lpts)
 
+    if return_state:
+        cols["_state"] = {"srv_surf": srv_surf, "srv_all": srv_all,
+                          "ret_all": ret_all, "league": league}
     return cols
+
+
+def state_at(matches: pd.DataFrame, params: RateParams) -> dict:
+    """Final accumulator state after replaying ``matches``.
+
+    price.py needs a player's rate on a date they are not playing on, which
+    the per-match view cannot give. Same forward pass, same as-of guarantee:
+    pass only matches strictly before the pricing date.
+    """
+    f = _match_frame(matches)
+    adj = np.zeros((len(f), 2))
+    cols = _sweep(f, params, None)
+    if params.opponent_adjust:
+        league_ret = 1.0 - cols["league"]
+        adj[:, 0] = np.nan_to_num(cols["l_ret"] - league_ret)
+        adj[:, 1] = np.nan_to_num(cols["w_ret"] - league_ret)
+    return _sweep(f, params, adj, return_state=True)["_state"]
+
+
+def rate_at(state: dict, player_id: str, surface: str, t: float,
+            level_group: str, params: RateParams,
+            prior_override: float | None = None) -> tuple[Rate, float]:
+    """(serve rate, return rate) for one player on one date, from the state."""
+    ss_won, ss_pl, nm = state["srv_surf"].get((player_id, surface), t)
+    sa_won, sa_pl, _ = state["srv_all"].get(player_id, t)
+    r_won, r_pl, _ = state["ret_all"].get(player_id, t)
+    lg_won, lg_pl, _ = state["league"].get(level_group, t)
+    league = lg_won / lg_pl if lg_pl > 0 else float("nan")
+    prior = prior_override if prior_override is not None else league
+    rate = rate_from_state(ss_won, ss_pl, sa_won, sa_pl, nm,
+                           prior if np.isfinite(prior) else league,
+                           params, level_group, surface)
+    ret = r_won / r_pl if r_pl > 0 else (1 - league if np.isfinite(league) else 0.38)
+    return rate, float(ret)
 
 
 def build_asof(matches: pd.DataFrame, params: RateParams) -> pd.DataFrame:

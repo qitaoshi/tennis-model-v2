@@ -3,74 +3,71 @@
 Measured on TUNE, conditioned on the format rule in force at match time, excluding retirements, walkovers and `score_string_suspect` matches.
 
 
-Selected provenance scheme: **pooled** (inferred weight 1.0). Tiebreak inflation **-0.0600**, level sigma **0.000**.
+Selected provenance scheme: **pooled** (inferred weight 1.0). Tiebreak inflation **-0.0200**, split sigma **0.080**.
 
 
 ## (a) Tiebreak occurrence
 
 | | observed | predicted | gap |
 |---|---|---|---|
-| before | 0.3445 | 0.4264 | -0.0819 |
-| after | 0.3445 | 0.3957 | **-0.0512** |
+| before | 0.3445 | 0.4262 | -0.0817 |
+| after | 0.3445 | 0.3451 | **-0.0006** |
 
-### Inflation sweep (selected scheme)
+### Inflation sweep (selected scheme, at the fitted split sigma)
 
 | inflation | tiebreak gap |
 |---|---|
-| -0.0600 | -0.05125 |
-| -0.0500 | -0.05592 |
-| -0.0400 | -0.06077 |
-| -0.0300 | -0.06580 |
-| -0.0200 | -0.07101 |
-| -0.0100 | -0.07639 |
-| 0.0000 | -0.08195 |
-| 0.0100 | -0.08766 |
+| -0.0300 | +0.00384 |
+| -0.0200 | -0.00058 |
+| -0.0100 | -0.00511 |
+| 0.0000 | -0.00982 |
+| 0.0100 | -0.01468 |
 
 ## (b) Total games — PIT and coverage
 
 | | PIT deviation from uniform | central-80% coverage |
 |---|---|---|
-| before | 0.02860 | 0.7332 |
-| after | **0.02810** | **0.7312** |
+| before | 0.02873 | 0.7325 |
+| after | **0.00703** | **0.8070** |
 
-### Sigma sweep (selected scheme, at the chosen inflation)
+### Split-sigma sweep (selected scheme)
 
-| level sigma | PIT deviation | coverage80 |
+| split sigma | PIT deviation | coverage80 |
 |---|---|---|
-| 0.000 | 0.02810 | 0.7312 |
-| 0.010 | 0.02810 | 0.7313 |
-| 0.020 | 0.02813 | 0.7317 |
-| 0.030 | 0.02820 | 0.7322 |
-| 0.050 | 0.02870 | 0.7325 |
-| 0.080 | 0.02997 | 0.7357 |
+| 0.000 | 0.02873 | 0.7325 |
+| 0.040 | 0.02010 | 0.7608 |
+| 0.060 | 0.01267 | 0.7840 |
+| 0.080 | 0.00697 | 0.8075 |
+| 0.100 | 0.01000 | 0.8287 |
+| 0.120 | 0.01757 | 0.8423 |
 
 ## Provenance-weighting schemes compared (ground rule 4)
 
 | scheme | inflation | sigma | tiebreak gap | PIT deviation |
 |---|---|---|---|---|
-| documented_only | -0.0600 | 0.030 | -0.10764 | 0.04547 |
-| pooled **(selected)** | -0.0600 | 0.000 | -0.05125 | 0.02810 |
-| downweight_inferred | -0.0600 | 0.000 | -0.05529 | 0.02810 |
+| documented_only | -0.0300 | 0.080 | -0.02288 | 0.01623 |
+| pooled **(selected)** | -0.0200 | 0.080 | -0.00058 | 0.00703 |
+| downweight_inferred | -0.0300 | 0.080 | +0.00185 | 0.00710 |
 
 ## Separation check
 
 Neither correction may degrade the other's calibration.
 
 
-- tiebreak gap with the tiebreak correction alone: -0.05125; with both: -0.05125
+- tiebreak gap with the tiebreak correction alone: -0.07081; with both: -0.00058
 
-- PIT deviation with the variance correction alone: 0.02860; with both: 0.02810
+- PIT deviation with the variance correction alone: 0.00697; with both: 0.00703
 
 
 ## FIT-internal rolling origin
 
-Tiebreak-gap improvement per fold: +0.03075, +0.03198, +0.03235, +0.03229, +0.03264
+Tiebreak-gap improvement per fold: +0.06051, +0.08105, +0.08086, +0.08172, +0.08108
 
 
-PIT-deviation improvement per fold: +0.00024, +0.00033, +0.00100, +0.00057, +0.00132
+PIT-deviation improvement per fold: +0.01990, +0.01961, +0.02352, +0.01619, +0.00858
 
 
 ## Gate
 
-Tiebreak calibration acceptable (|gap| < 0.01 and improved): **False**. Games PIT/coverage acceptable (improved and coverage in (0.75, 0.85)): **False**. Neither correction degraded the other: **True**. Gate **FAILED**.
+Tiebreak calibration acceptable (|gap| < 0.01 and improved): **True**. Games PIT/coverage acceptable (improved and coverage in (0.75, 0.85)): **True**. Neither correction degraded the other: **True**. Gate **PASSED**.
 

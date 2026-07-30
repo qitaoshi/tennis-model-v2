@@ -107,7 +107,17 @@ class _Ratings:
             self.chall_n[pid] = self.chall_n.get(pid, 0) + 1
 
 
-def run_elo(matches: pd.DataFrame, params: EloParams) -> pd.DataFrame:
+def ratings_at(matches: pd.DataFrame, params: EloParams) -> "_Ratings":
+    """Final rating state after replaying ``matches``.
+
+    price.py needs a rating on a date the player is not playing on. Same
+    forward pass, same as-of guarantee: pass only earlier matches.
+    """
+    return run_elo(matches, params, return_state=True)
+
+
+def run_elo(matches: pd.DataFrame, params: EloParams,
+            return_state: bool = False):
     """Pre-match ratings and win probabilities for every match, in date order.
 
     Returns one row per match, oriented winner-first: ``p_winner`` is the
@@ -146,6 +156,8 @@ def run_elo(matches: pd.DataFrame, params: EloParams) -> pd.DataFrame:
         r.update(wid, surf, t, lg, 1.0, p)
         r.update(lid, surf, t, lg, 0.0, 1.0 - p)
 
+    if return_state:
+        return r
     res = f[["match_id", "date", "t", "surface", "level_group", "tour",
              "winner_id", "loser_id", "winner_rank", "loser_rank",
              "tourney_code", "season_file", "split"]].copy()

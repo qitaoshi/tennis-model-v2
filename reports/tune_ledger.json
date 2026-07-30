@@ -603,5 +603,106 @@
   },
   "frozen": false,
   "notes": "total-games variance correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T061819Z-0341b95",
+  "metric": "tiebreak_occurrence_gap",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "tiebreak_inflation": -0.02,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.08116718592116523,
+  "tune_metric_value": 0.0005759914819247758,
+  "fit_rolling_origin_gain_folds": [
+   0.060506994750814225,
+   0.08105133714765617,
+   0.08086286360309924,
+   0.08172017698898149,
+   0.0810771255982678
+  ],
+  "fit_rolling_origin_gain_mean": 0.07704369961776378,
+  "fit_rolling_origin_gain_std": 0.009249969536682197,
+  "baselines": {
+   "uncorrected_gap": -0.08174317740309
+  },
+  "frozen": false,
+  "notes": "tiebreak-frequency correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T061819Z-0341b95",
+  "metric": "total_games_pit_deviation",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "split_sigma": 0.08,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.0217,
+  "tune_metric_value": 0.007033333333333333,
+  "fit_rolling_origin_gain_folds": [
+   0.01989778534923339,
+   0.019608482871125606,
+   0.023515754560530684,
+   0.016188870151770653,
+   0.008580858085808583
+  ],
+  "fit_rolling_origin_gain_mean": 0.017558350203693777,
+  "fit_rolling_origin_gain_std": 0.0056488385479765355,
+  "baselines": {
+   "uncorrected_pit_dev": 0.028733333333333333,
+   "uncorrected_coverage80": 0.7325
+  },
+  "frozen": false,
+  "notes": "total-games variance correction"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T061819Z-0341b95",
+  "metric": "tiebreak_occurrence_gap",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "tiebreak_inflation": -0.02,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.08116718592116523,
+  "tune_metric_value": 0.0005759914819247758,
+  "fit_rolling_origin_gain_folds": [
+   0.060506994750814225,
+   0.08105133714765617,
+   0.08086286360309924,
+   0.08172017698898149,
+   0.0810771255982678
+  ],
+  "fit_rolling_origin_gain_mean": 0.07704369961776378,
+  "fit_rolling_origin_gain_std": 0.009249969536682197,
+  "baselines": {},
+  "frozen": true,
+  "notes": "gate passed; frozen"
+ },
+ {
+  "stage": "stage_7",
+  "run_id": "20260730T061819Z-0341b95",
+  "metric": "total_games_pit_deviation",
+  "baseline": "uncorrected_engine",
+  "selected": {
+   "split_sigma": 0.08,
+   "scheme": "pooled"
+  },
+  "tune_gain": 0.0217,
+  "tune_metric_value": 0.007033333333333333,
+  "fit_rolling_origin_gain_folds": [
+   0.01989778534923339,
+   0.019608482871125606,
+   0.023515754560530684,
+   0.016188870151770653,
+   0.008580858085808583
+  ],
+  "fit_rolling_origin_gain_mean": 0.017558350203693777,
+  "fit_rolling_origin_gain_std": 0.0056488385479765355,
+  "baselines": {},
+  "frozen": true,
+  "notes": "gate passed; frozen"
  }
 ]

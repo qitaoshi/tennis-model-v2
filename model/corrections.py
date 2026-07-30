@@ -48,7 +48,18 @@ class CorrectionParams:
     tiebreak_inflation: float = 0.0
     #: Standard deviation of the normal wobble applied to the LEVEL.
     level_sigma: float = 0.0
-    #: Number of quadrature points used to mix over the wobble.
+    #: Standard deviation of the normal wobble applied to the SPLIT. This is
+    #: the lever that matters: iid points at a fixed split produce far more
+    #: close sets than real tennis, because a real match's skill gap varies
+    #: within the match. Wobbling the split produces the lopsided sets that
+    #: are actually observed.
+    split_sigma: float = 0.0
+    #: Re-solve the centre split so the mixture reproduces the uncorrected
+    #: match-win probability. Without this the wobble drags every favourite
+    #: toward even money and destroys match-winner calibration, which Stages
+    #: 3 and 4 already got right.
+    recenter: bool = True
+    #: Number of quadrature points used to mix over each wobble.
     n_mix: int = 5
     #: Weight on inferred-provenance matches when measuring (1.0 = pooled).
     inferred_weight: float = 1.0
@@ -61,39 +72,77 @@ def _gauss_hermite(n: int) -> tuple[np.ndarray, np.ndarray]:
     return x, w / w.sum()
 
 
+def _mix(level: float, split: float, spec: FormatSpec, params: CorrectionParams):
+    """Mixture distribution over the level and split wobbles."""
+    from model.engine import MatchDistribution
+
+    nodes, weights = _gauss_hermite(params.n_mix)
+    l_nodes = nodes if params.level_sigma > 0 else np.zeros(1)
+    l_w = weights if params.level_sigma > 0 else np.ones(1)
+    s_nodes = nodes if params.split_sigma > 0 else np.zeros(1)
+    s_w = weights if params.split_sigma > 0 else np.ones(1)
+
+    games: dict[tuple[int, int], float] = {}
+    sets: dict[tuple[int, int], float] = {}
+    p_a = tb_any = truncated = 0.0
+    for zl, wl in zip(l_nodes, l_w):
+        for zs, ws in zip(s_nodes, s_w):
+            L = level + params.level_sigma * zl
+            S = split + params.split_sigma * zs
+            a = float(np.clip((L + S) / 2, 0.05, 0.95))
+            b = float(np.clip((L - S) / 2, 0.05, 0.95))
+            d = match_distribution(round(a, 3), round(b, 3), spec,
+                                   close_inflation=params.tiebreak_inflation)
+            w = wl * ws
+            p_a += w * d.p_a
+            tb_any += w * d.tiebreak_any
+            truncated += w * d.truncated_mass
+            for k, v in d.games.items():
+                games[k] = games.get(k, 0.0) + w * v
+            for k, v in d.sets.items():
+                sets[k] = sets.get(k, 0.0) + w * v
+    return MatchDistribution(p_a, sets, games, tb_any, truncated, spec)
+
+
 def corrected_distribution(pa: float, pb: float, spec: FormatSpec,
                            params: CorrectionParams):
     """Match distribution with both corrections applied.
 
-    The tiebreak correction raises hold probability at the close-set states
-    only, so it moves tiebreak frequency without moving who wins. The variance
-    correction mixes the whole distribution over a normal wobble in the level.
-    A mixture is wider than its components, which is the point.
+    The tiebreak correction moves hold probability at the close-set states
+    only, symmetrically, so it changes tiebreak frequency without changing who
+    wins. The variance correction mixes over a normal wobble in the split (and
+    optionally the level), which produces the lopsided sets that iid points at
+    a fixed split cannot.
+
+    With ``recenter`` the centre split is re-solved so the mixture reproduces
+    the uncorrected match-win probability: the mixture is there to fix the
+    shape of the set and games distributions, not to relitigate who wins.
     """
     infl = params.tiebreak_inflation
-    if params.level_sigma <= 0:
+    if params.split_sigma <= 0 and params.level_sigma <= 0:
         return match_distribution(round(pa, 4), round(pb, 4), spec,
                                   close_inflation=infl)
 
-    nodes, weights = _gauss_hermite(params.n_mix)
-    games: dict[tuple[int, int], float] = {}
-    sets: dict[tuple[int, int], float] = {}
-    p_a = tb_any = truncated = 0.0
-    for z, w in zip(nodes, weights):
-        shift = params.level_sigma * z / 2.0  # split the level shift evenly
-        d = match_distribution(round(float(np.clip(pa + shift, 0.01, 0.99)), 4),
-                               round(float(np.clip(pb + shift, 0.01, 0.99)), 4),
-                               spec, close_inflation=infl)
-        p_a += w * d.p_a
-        tb_any += w * d.tiebreak_any
-        truncated += w * d.truncated_mass
-        for k, v in d.games.items():
-            games[k] = games.get(k, 0.0) + w * v
-        for k, v in d.sets.items():
-            sets[k] = sets.get(k, 0.0) + w * v
+    level, split = pa + pb, pa - pb
+    if not params.recenter or params.split_sigma <= 0:
+        return _mix(level, split, spec, params)
 
-    from model.engine import MatchDistribution
-    return MatchDistribution(p_a, sets, games, tb_any, truncated, spec)
+    target = match_distribution(round(pa, 4), round(pb, 4), spec,
+                                close_inflation=infl).p_a
+    lo, hi = -0.45, 0.45
+    if _mix(level, lo, spec, params).p_a > target:
+        return _mix(level, lo, spec, params)
+    if _mix(level, hi, spec, params).p_a < target:
+        return _mix(level, hi, spec, params)
+    for _ in range(12):  # p_a is monotone in the centre split
+        mid = (lo + hi) / 2
+        if _mix(level, mid, spec, params).p_a < target:
+            lo = mid
+        else:
+            hi = mid
+        if hi - lo < 1e-3:
+            break
+    return _mix(level, (lo + hi) / 2, spec, params)
 
 
 def measure_tiebreak_gap(observed_tb: np.ndarray, predicted_tb: np.ndarray,

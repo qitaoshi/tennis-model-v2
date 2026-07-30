@@ -61,5 +61,20 @@
   "median_venue_history": 144.0,
   "tune_crps_well_measured": 3.8403705694011387,
   "baseline_crps_well_measured": 3.8418109554213684
+ },
+ "stage_7": {
+  "tiebreak_inflation": -0.02,
+  "split_sigma": 0.08,
+  "level_sigma": 0.0,
+  "recenter": true,
+  "n_mix": 5,
+  "provenance_scheme": "pooled",
+  "inferred_weight": 1.0,
+  "selected_on": "tune",
+  "tune_tb_gap_before": -0.08174317740309,
+  "tune_tb_gap_after": -0.0005759914819247758,
+  "tune_pit_dev_before": 0.028733333333333333,
+  "tune_pit_dev_after": 0.007033333333333333,
+  "tune_coverage80_after": 0.807
  }
 }

@@ -132,3 +132,33 @@ def test_pit_and_coverage_on_a_known_forecast() -> None:
                             0.9 + rng.random(10_000) * 0.1])
     assert CR.pit_deviation(tails) > 0.05
     assert CR.coverage(tails) < 0.2
+
+
+def test_split_wobble_produces_lopsided_sets() -> None:
+    """The variance correction's real job: fewer close sets, not a wider level."""
+    base = match_distribution(0.64, 0.60, BO3)
+    d = CR.corrected_distribution(0.64, 0.60, BO3,
+                                  CR.CorrectionParams(split_sigma=0.08))
+    base_games = sum(g * p for g, p in base.total_games_pmf().items())
+    d_games = sum(g * p for g, p in d.total_games_pmf().items())
+    assert d_games < base_games - 1.0, "wobbling the split must shorten matches"
+    assert d.tiebreak_any < base.tiebreak_any - 0.03
+    assert _sd(d.total_games_pmf()) > _sd(base.total_games_pmf())
+
+
+def test_recentering_preserves_the_match_winner_probability() -> None:
+    """The mixture fixes distribution shape; it must not relitigate who wins."""
+    for pa, pb, spec in ((0.64, 0.60, BO3), (0.68, 0.58, BO5), (0.62, 0.62, BO3)):
+        base = match_distribution(pa, pb, spec)
+        for sigma in (0.04, 0.08, 0.12):
+            d = CR.corrected_distribution(
+                pa, pb, spec, CR.CorrectionParams(split_sigma=sigma))
+            assert d.p_a == pytest.approx(base.p_a, abs=0.01), (pa, pb, sigma)
+
+
+def test_without_recentering_the_favourite_is_dragged_to_even_money() -> None:
+    """Documents why recentering exists, rather than asserting it silently."""
+    base = match_distribution(0.64, 0.60, BO3)
+    naive = CR.corrected_distribution(
+        0.64, 0.60, BO3, CR.CorrectionParams(split_sigma=0.12, recenter=False))
+    assert naive.p_a < base.p_a - 0.05

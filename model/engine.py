@@ -215,6 +215,7 @@ class MatchDistribution:
         return dict(sorted(pmf.items()))
 
 
+@lru_cache(maxsize=200_000)
 def match_distribution(pa: float, pb: float, spec: FormatSpec,
                        a_serves_first: bool = True,
                        close_inflation: float = 0.0) -> MatchDistribution:
@@ -225,6 +226,11 @@ def match_distribution(pa: float, pb: float, spec: FormatSpec,
 
     ``close_inflation`` is Stage 7's tiebreak correction; see
     :func:`set_distribution`.
+
+    Memoized: Stage 7's mixture and the fitting scripts evaluate the same
+    (pa, pb, format) triples thousands of times over. The returned object is
+    treated as read-only by every caller — mutating its dicts would corrupt
+    the cache.
     """
     need = spec.best_of // 2 + 1
     # per-set distributions, cached by (serves first, is deciding)
@@ -294,7 +300,9 @@ def fair_price(p: float, push: float = 0.0) -> float:
     """
     if p <= 0.0:
         return float("inf")
-    return (1.0 - push) / p
+    # p can never exceed 1 - push, so the fair price is at least evens; the
+    # max() only removes floating-point noise at that boundary.
+    return max(1.0, (1.0 - push) / p)
 
 
 def ladder(pa: float, pb: float, spec: FormatSpec,
