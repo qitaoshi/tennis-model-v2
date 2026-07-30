@@ -1,0 +1,50 @@
+p_hold(0.50) = 0.500000
+p_hold(0.62) = 0.775863
+p_tiebreak(0.62, 0.60, 7)  = 0.532524
+p_tiebreak(0.62, 0.60, 10) = 0.538119
+
+Wimbledon 2010 (advantage): bo5, advantage [documented]
+  P(A wins) = 0.7401   fair price 1.351
+  P(any tiebreak) = 0.5348
+  total games: min 18, max 169, mean 40.59, truncated mass 1.18e-11
+  set betting: 0-3: 0.050, 1-3: 0.094, 2-3: 0.116, 3-0: 0.253, 3-1: 0.279, 3-2: 0.208
+  line  20.0  over 0.9999 @ 1.000   under 0.0000 @ 44344.706
+  line  20.5  over 0.9999 @ 1.000   under 0.0001 @ 10442.001
+  line  21.0  over 0.9993 @ 1.000   under 0.0001 @ 10435.810
+  line  21.5  over 0.9993 @ 1.001   under 0.0007 @ 1452.061
+
+Wimbledon 2023 (10-pt TB): bo5, tiebreak [documented]
+  P(A wins) = 0.7381   fair price 1.355
+  P(any tiebreak) = 0.5603
+  total games: min 18, max 65, mean 40.31, truncated mass 0.00e+00
+  set betting: 0-3: 0.050, 1-3: 0.094, 2-3: 0.118, 3-0: 0.253, 3-1: 0.279, 3-2: 0.206
+  line  20.0  over 0.9999 @ 1.000   under 0.0000 @ 44344.706
+  line  20.5  over 0.9999 @ 1.000   under 0.0001 @ 10442.001
+  line  21.0  over 0.9993 @ 1.000   under 0.0001 @ 10435.810
+  line  21.5  over 0.9993 @ 1.001   under 0.0007 @ 1452.061
+
+Brisbane 2019 (bo3): bo3, tiebreak [inferred]
+  P(A wins) = 0.6945   fair price 1.440
+  P(any tiebreak) = 0.3983
+  total games: min 12, max 39, mean 24.69, truncated mass 0.00e+00
+  set betting: 0-2: 0.135, 1-2: 0.171, 2-0: 0.400, 2-1: 0.294
+  line  20.0  over 0.6861 @ 1.376   under 0.2577 @ 3.662
+  line  20.5  over 0.6861 @ 1.458   under 0.3139 @ 3.186
+  line  21.0  over 0.6286 @ 1.499   under 0.3139 @ 3.002
+  line  21.5  over 0.6286 @ 1.591   under 0.3714 @ 2.692
+
+Wimbledon 2010 (advantage):
+  P(A) sim 0.7418 +/- 0.0031   exact 0.7401
+  mean games sim 40.56   exact 40.59
+  P(tiebreak) sim 0.5327   exact 0.5348
+Wimbledon 2023 (10-pt TB):
+  P(A) sim 0.7361 +/- 0.0031   exact 0.7381
+  mean games sim 40.24   exact 40.31
+  P(tiebreak) sim 0.5581   exact 0.5603
+Brisbane 2019 (bo3):
+  P(A) sim 0.6965 +/- 0.0033   exact 0.6945
+  mean games sim 24.68   exact 24.69
+  P(tiebreak) sim 0.3957   exact 0.3983
+
+.......................................................                  [100%]
+55 passed in 3.84s

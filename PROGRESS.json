@@ -1,5 +1,5 @@
 {
-  "current_stage": "stage_1",
+  "current_stage": "stage_2",
   "human_checkpoints_pending": [
     {
       "stage": "stage_0",
@@ -25,8 +25,8 @@
       "notes": "REDONE on TML-Database (vendor/). 100,658 matches 2010-01-03..2023-11-27, 39,596 ATP + 61,062 Challenger; 2024-2026 files never opened. Outcomes: completed 96,804 / retired 3,342 / walkover 502 / default 9 / unknown 1 (parsed from score-string RET/W-O/DEF markers - TML has no flag column). score_string_suspect 285 rows (0.28%). serve_stats_valid 92.2%. 105 tournament codes change surface. 62 rows had colliding ids (TML 'Rome'/'GA' field swap) - match_id now includes season. 24/24 tests pass."
     },
     "stage_1": {
-      "gate_passed": false,
-      "notes": ""
+      "gate_passed": true,
+      "notes": "engine.py closed form + simulate.py point-level MC. 55 gate tests pass: p_hold(0.5)==0.5 exactly, p_hold monotonic over p in (0.01,0.99), p_hold and p_tiebreak (7- and 10-point) match state-expansion enumeration to 1e-12 at 6 and 8 (pa,pb) points respectively; match distribution matches 70k-match point-level MC (>=1e7 points) within 4 SE on P(A), mean total games and P(any tiebreak) for all five format variants (advantage bo5, 12-12 TB bo5, 10-pt TB bo5, 7-pt TB bo5, 7-pt TB bo3) at two (pa,pb) pairs; symmetry p_match(a,b)+p_match(b,a)==1 and mirrored joint games distribution; advantage-set truncated mass ~1e-11 < TAIL_MASS_THRESHOLD 1e-9; ladder monotone; over+under+push==1; suspect-flagged matches excluded from validation targets. No hyperparameter fitted, so no ledger entry."
     },
     "stage_2": {
       "gate_passed": false,
