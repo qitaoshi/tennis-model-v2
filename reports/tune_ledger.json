@@ -66,5 +66,69 @@
   "notes": "gate passed; frozen for downstream stages",
   "tune_mae": 0.06595348606572711,
   "tune_match_logloss": 0.6710618190785423
+ },
+ {
+  "stage": "stage_3",
+  "run_id": "20260730T043822Z-dcc00e5",
+  "metric": "match_winner_logloss",
+  "baseline": "ranking_logistic",
+  "selected": {
+   "k": 48.0,
+   "k_chall_mult": 0.75,
+   "surface_weight": 0.3,
+   "inactivity_half_life": 1095.0,
+   "level_gap": 100.0,
+   "level_offset": 0.0
+  },
+  "tune_gain": 0.01130471711524772,
+  "tune_metric_value": 0.6397655752495135,
+  "fit_rolling_origin_gain_folds": [
+   0.004522955626450664,
+   0.006822304572080995,
+   0.011072544566648856,
+   0.010368636955051969,
+   0.00884325603240177
+  ],
+  "fit_rolling_origin_gain_mean": 0.00832593955052685,
+  "fit_rolling_origin_gain_std": 0.0026789770911043375,
+  "baselines": {
+   "ranking_logloss": 0.6510702923647612,
+   "ranking_brier": 0.2299326430522944
+  },
+  "frozen": false,
+  "notes": "grid of 144 settings; gap -0.0112 is 1.2 SE \u2014 within noise, no offset fitted",
+  "tune_brier": 0.22482763863774108
+ },
+ {
+  "stage": "stage_3",
+  "run_id": "20260730T043823Z-dcc00e5",
+  "metric": "match_winner_logloss",
+  "baseline": "ranking_logistic",
+  "selected": {
+   "k": 48.0,
+   "k_chall_mult": 0.75,
+   "surface_weight": 0.3,
+   "inactivity_half_life": 1095.0,
+   "level_gap": 100.0,
+   "level_offset": 0.0
+  },
+  "tune_gain": 0.01130471711524772,
+  "tune_metric_value": 0.6397655752495135,
+  "fit_rolling_origin_gain_folds": [
+   0.004522955626450664,
+   0.006822304572080995,
+   0.011072544566648856,
+   0.010368636955051969,
+   0.00884325603240177
+  ],
+  "fit_rolling_origin_gain_mean": 0.00832593955052685,
+  "fit_rolling_origin_gain_std": 0.0026789770911043375,
+  "baselines": {
+   "ranking_logloss": 0.6510702923647612,
+   "ranking_brier": 0.2299326430522944
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen for downstream stages",
+  "tune_brier": 0.22482763863774108
  }
 ]

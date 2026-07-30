@@ -1,5 +1,5 @@
 {
-  "current_stage": "stage_3",
+  "current_stage": "stage_4",
   "human_checkpoints_pending": [],
   "stages": {
     "constants.py": {
@@ -23,8 +23,8 @@
       "notes": "Selected on TUNE: half-life 730d, surface pooling 300 serve points, shrinkage n0 500 serve points (4x4x4 grid). GATE PASSED on both required comparisons: next-match serve-points-won MAE 0.06595 vs career-average 0.06834 and last-10 0.07004; match-winner log-loss through the Stage 1 engine 0.67106 vs 0.71706 and 0.74711. n=21,244 player-matches on TUNE. FIT-internal rolling-origin gain over career average: +0.00111/+0.00107/+0.00098/+0.00102/+0.00124 (mean +0.00108, std 0.00010); TUNE gain +0.00071 - BELOW the FIT gain, so no overfit signal. Opponent adjustment converged within 50 sweeps at 1e-6 with the level-period average serve-win% as the identifiability anchor. Ledger entry frozen. NOTE: serve_stats_valid now also excludes score_string_suspect rows (ground rule 8) - found by a test, fixed, dataset rebuilt (91,242 usable rows)."
     },
     "stage_3": {
-      "gate_passed": false,
-      "notes": ""
+      "gate_passed": true,
+      "notes": "Surface Elo. Selected on TUNE (144-setting grid): K=48, Challenger K x0.75, surface blend 0.3, inactivity half-life 1095d, new-player level gap 100, cross-level offset 0. GATE PASSED: decile calibration max |gap| 0.0170 and mean |gap| 0.0085 against pre-set criteria 0.05/0.025; Brier 0.22483 vs rankings-baseline 0.22993 (log-loss 0.63977 vs 0.65107) on 11,225 TUNE matches. CROSS-LEVEL CHECK reported: Challenger-built vs tour-rated, n=2,883, predicted 0.4243 vs observed 0.4131, gap -0.0112 = 1.2 SE, within noise, so no level offset fitted. FIT rolling-origin gain mean +0.00833 std 0.00268, TUNE gain +0.01130, excess 0.00297 < envelope 0.00536 - no overfit signal. Ledger frozen."
     },
     "stage_4": {
       "gate_passed": false,
