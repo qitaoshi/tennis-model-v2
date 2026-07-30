@@ -88,8 +88,20 @@ Derived by this module: `date`, `tour`, `season_file`, `level_label`, `tourney_c
 | 2023          |      1050 |       435 |         5693 |         223 |          508 |            695 |          0 |             69 |            15 |    8688 |
 | total         |     15162 |      5512 |        61062 |        3547 |         6985 |           7554 |        192 |            418 |           226 |  100658 |
 
-2020 is roughly half a normal season (COVID). Davis Cup and Olympics are present and are tour-level results with unusual formats — rules.py must not assume a tour default for them.
+2020 is roughly half a normal season (COVID).
 
+
+### Scope exclusions
+
+**4,041 rows (4.0%) are excluded from the model**, leaving 96,617 in scope (35,555 ATP, 61,062 Challenger). They stay in the canonical record, flagged `in_scope=False`, so the audit still sees them.
+
+
+| excluded | rows | why |
+|---|---|---|
+| Davis Cup | 3,547 | per-tie identifiers leave the rules inference with almost no evidence, and tie formats are irregular |
+| Olympics | 192 | small, atypical field on a four-year cycle |
+| Tour Finals | 226 | round-robin, eight-player field |
+| Next Gen Finals | 92 | first-to-4 short sets; the engine prices 6-game sets only |
 
 ## Per-match statistics and their coverage
 
@@ -129,7 +141,7 @@ Non-null % of other fields, whole dataset:
 | winner_seed |         40.6 |
 | draw_size   |        100   |
 
-`serve_stats_valid` (all counters present, positive serve points, internally consistent, completed match): **92.2%** of all rows, 95.9% of completed matches. This is Stage 2's input filter.
+`serve_stats_valid` (all counters present, positive serve points, internally consistent, completed match): **90.8%** of all rows, 94.4% of completed matches. This is Stage 2's input filter.
 
 
 `indoor` is populated on only 36.2% of rows — Stage 6 may use it as a feature only where present, and must not treat missing as outdoor.

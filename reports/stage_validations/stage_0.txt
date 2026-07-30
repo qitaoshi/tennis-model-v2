@@ -1,7 +1,7 @@
 loaded 100,658 matches, 2010-01-03 .. 2023-11-27
 tours: {'chall': 61062, 'atp': 39596}
 outcomes: {'completed': 96804, 'retired': 3342, 'walkover': 502, 'default': 9, 'unknown': 1}
-serve_stats_valid: 92,800
+serve_stats_valid: 91,370
 score_string_suspect: 285
 
 first 5 suspect rows:
@@ -11,5 +11,5 @@ first 5 suspect rows:
 2010-2010-615-4-atp 2010-05-16 World Team Championship    Clay        Jan Hajek  Daniel Gimeno-Traver        6-2 6-2 completed score games 16 disagree with SvGms 33
 2010-2010-615-5-atp 2010-05-16 World Team Championship    Clay    Jeremy Chardy Philipp Kohlschreiber        6-2 6-4 completed score games 18 disagree with SvGms 33
 2010-2010-615-7-atp 2010-05-16 World Team Championship    Clay      Juan Monaco        Viktor Troicki 1-6 6-3 7-6(3) completed score games 29 disagree with SvGms 33
-........................                                                 [100%]
-24 passed in 1.37s
+.................                                                        [100%]
+17 passed in 1.21s

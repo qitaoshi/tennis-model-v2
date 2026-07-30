@@ -97,6 +97,17 @@ def test_truncated_outcomes_not_suspect_by_construction(m: pd.DataFrame) -> None
     assert not m.loc[m["outcome"] == "walkover", "score_string_suspect"].any()
 
 
+def test_scope_exclusions(m: pd.DataFrame) -> None:
+    """Excluded events stay in the record, flagged, not deleted."""
+    out = m[~m["in_scope"]]
+    assert set(out["level_label"]) <= set(A.EXCLUDED_LEVELS) | {"Tour (other)"}
+    assert (out["level_label"].isin(A.EXCLUDED_LEVELS)
+            | out["tourney_code"].isin(A.EXCLUDED_CODES)).all()
+    assert not m.loc[m["in_scope"], "level_label"].isin(A.EXCLUDED_LEVELS).any()
+    assert not m.loc[m["in_scope"], "tourney_code"].isin(A.EXCLUDED_CODES).any()
+    assert m["in_scope"].sum() == 96_617
+
+
 def test_serve_stats_valid_filter(m: pd.DataFrame) -> None:
     ok = m["serve_stats_valid"]
     assert 0.85 < ok.mean() < 1.0

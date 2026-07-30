@@ -229,6 +229,7 @@ def load_raw(years: list[int] | None = None) -> pd.DataFrame:
     m["score_suspect_reason"] = [p.reason for p in parsed]
 
     m = _cross_check_games(m)
+    m["in_scope"] = _in_scope(m)
     m["serve_stats_valid"] = _serve_stats_valid(m)
     # season_file is part of the key because some tourney_ids carry no year
     # prefix and are reused across seasons (see the dictionary's identifier
@@ -274,6 +275,22 @@ def _cross_check_games(m: pd.DataFrame) -> pd.DataFrame:
     return m
 
 
+#: Event types excluded from the model by decision, 2026-07-30. Davis Cup ties
+#: carry per-tie identifiers that give the rules inference almost nothing to
+#: work with and irregular formats; the Olympics and the season-ending Finals
+#: are small, atypical fields; Next Gen Finals uses first-to-4 short sets the
+#: engine does not price.
+EXCLUDED_LEVELS = ("Davis Cup", "Olympics", "Tour Finals")
+EXCLUDED_CODES = ("7696",)
+
+
+def _in_scope(m: pd.DataFrame) -> pd.Series:
+    """Rows the model is built on. Excluded rows stay in the record, audited."""
+    return ~(
+        m["level_label"].isin(EXCLUDED_LEVELS) | m["tourney_code"].isin(EXCLUDED_CODES)
+    )
+
+
 def _serve_stats_valid(m: pd.DataFrame) -> pd.Series:
     """Serve-stat rows usable for rate fitting (Stage 2's input filter).
 
@@ -291,7 +308,7 @@ def _serve_stats_valid(m: pd.DataFrame) -> pd.Series:
         ok &= m[f"{side}_2ndWon"] <= (m[f"{side}_svpt"] - m[f"{side}_1stIn"])
         ok &= m[f"{side}_bpSaved"] <= m[f"{side}_bpFaced"]
         ok &= m[f"{side}_ace"] <= m[f"{side}_svpt"]
-    return ok & m["outcome"].eq("completed")
+    return ok & m["outcome"].eq("completed") & m["in_scope"]
 
 
 def flag_suspect(matches: pd.DataFrame, match_ids: list[str], reason: str) -> pd.DataFrame:
@@ -399,9 +416,27 @@ def write_data_dictionary(m: pd.DataFrame, path: Path | None = None) -> Path:
     ct = pd.crosstab(m["season_file"], m["level_label"], margins=True,
                      margins_name="total")
     a(ct.to_markdown())
-    a("\n2020 is roughly half a normal season (COVID). Davis Cup and Olympics "
-      "are present and are tour-level results with unusual formats — rules.py "
-      "must not assume a tour default for them.\n")
+    a("\n2020 is roughly half a normal season (COVID).\n")
+
+    a("\n### Scope exclusions\n")
+    out_rows = m[~m["in_scope"]]
+    a(f"**{len(out_rows):,} rows ({_pct(len(out_rows) / len(m))}) are excluded "
+      f"from the model**, leaving {int(m['in_scope'].sum()):,} in scope "
+      f"({(m['in_scope'] & m['tour'].eq('atp')).sum():,} ATP, "
+      f"{(m['in_scope'] & m['tour'].eq('chall')).sum():,} Challenger). They stay "
+      "in the canonical record, flagged `in_scope=False`, so the audit still "
+      "sees them.\n")
+    a("\n| excluded | rows | why |")
+    a("|---|---|---|")
+    a(f"| Davis Cup | {(out_rows['level_label'] == 'Davis Cup').sum():,} | "
+      "per-tie identifiers leave the rules inference with almost no evidence, "
+      "and tie formats are irregular |")
+    a(f"| Olympics | {(out_rows['level_label'] == 'Olympics').sum():,} | small, "
+      "atypical field on a four-year cycle |")
+    a(f"| Tour Finals | {(out_rows['level_label'] == 'Tour Finals').sum():,} | "
+      "round-robin, eight-player field |")
+    a(f"| Next Gen Finals | {(out_rows['tourney_code'] == '7696').sum():,} | "
+      "first-to-4 short sets; the engine prices 6-game sets only |")
 
     a("\n## Per-match statistics and their coverage\n")
     a("All nine serve counters exist for both players: `{w,l}_` × "

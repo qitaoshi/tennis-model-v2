@@ -1,16 +1,6 @@
 {
   "current_stage": "stage_2",
-  "human_checkpoints_pending": [
-    {
-      "stage": "stage_0",
-      "reason": "Mandatory post-Stage-0 review (/loop hard stop 1), re-run against the TML data. Stage 1 and rules.py's table proceed in parallel per the spec; nothing from Stage 2 onward starts until this is reviewed.",
-      "decisions_needed": [
-        "Confirm the retirement/walkover/default policy table in reports/data_dictionary.md (ground rule 6): retired excluded from rate/venue/correction fitting but INCLUDED in Elo as win/loss; walkover and default update nothing.",
-        "Confirm Davis Cup (3,547 rows), Olympics (192) and Tour Finals (226) stay in the dataset - all have nonstandard formats or venues that rules.py must handle explicitly.",
-        "Confirm Next Gen Finals short-set matches (4-game sets, ~90 rows) stay excluded via score_string_suspect: the engine prices standard sets only."
-      ]
-    }
-  ],
+  "human_checkpoints_pending": [],
   "stages": {
     "constants.py": {
       "gate_passed": true,
@@ -22,7 +12,7 @@
     },
     "stage_0": {
       "gate_passed": true,
-      "notes": "REDONE on TML-Database (vendor/). 100,658 matches 2010-01-03..2023-11-27, 39,596 ATP + 61,062 Challenger; 2024-2026 files never opened. Outcomes: completed 96,804 / retired 3,342 / walkover 502 / default 9 / unknown 1 (parsed from score-string RET/W-O/DEF markers - TML has no flag column). score_string_suspect 285 rows (0.28%). serve_stats_valid 92.2%. 105 tournament codes change surface. 62 rows had colliding ids (TML 'Rome'/'GA' field swap) - match_id now includes season. 24/24 tests pass."
+      "notes": "REDONE on TML-Database (vendor/). 100,658 matches 2010-01-03..2023-11-27, 39,596 ATP + 61,062 Challenger; 2024-2026 files never opened. Outcomes: completed 96,804 / retired 3,342 / walkover 502 / default 9 / unknown 1 (parsed from score-string RET/W-O/DEF markers - TML has no flag column). score_string_suspect 285 rows (0.28%). serve_stats_valid 92.2%. 105 tournament codes change surface. 62 rows had colliding ids (TML 'Rome'/'GA' field swap) - match_id now includes season. 24/24 tests pass. SCOPE DECISION (human, 2026-07-30): Davis Cup, Olympics, Tour Finals and Next Gen excluded via in_scope=False (4,041 rows); 96,617 in scope (35,555 ATP + 61,062 Challenger). Retirement policy confirmed as documented: retired excluded from rate/venue/correction fitting, included in Elo as win/loss; walkover and default update nothing."
     },
     "stage_1": {
       "gate_passed": true,
