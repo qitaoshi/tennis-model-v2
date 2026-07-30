@@ -308,7 +308,10 @@ def _serve_stats_valid(m: pd.DataFrame) -> pd.Series:
         ok &= m[f"{side}_2ndWon"] <= (m[f"{side}_svpt"] - m[f"{side}_1stIn"])
         ok &= m[f"{side}_bpSaved"] <= m[f"{side}_bpFaced"]
         ok &= m[f"{side}_ace"] <= m[f"{side}_svpt"]
-    return ok & m["outcome"].eq("completed") & m["in_scope"]
+    # Ground rule 8: a suspect score string discredits the whole row for any
+    # consumer of its game-level detail, Stage 2's rate fitting included.
+    return (ok & m["outcome"].eq("completed") & m["in_scope"]
+            & ~m["score_string_suspect"])
 
 
 def flag_suspect(matches: pd.DataFrame, match_ids: list[str], reason: str) -> pd.DataFrame:

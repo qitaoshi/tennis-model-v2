@@ -141,7 +141,7 @@ Non-null % of other fields, whole dataset:
 | winner_seed |         40.6 |
 | draw_size   |        100   |
 
-`serve_stats_valid` (all counters present, positive serve points, internally consistent, completed match): **90.8%** of all rows, 94.4% of completed matches. This is Stage 2's input filter.
+`serve_stats_valid` (all counters present, positive serve points, internally consistent, completed match): **90.6%** of all rows, 94.3% of completed matches. This is Stage 2's input filter.
 
 
 `indoor` is populated on only 36.2% of rows — Stage 6 may use it as a feature only where present, and must not treat missing as outdoor.

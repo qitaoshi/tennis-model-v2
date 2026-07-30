@@ -1,0 +1,70 @@
+[
+ {
+  "stage": "stage_2",
+  "run_id": "20260730T043147Z-6e4cd36",
+  "metric": "spw_per_point_logloss",
+  "baseline": "career_average",
+  "selected": {
+   "half_life_days": 730.0,
+   "surface_pool": 300.0,
+   "shrink_n0": 500.0
+  },
+  "tune_gain": 0.0007072222720528876,
+  "tune_metric_value": 0.662607869243928,
+  "fit_rolling_origin_gain_folds": [
+   0.001114886333883236,
+   0.0010667557614082446,
+   0.000975457893063636,
+   0.0010233868099370769,
+   0.0012361033585023273
+  ],
+  "fit_rolling_origin_gain_mean": 0.0010833180313589042,
+  "fit_rolling_origin_gain_std": 9.97995283489551e-05,
+  "baselines": {
+   "career_average_mae": 0.06833663259765997,
+   "last_10_mae": 0.07003579115092594,
+   "career_average_logloss": 0.6633150915159809,
+   "last_10_logloss": 0.6642880854617585,
+   "career_average_match_logloss": 0.717063777245705,
+   "last_10_match_logloss": 0.7471139176298963
+  },
+  "frozen": false,
+  "notes": "grid over 4x4x4 settings; TUNE MAE 0.06595, match-winner log-loss 0.67106",
+  "tune_mae": 0.06595348606572711,
+  "tune_match_logloss": 0.6710618190785423
+ },
+ {
+  "stage": "stage_2",
+  "run_id": "20260730T043147Z-6e4cd36",
+  "metric": "spw_per_point_logloss",
+  "baseline": "career_average",
+  "selected": {
+   "half_life_days": 730.0,
+   "surface_pool": 300.0,
+   "shrink_n0": 500.0
+  },
+  "tune_gain": 0.0007072222720528876,
+  "tune_metric_value": 0.662607869243928,
+  "fit_rolling_origin_gain_folds": [
+   0.001114886333883236,
+   0.0010667557614082446,
+   0.000975457893063636,
+   0.0010233868099370769,
+   0.0012361033585023273
+  ],
+  "fit_rolling_origin_gain_mean": 0.0010833180313589042,
+  "fit_rolling_origin_gain_std": 9.97995283489551e-05,
+  "baselines": {
+   "career_average_mae": 0.06833663259765997,
+   "last_10_mae": 0.07003579115092594,
+   "career_average_logloss": 0.6633150915159809,
+   "last_10_logloss": 0.6642880854617585,
+   "career_average_match_logloss": 0.717063777245705,
+   "last_10_match_logloss": 0.7471139176298963
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen for downstream stages",
+  "tune_mae": 0.06595348606572711,
+  "tune_match_logloss": 0.6710618190785423
+ }
+]

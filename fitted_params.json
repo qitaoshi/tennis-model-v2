@@ -1,0 +1,14 @@
+{
+ "stage_2": {
+  "half_life_days": 730.0,
+  "surface_pool": 300.0,
+  "shrink_n0": 500.0,
+  "recency": true,
+  "surface_split": true,
+  "opponent_adjust": true,
+  "selected_on": "tune",
+  "tune_logloss": 0.662607869243928,
+  "tune_mae": 0.06595348606572711,
+  "tune_match_logloss": 0.6710618190785423
+ }
+}
