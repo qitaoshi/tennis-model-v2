@@ -133,7 +133,14 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
     p["venue_measured"] = False
     p["venue_n_matches"] = 0
     if venue_params is not None and venue_params.enabled:
-        vi = V.build_asof_index(m, venue_params).set_index("match_id")
+        # The venue effect is measured as a residual against the model's own
+        # expectation, so it is court speed rather than field strength.
+        expected = pd.Series(
+            ((p["serve_pa"] * p["w_svpt"] + p["serve_pb"] * p["l_svpt"])
+             / (p["w_svpt"] + p["l_svpt"])).to_numpy(),
+            index=p["match_id"].to_numpy(),
+        )
+        vi = V.build_asof_index(m, venue_params, expected=expected).set_index("match_id")
         common = p["match_id"].isin(vi.index)
         sub = vi.loc[p.loc[common, "match_id"]]
         p.loc[common, "venue_multiplier"] = sub["multiplier"].to_numpy()

@@ -73,14 +73,25 @@ def _frame(matches: pd.DataFrame, params: VenueParams) -> pd.DataFrame:
     return f.sort_values(["t", "match_id"]).reset_index(drop=True)
 
 
-def build_asof_index(matches: pd.DataFrame, params: VenueParams) -> pd.DataFrame:
+def build_asof_index(matches: pd.DataFrame, params: VenueParams,
+                     expected: pd.Series | None = None) -> pd.DataFrame:
     """Per-match venue multiplier, computed from that venue's earlier matches.
 
+    ``expected`` is the model's own expected serve points won for each match,
+    indexed by ``match_id``. When supplied, the venue effect is estimated as a
+    RESIDUAL — observed serve points won over expected — which is what a court
+    speed actually is. Without it the estimate is the raw serve-dominance
+    average, which confounds the court with the field that plays on it: a
+    venue whose draw is full of big servers looks fast even when it is not.
+
     Returns one row per match with the multiplier that would have been used to
-    price it, the evidence behind it, and whether the venue was measured at
-    all.
+    price it, the evidence behind it, and whether the venue was measured.
     """
     f = _frame(matches, params)
+    if expected is not None:
+        exp = expected.reindex(f["match_id"]).to_numpy(dtype=float)
+        f["expected_rate"] = np.where(np.isfinite(exp) & (exp > 0), exp, np.nan)
+        f = f[np.isfinite(f["expected_rate"])].reset_index(drop=True)
     venue_won: dict[tuple, float] = {}
     venue_pts: dict[tuple, float] = {}
     venue_matches: dict[tuple, int] = {}
@@ -94,8 +105,14 @@ def build_asof_index(matches: pd.DataFrame, params: VenueParams) -> pd.DataFrame
     measured = np.zeros(n, dtype=bool)
     surf_rate = np.full(n, np.nan)
 
-    for i, (vk, sk, spw, svpt) in enumerate(zip(
-        f["venue_key"], f["surface_key"], f["spw"], f["svpt"]
+    # With residuals the denominator is expected serve points won, so a venue
+    # rate is "observed over expected" and the surface rate absorbs any
+    # surface-level model bias before the venue is compared against it.
+    residual = "expected_rate" in f.columns
+    base = (f["expected_rate"] * f["svpt"]).to_numpy() if residual else f["svpt"].to_numpy()
+
+    for i, (vk, sk, spw, svpt, denom) in enumerate(zip(
+        f["venue_key"], f["surface_key"], f["spw"], f["svpt"], base
     )):
         s_won, s_pts = surf_won.get(sk, 0.0), surf_pts.get(sk, 0.0)
         v_won, v_pts = venue_won.get(vk, 0.0), venue_pts.get(vk, 0.0)
@@ -103,7 +120,7 @@ def build_asof_index(matches: pd.DataFrame, params: VenueParams) -> pd.DataFrame
         surf_rate[i] = s_rate
 
         if v_pts > 0 and np.isfinite(s_rate) and s_rate > 0:
-            # empirical Bayes toward the surface mean, in serve points
+            # empirical Bayes toward the surface rate, in serve points
             v_rate = (v_won + params.shrink_n0 * s_rate) / (v_pts + params.shrink_n0)
             mult[i] = v_rate / s_rate
             measured[i] = True
@@ -111,10 +128,10 @@ def build_asof_index(matches: pd.DataFrame, params: VenueParams) -> pd.DataFrame
         n_matches[i] = venue_matches.get(vk, 0)
 
         venue_won[vk] = v_won + spw * svpt
-        venue_pts[vk] = v_pts + svpt
+        venue_pts[vk] = v_pts + denom
         venue_matches[vk] = venue_matches.get(vk, 0) + 1
         surf_won[sk] = s_won + spw * svpt
-        surf_pts[sk] = s_pts + svpt
+        surf_pts[sk] = s_pts + denom
 
     out = f[["match_id", "date", "t", "surface_key", "tourney_code", "split",
              "spw", "svpt"]].copy()

@@ -52,5 +52,14 @@
   "tune_crps": 3.7112666560712846,
   "baseline_logloss": 0.63938745936996,
   "baseline_crps": 3.7191313112955338
+ },
+ "stage_6": {
+  "shrink_n0": 20000.0,
+  "use_indoor": false,
+  "enabled": true,
+  "selected_on": "tune",
+  "median_venue_history": 144.0,
+  "tune_crps_well_measured": 3.8403705694011387,
+  "baseline_crps_well_measured": 3.8418109554213684
  }
 }

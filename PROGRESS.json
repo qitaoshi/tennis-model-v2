@@ -1,5 +1,5 @@
 {
-  "current_stage": "stage_6",
+  "current_stage": "stage_7",
   "human_checkpoints_pending": [],
   "stages": {
     "constants.py": {
@@ -35,8 +35,8 @@
       "notes": "Cohort kNN prior replaces the flat tour-average prior for thin players. Style vector: ace rate, DF rate, serve pw, return pw, clay lean, hand, height; features AND standardization stats both as-of the 91-day snapshot (test asserts truncating the future leaves earlier snapshots bit-identical). GATE PASSED on both required metrics, TUNE thin-data matches only (n=3,199): match-winner log-loss 0.63883 vs tour-average 0.63939; total-games CRPS 3.7113 vs 3.7191. Selected k=5. The opponent-vs-cohort adjustment is implemented and measured: it improves CRPS (3.7025) but costs log-loss (0.64043), and selection is on log-loss, so it ships OFF (opponent_vs_cohort_n0=0). Grid in the report shows the trade. FIT rolling-origin gain mean +0.00120 std 0.00038, TUNE gain +0.00056 - below FIT gain, no overfit signal."
     },
     "stage_6": {
-      "gate_passed": false,
-      "notes": ""
+      "gate_passed": true,
+      "notes": "Venue court-speed index, keyed (tourney_code, surface). FIRST ATTEMPT FAILED: multipliers estimated from raw serve-points-won made TUNE total-games CRPS at above-median-history venues WORSE at every setting (baseline 3.8418; best candidate 3.8499, worst 3.8587). Diagnosis: the raw average confounds court speed with field strength - a venue whose draw is full of big servers looks fast. FIX (one attempt, per the loop protocol): estimate the venue effect as a residual, observed serve points won over the model's own expected, so the field cancels. Residual multipliers are tighter than raw (std 0.0062 vs 0.0110, correlation 0.78). GATE PASSED on re-run: CRPS at above-median-history venues 3.8404 vs baseline 3.8418; unmeasured venues unchanged at 3.5880 (they get exactly the surface average, flagged measured=False). Selected shrink_n0=20,000 serve points, indoor flag not in the key (no measurable effect). Gain is small (+0.0014 CRPS); FIT rolling-origin gain mean +0.00149 std 0.00252, TUNE gain +0.00144 - no overfit signal."
     },
     "stage_7": {
       "gate_passed": false,

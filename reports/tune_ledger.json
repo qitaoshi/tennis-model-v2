@@ -385,5 +385,117 @@
   "frozen": true,
   "notes": "gate passed; frozen",
   "tune_crps": 3.7112666560712846
+ },
+ {
+  "stage": "stage_6",
+  "run_id": "20260730T050324Z-20558fa",
+  "metric": "total_games_crps_well_measured_venues",
+  "baseline": "no_venue_multiplier",
+  "selected": {
+   "shrink_n0": 150000.0,
+   "use_indoor": false,
+   "enabled": false
+  },
+  "tune_gain": -0.008132950744706324,
+  "tune_metric_value": 3.8499439061660747,
+  "fit_rolling_origin_gain_folds": [
+   -0.0003788057718558946,
+   -0.004038012161827531,
+   -0.00024010008199049082,
+   -0.008967222912603212,
+   -0.009417366357349355
+  ],
+  "fit_rolling_origin_gain_mean": -0.004608301457125296,
+  "fit_rolling_origin_gain_std": 0.004455960849114534,
+  "baselines": {
+   "no_venue_crps_well_measured": 3.8418109554213684,
+   "no_venue_crps_unmeasured": 3.588000524659584,
+   "no_venue_crps_overall": 3.6815418392116546
+  },
+  "frozen": false,
+  "notes": "grid of 8 settings; median venue history 144 matches"
+ },
+ {
+  "stage": "stage_6",
+  "run_id": "20260730T050324Z-20558fa",
+  "metric": "total_games_crps_well_measured_venues",
+  "baseline": "no_venue_multiplier",
+  "selected": {
+   "shrink_n0": 150000.0,
+   "use_indoor": false,
+   "enabled": false
+  },
+  "tune_gain": -0.008132950744706324,
+  "tune_metric_value": 3.8499439061660747,
+  "fit_rolling_origin_gain_folds": [
+   -0.0003788057718558946,
+   -0.004038012161827531,
+   -0.00024010008199049082,
+   -0.008967222912603212,
+   -0.009417366357349355
+  ],
+  "fit_rolling_origin_gain_mean": -0.004608301457125296,
+  "fit_rolling_origin_gain_std": 0.004455960849114534,
+  "baselines": {
+   "no_venue_crps_well_measured": 3.8418109554213684
+  },
+  "frozen": true,
+  "notes": "gate failed; frozen as DISABLED so the lineage records it is unused"
+ },
+ {
+  "stage": "stage_6",
+  "run_id": "20260730T051007Z-20558fa",
+  "metric": "total_games_crps_well_measured_venues",
+  "baseline": "no_venue_multiplier",
+  "selected": {
+   "shrink_n0": 20000.0,
+   "use_indoor": false,
+   "enabled": true
+  },
+  "tune_gain": 0.001440386020229667,
+  "tune_metric_value": 3.8403705694011387,
+  "fit_rolling_origin_gain_folds": [
+   0.004681612273672364,
+   -0.0019406551814817874,
+   0.003069986711833561,
+   0.0008076335617732688,
+   0.0008517344710123886
+  ],
+  "fit_rolling_origin_gain_mean": 0.001494062367361959,
+  "fit_rolling_origin_gain_std": 0.0025162008175334343,
+  "baselines": {
+   "no_venue_crps_well_measured": 3.8418109554213684,
+   "no_venue_crps_unmeasured": 3.588000524659584,
+   "no_venue_crps_overall": 3.6815418392116546
+  },
+  "frozen": false,
+  "notes": "grid of 8 settings; median venue history 144 matches"
+ },
+ {
+  "stage": "stage_6",
+  "run_id": "20260730T051007Z-20558fa",
+  "metric": "total_games_crps_well_measured_venues",
+  "baseline": "no_venue_multiplier",
+  "selected": {
+   "shrink_n0": 20000.0,
+   "use_indoor": false,
+   "enabled": true
+  },
+  "tune_gain": 0.001440386020229667,
+  "tune_metric_value": 3.8403705694011387,
+  "fit_rolling_origin_gain_folds": [
+   0.004681612273672364,
+   -0.0019406551814817874,
+   0.003069986711833561,
+   0.0008076335617732688,
+   0.0008517344710123886
+  ],
+  "fit_rolling_origin_gain_mean": 0.001494062367361959,
+  "fit_rolling_origin_gain_std": 0.0025162008175334343,
+  "baselines": {
+   "no_venue_crps_well_measured": 3.8418109554213684
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen"
  }
 ]
