@@ -54,6 +54,13 @@ class Selection:
     calibrated: bool = False
     note: str = ""
 
+    def __post_init__(self) -> None:
+        # Summing a pmf over a ladder accumulates float error; a probability
+        # of 1.0000000000000002 is 1.0.
+        self.probability = float(min(max(self.probability, 0.0), 1.0))
+        self.push_probability = float(min(max(self.push_probability, 0.0), 1.0))
+        self.fair_decimal = float(max(self.fair_decimal, 1.0))
+
 
 @dataclass
 class PricedMatch:
