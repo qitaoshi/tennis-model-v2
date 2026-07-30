@@ -1,0 +1,11 @@
+loaded 27,458 matches, 2012-12-31 .. 2023-11-19
+outcomes: {'completed': 26485, 'retired': 796, 'walkover': 172, 'other': 5}
+suspect: 24
+  match_id       date                                tournament surface      winner       loser score_string   outcome  score_string_suspect split
+2013_00501 2013-02-20 U.S. National Indoor Tennis Championships    Hard    Young D.  Malisse X.          5-1   retired                  True   fit
+2013_01040 2013-05-05                             Portugal Open    Clay Wawrinka S.   Ferrer D.  6-1 6-4 2-0 completed                  True   fit
+2013_01358 2013-06-16                          Gerry Weber Open   Grass  Federer R.  Youzhny M.  6-7 6-3 6-4 completed                  True   fit
+2013_01710 2013-07-21                       Claro Open Colombia    Clay Karlovic I.    Falla A.      6-3 7-6 completed                  True   fit
+2014_01656 2014-07-13                Hall of Fame Championships   Grass   Hewitt L. Karlovic I.  6-3 6-7 7-6 completed                  True   fit
+....................                                                     [100%]
+20 passed in 3.63s
