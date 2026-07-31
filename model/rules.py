@@ -345,8 +345,13 @@ def build(save: bool = True, parquet: str = "matches.parquet"
 
     matches = pd.read_parquet(C.PROCESSED_DIR / parquet)
     global _INFERRED_CACHE
-    _INFERRED_CACHE = build_inferred_table(matches, save=save)
-    disc = empirical_scan(matches, save=save)
+    canonical = parquet == "matches.parquet"
+    # A holdout-inclusive build must not overwrite the pre-holdout reports:
+    # those are the committed artefacts every earlier stage was validated
+    # against, and silently extending them with post-cutoff rows would make
+    # the audit trail disagree with the record it describes.
+    _INFERRED_CACHE = build_inferred_table(matches, save=save and canonical)
+    disc = empirical_scan(matches, save=save and canonical)
     matches = data_audit.flag_suspect(
         matches, disc["match_id"].tolist(), "rules.py: score conflicts assigned format"
     )

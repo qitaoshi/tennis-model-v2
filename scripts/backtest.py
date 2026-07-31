@@ -92,7 +92,11 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
                   "provenance": r.format_provenance, "split": r.split}
 
         p = d.p_a if maps is None else float(maps.apply("match_winner", d.p_a))
+        # Panel rows are oriented winner-first, so scoring only that
+        # orientation would make every outcome a 1 by construction and turn
+        # calibration error into (1 - mean prediction). Emit both sides.
         rows.append({**common, "family": "match_winner", "p": p, "y": 1.0})
+        rows.append({**common, "family": "match_winner", "p": 1.0 - p, "y": 0.0})
 
         pmf = d.total_games_pmf()
         median = _median_of(pmf)
@@ -117,10 +121,16 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
         diffs: dict[int, float] = {}
         for (ga, gb), q in d.games.items():
             diffs[ga - gb] = diffs.get(ga - gb, 0.0) + q
+        margin = r.winner_games - r.loser_games
         for h in (-6.5, -2.5, 1.5, 5.5):
+            # Same orientation trap as the match winner: the row knows who won
+            # and the model does not, so score both perspectives.
             rows.append({**common, "family": "handicap",
                          "p": sum(q for dd, q in diffs.items() if dd > h),
-                         "y": float((r.winner_games - r.loser_games) > h)})
+                         "y": float(margin > h)})
+            rows.append({**common, "family": "handicap",
+                         "p": sum(q for dd, q in diffs.items() if -dd > h),
+                         "y": float(-margin > h)})
 
         rows.append({**common, "family": "_crps",
                      "p": P.crps_games(pmf, int(r.total_games)), "y": np.nan})
@@ -145,6 +155,24 @@ def main() -> None:
     raw = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
     print(f"canonical record holds {len(raw):,} pre-holdout matches; the "
           "holdout window is loaded fresh below")
+
+    # Build the holdout-inclusive record here rather than expecting it to
+    # exist. Every other entry point reads matches.parquet, which stops at the
+    # cutoff, so this file only ever comes into being inside this script,
+    # after the guard has passed.
+    from model import data_audit as DA
+    from model import rules as RU
+
+    holdout_path = C.PROCESSED_DIR / DA.HOLDOUT_PARQUET
+    if not holdout_path.exists():
+        print("building the holdout-inclusive canonical record ...")
+        DA.build(include_holdout=True)
+        RU.build(parquet=DA.HOLDOUT_PARQUET)
+    full_record = pd.read_parquet(holdout_path)
+    n_hold = int((full_record["split"] == "holdout").sum())
+    print(f"holdout window: {n_hold:,} matches, "
+          f"{full_record.loc[full_record['split'] == 'holdout', 'date'].min()} .. "
+          f"{full_record.loc[full_record['split'] == 'holdout', 'date'].max()}")
 
     lines = ["# Final backtest — HOLDOUT\n"]
     results = {}

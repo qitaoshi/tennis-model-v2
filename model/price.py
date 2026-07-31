@@ -304,6 +304,12 @@ class Pricer:
             push = pmf.get(int(line), 0.0) if float(line).is_integer() else 0.0
             fam = f"totals_under_{RC.totals_region(line, median)}"
             u, cal = self._cal(fam, under)
+            # The isotonic map calibrates `under` on its own, so on a
+            # whole-number line it can come back above 1 - push and leave the
+            # complement negative. Keep the triple coherent: over, under and
+            # push must sum to exactly 1, or the ladder quotes a price below
+            # evens and looks like free money.
+            u = min(max(u, 0.0), 1.0 - push)
             o = 1.0 - u - push
             out.append(Selection("total_games", f"over {line}", max(o, 1e-9),
                                  fair_price(max(o, 1e-9), push), push, cal))

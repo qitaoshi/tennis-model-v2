@@ -223,6 +223,12 @@ def load_raw(years: list[int] | None = None,
         for col in [f"{side}_{c}" for c in _SERVE_COLS] + [f"{side}_svpt"]:
             if col in m.columns:
                 m[col] = pd.to_numeric(m[col], errors="coerce")
+    # Seeds are numeric in most files and text in some ("2" vs 2), which makes
+    # the concatenated column unwritable as parquet. Nothing in the model reads
+    # them, so coerce and move on.
+    for col in ("winner_seed", "loser_seed", "draw_size", "minutes"):
+        if col in m.columns:
+            m[col] = pd.to_numeric(m[col], errors="coerce")
     m["date"] = pd.to_datetime(m["tourney_date"], format="%Y%m%d").dt.date
     m["level_label"] = m["tourney_level"].astype(str).map(LEVEL_LABEL).fillna("unknown")
     #: tourney_id is `YYYY-CODE`; the year prefix moves each season, the rest
@@ -251,9 +257,21 @@ def load_raw(years: list[int] | None = None,
     # season_file is part of the key because some tourney_ids carry no year
     # prefix and are reused across seasons (see the dictionary's identifier
     # anomalies section).
+    m["match_num"] = pd.to_numeric(m["match_num"], errors="coerce").astype("Int64")
+    # A missing match_num must not propagate NA through the concatenation and
+    # null the whole identifier — 489 holdout rows have no match number.
+    num = m["match_num"].astype("string").fillna("NA")
     m["match_id"] = (
         m["season_file"].astype(str) + "-" + m["tourney_id"].astype(str)
-        + "-" + m["match_num"].astype(str) + "-" + m["tour"]
+        + "-" + num + "-" + m["tour"]
+    )
+    # Some season files give two distinct events the same tourney_id and let
+    # match_num restart (two Alicante Challengers share 2026-2955), so the key
+    # collides. Break ties with a deterministic occurrence suffix rather than
+    # letting a downstream merge silently multiply rows.
+    dup_rank = m.groupby("match_id").cumcount()
+    m.loc[dup_rank > 0, "match_id"] = (
+        m.loc[dup_rank > 0, "match_id"] + "-d" + dup_rank[dup_rank > 0].astype(str)
     )
     m["split"] = [C.split_of(d) for d in m["date"]]
 
