@@ -31,7 +31,13 @@ def _name_key(name: object, odds_style: bool = False) -> str:
     if not tokens:
         return ""
     if odds_style:
-        initial, surname = tokens[-1][0], "".join(tokens[:-1])
+        # Trailing single letters are given-name initials, and there may be
+        # more than one: "Etcheverry T. M.", "Struff J-L.", "Wolf J.J.".
+        surname_tokens, initials = list(tokens), []
+        while len(surname_tokens) > 1 and len(surname_tokens[-1]) == 1:
+            initials.insert(0, surname_tokens.pop())
+        initial = initials[0] if initials else surname_tokens[-1][0]
+        surname = "".join(surname_tokens)
     else:
         initial, surname = tokens[0][0], "".join(tokens[1:])
     return initial + surname
