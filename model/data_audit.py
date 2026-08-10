@@ -230,6 +230,12 @@ def load_raw(years: list[int] | None = None,
         if col in m.columns:
             m[col] = pd.to_numeric(m[col], errors="coerce")
     m["date"] = pd.to_datetime(m["tourney_date"], format="%Y%m%d").dt.date
+    # TML misfiles whole events into the wrong season file. chall_matches_2024
+    # carries the 2008 Noumea Challenger (dated 20071231) under tourney_id
+    # 2024-2205, the same id as the real 2024 Noumea; the two are told apart by
+    # date and by disjoint match_num ranges, so match_id does not collide. The
+    # dates are genuine, not typos, so they are kept as-is and excluded by
+    # DATA_START below rather than "repaired" onto the season file's year.
     m["level_label"] = m["tourney_level"].astype(str).map(LEVEL_LABEL).fillna("unknown")
     #: tourney_id is `YYYY-CODE`; the year prefix moves each season, the rest
     #: is stable. This is the venue/tournament key for Stage 6. A minority of
@@ -274,6 +280,14 @@ def load_raw(years: list[int] | None = None,
         m.loc[dup_rank > 0, "match_id"] + "-d" + dup_rank[dup_rank > 0].astype(str)
     )
     m["split"] = [C.split_of(d) for d in m["date"]]
+    # DATA_START is a real boundary, not just a file filter: a misfiled event
+    # (see the Noumea note above) puts genuinely pre-2010 matches inside a
+    # modern season file, and they would otherwise be fed to Elo sixteen years
+    # out of place. Drop them here, where the count is visible, rather than
+    # leaving every downstream caller to remember the date floor.
+    pre = m["split"] == "pre_data"
+    if pre.any():
+        m = m[~pre].reset_index(drop=True)
 
     if not include_holdout:
         C.assert_no_holdout(m["date"])
@@ -578,10 +592,18 @@ def write_data_dictionary(m: pd.DataFrame, path: Path | None = None) -> Path:
 
     a("\n## Split assignment\n")
     a(m.groupby(["split", "season_file"]).size().unstack(fill_value=0).to_markdown())
+    held = sorted({int(p.stem.rsplit("_", 1)[1]) for p in C.VENDOR_DIR.glob("*_matches_*.csv")
+                   if int(p.stem.rsplit("_", 1)[1]) >= C.HOLDOUT_CUTOFF.year})
     a("\nSplit is assigned from `tourney_date` (tournament start), so an event "
       "straddling a boundary lands whole in one window. No row on or after the "
-      f"permanently fixed holdout cutoff ({C.HOLDOUT_CUTOFF}) is loaded; the "
-      "2024–2026 season files are never opened.\n")
+      f"holdout cutoff ({C.HOLDOUT_CUTOFF}) is loaded; the "
+      f"{', '.join(str(y) for y in held)} season files are never opened.\n")
+    a("\nThe cutoff moved once, on 2026-08-08, from 2024-01-01, as part of a "
+      "deliberate re-split after the original build spent its holdout — see "
+      "the `constants.py` docstring. Rows dated before `DATA_START` are "
+      "dropped here rather than carried: TML misfiles the 2008 Noumea "
+      "Challenger into the 2024 season file, and those matches would "
+      "otherwise reach Elo sixteen years out of place.\n")
 
     path.write_text("\n".join(L) + "\n")
     return path

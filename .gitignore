@@ -1,3 +1,13 @@
-data/processed/
+data/processed/*
+# The paper-trading deployment runs in a cloud sandbox that mounts this repo
+# from GitHub, so the three artefacts the pricer loads have to be tracked.
+# ~11 MB together; everything else under data/processed/ stays out.
+!data/processed/matches.parquet
+!data/processed/matches_with_holdout.parquet
+!data/processed/calibration_maps.pkl
 __pycache__/
 .pytest_cache/
+data/raw/mcp/*.csv
+
+# Scratch run logs, never part of the record.
+scratch_*.log

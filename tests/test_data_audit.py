@@ -21,7 +21,7 @@ def m() -> pd.DataFrame:
 
 def test_every_year_in_range_ingests(m: pd.DataFrame) -> None:
     years = A._season_years()
-    assert years == list(range(2010, 2024)), years
+    assert years == list(range(C.DATA_START.year, C.HOLDOUT_CUTOFF.year)), years
     counts = m.groupby(["season_file", "tour"]).size()
     assert set(counts.index.get_level_values(0)) == set(years)
     assert (counts > 1000).all(), counts.to_dict()
@@ -29,14 +29,21 @@ def test_every_year_in_range_ingests(m: pd.DataFrame) -> None:
 
 def test_holdout_files_never_opened() -> None:
     on_disk = {int(p.stem.rsplit("_", 1)[1]) for p in C.VENDOR_DIR.glob("*_matches_*.csv")}
-    assert on_disk & {2024, 2025, 2026}, "expected holdout files to exist"
-    assert not set(A._season_years()) & {y for y in on_disk if y >= 2024}
+    held = {y for y in on_disk if y >= C.HOLDOUT_CUTOFF.year}
+    assert held, "expected holdout season files to exist on disk"
+    assert not set(A._season_years()) & held
 
 
 def test_no_holdout_dates(m: pd.DataFrame) -> None:
     assert max(m["date"]) < C.HOLDOUT_CUTOFF
     assert set(m["split"]) <= {"fit", "tune", "burned_test", "test", "reserve"}
     assert {"fit", "tune", "test"} <= set(m["split"])
+
+
+def test_pre_data_rows_dropped(m: pd.DataFrame) -> None:
+    """A misfiled event can put pre-DATA_START matches in a modern file."""
+    assert min(m["date"]) >= C.DATA_START
+    assert "pre_data" not in set(m["split"])
 
 
 def test_both_tours_present(m: pd.DataFrame) -> None:
@@ -106,7 +113,10 @@ def test_scope_exclusions(m: pd.DataFrame) -> None:
             | out["tourney_code"].isin(A.EXCLUDED_CODES)).all()
     assert not m.loc[m["in_scope"], "level_label"].isin(A.EXCLUDED_LEVELS).any()
     assert not m.loc[m["in_scope"], "tourney_code"].isin(A.EXCLUDED_CODES).any()
-    assert m["in_scope"].sum() == 96_617
+    # Drift tripwire, not a derivation. Update deliberately when the split
+    # boundaries or the vendor files move, never to make a red test green.
+    # 96,617 under the pre-2026-08-08 split (FIT..TEST ending 2023-12-31).
+    assert m["in_scope"].sum() == 114_353
 
 
 def test_serve_stats_valid_filter(m: pd.DataFrame) -> None:
@@ -146,7 +156,7 @@ def test_duplicates_and_surface_changes_computed(m: pd.DataFrame) -> None:
     assert len(A.identifier_instability(m)) > 0
 
 
-def test_data_dictionary_sections_complete() -> None:
+def test_data_dictionary_sections_complete(m: pd.DataFrame) -> None:
     path = C.REPORTS_DIR / "data_dictionary.md"
     assert path.exists(), "run `python -m model.data_audit` / A.build() first"
     text = path.read_text()
@@ -162,7 +172,10 @@ def test_data_dictionary_sections_complete() -> None:
         "## Split assignment",
     ]:
         assert section in text, section
-    assert "100,658" in text
+    # The dictionary must state the row count of the record it describes.
+    # Derived, not hardcoded: the count moves whenever the split boundaries do,
+    # and a literal here would just be re-typed to whatever made it green.
+    assert f"{len(m):,}" in text
     for outcome, policy in A.OUTCOME_POLICY.items():
         assert f"`{outcome}`" in text
         assert policy.split("—")[0].split(".")[0].strip() in text

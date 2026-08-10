@@ -48,6 +48,19 @@ class EloParams:
     #: Cross-level correction added to a Challenger-built rating when it meets
     #: a tour-built one. Fitted only if the cross-level check demands it.
     level_offset: float = 0.0
+    #: Rating points per natural-log unit of ATP rank used to seed a player the
+    #: ladder has never seen. 0.0 reproduces the original behaviour exactly: a
+    #: debutant starts at the flat level reference regardless of whether they
+    #: are ranked 40 or 900.
+    #:
+    #: Why this exists: matches involving a debutant have Elo-layer ECE 0.0800
+    #: against 0.0025 when both players are known (reports/
+    #: match_winner_diagnosis.md). The ranking is in the data, is as-of by
+    #: construction, and nothing was using it here.
+    rank_seed_scale: float = 0.0
+    #: Rank treated as "average" by the seed, i.e. the rank that gets exactly
+    #: the flat reference. A scale choice, not a fitted value.
+    rank_seed_pivot: float = 250.0
 
 
 def expected_score(ra: float, rb: float) -> float:
@@ -70,6 +83,27 @@ class _Ratings:
 
     def reference(self, level_group: str) -> float:
         return BASE_RATING - (self.params.level_gap if level_group == "chall" else 0.0)
+
+    def seed(self, pid: str, level_group: str, rank: float) -> None:
+        """Give a never-seen player a starting rating from their ATP rank.
+
+        No-op if the player is already rated, if the feature is off, or if the
+        rank is missing — an unranked debutant genuinely carries no
+        information, so it keeps the flat reference.
+
+        Uses log rank because the gap in strength between rank 5 and 25 is
+        much larger than between 505 and 525, and clamps the result so a
+        freak rank cannot hand out a rating the ladder would take a season to
+        work off.
+        """
+        if pid in self.overall or not self.params.rank_seed_scale:
+            return
+        if rank is None or not np.isfinite(rank) or rank <= 0:
+            return
+        ref = self.reference(level_group)
+        offset = self.params.rank_seed_scale * np.log(
+            self.params.rank_seed_pivot / float(rank))
+        self.overall[pid] = ref + float(np.clip(offset, -300.0, 300.0))
 
     def _regress(self, value: float, ref: float, days: float) -> float:
         hl = self.params.inactivity_half_life
@@ -134,10 +168,16 @@ def run_elo(matches: pd.DataFrame, params: EloParams,
     out = {k: np.zeros(n) for k in ("w_rating", "l_rating", "p_winner",
                                     "w_chall_share", "l_chall_share",
                                     "w_n", "l_n")}
+    w_rank = pd.to_numeric(f["winner_rank"], errors="coerce").to_numpy(dtype=float)
+    l_rank = pd.to_numeric(f["loser_rank"], errors="coerce").to_numpy(dtype=float)
     for i, (t, wid, lid, surf, lg) in enumerate(zip(
         f["t"], f["winner_id"], f["loser_id"], f["surface"], f["level_group"]
     )):
         surf = surf if isinstance(surf, str) else "Unknown"
+        # Seed before reading, so a debutant's first match is priced with the
+        # seed rather than being seeded by its own result afterwards.
+        r.seed(wid, lg, w_rank[i])
+        r.seed(lid, lg, l_rank[i])
         rw = r.blended(wid, surf, t, lg)
         rl = r.blended(lid, surf, t, lg)
         # cross-level correction, applied only where the two ratings come from

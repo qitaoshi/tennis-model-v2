@@ -1,0 +1,28 @@
+Match Charting Project (MCP) point-by-point data
+(c) The Tennis Abstract Match Charting Project, https://github.com/JeffSackmann/tennis_MatchChartingProject
+License: CC BY-NC-SA 4.0 (attribution, NON-COMMERCIAL, share-alike).
+Retrieved 2026-08-09 from the master branch:
+  charting-m-matches.csv
+  charting-m-points-2010s.csv
+  charting-m-points-2020s.csv
+
+Crowdsourced, shot-by-shot. NOT a random sample of professional tennis: it
+skews toward notable matches and top players. See reports/momentum_measurement.md
+for what that costs the one analysis that uses it.
+
+WHY THIS IS NOT IN vendor/. vendor/ is TennisMyLife match data under MIT, and
+it is the model's only match-data source. MCP is a different source under a
+non-commercial licence, read by exactly one measurement script
+(scripts/measure_momentum.py). No MCP-derived number enters fitted_params.json,
+model/, or any shipped artifact. If this project ever becomes commercial, any
+conclusion drawn from MCP must be re-derived from a permissively licensed source.
+
+The CSVs themselves are gitignored (93 MB); re-fetch them by running
+  python -m scripts.measure_momentum
+which downloads anything missing.
+
+NOTE (2026-08-09): the source originally specified for this work,
+JeffSackmann/tennis_slam_pointbypoint, returns HTTP 404 and that account is down
+to a single public repository. MCP is the surviving Sackmann point-by-point
+source, and it is the better one here anyway because it includes best-of-three
+matches.

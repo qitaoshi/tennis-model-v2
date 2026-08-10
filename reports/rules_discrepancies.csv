@@ -15,3 +15,4 @@ match_id,tourney_code,year,assigned_format,provenance,score,conflict
 2018-2018-M-DC-2018-WG-M-FRA-ESP-01-3-atp,M-DC-2018-WG-M-FRA-ESP-01,2018,bo5/tiebreak@6to7,inferred,1-6 6-4 12-14,set 12-14 exceeds tiebreak at 6-6
 2018-2018-M-DC-2018-WG-M-FRA-ESP-01-4-atp,M-DC-2018-WG-M-FRA-ESP-01,2018,bo5/tiebreak@6to7,inferred,6-7(2) 6-3 11-13,set 11-13 exceeds tiebreak at 6-6
 2020-2020-M-DC-2020-WG2-PO-POL-HKG-01-3-atp,M-DC-2020-WG2-PO-POL-HKG-01,2020,bo3/tiebreak@6to7,inferred,1-6 6-2 10-3,set 10-3 exceeds tiebreak at 6-6
+2025-2025-9210-NA-atp-d1,9210,2025,bo3/tiebreak@6to7,inferred,6-1 6-7(3) 10-8,set 10-8 exceeds tiebreak at 6-6

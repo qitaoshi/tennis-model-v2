@@ -1,43 +1,43 @@
 # Final backtest — HOLDOUT
 
 
-Holdout window: 2024-01-01 onward. 22,634 scoreable matches (completed, in scope, clean score, usable serve stats).
+Holdout window: 2026-01-01 onward. 5,735 scoreable matches (completed, in scope, clean score, usable serve stats).
 
 
 ## By market family
 
 | family | n | Brier | log-loss | ECE |
 |---|---|---|---|---|
-| handicap | 181,072 | 0.1676 | 0.5037 | 0.0088 |
-| match_winner | 45,268 | 0.2255 | 0.6413 | 0.0693 |
-| set_betting | 92,914 | 0.1711 | 0.5207 | 0.0065 |
-| tiebreak | 22,634 | 0.2182 | 0.6273 | 0.0091 |
-| totals | 158,438 | 0.1885 | 0.5523 | 0.0081 |
+| handicap | 45,880 | 0.1676 | 0.5037 | 0.0098 |
+| match_winner | 11,470 | 0.2240 | 0.6377 | 0.0665 |
+| set_betting | 23,404 | 0.1722 | 0.5231 | 0.0078 |
+| tiebreak | 5,735 | 0.2224 | 0.6359 | 0.0236 |
+| totals | 40,145 | 0.1902 | 0.5563 | 0.0078 |
 
 ## By tour level
 
 | level | n | Brier | log-loss | ECE |
 |---|---|---|---|---|
-| ATP 250 | 48,224 | 0.1787 | 0.5298 | 0.0079 |
-| ATP 500 | 27,126 | 0.1701 | 0.5073 | 0.0109 |
-| Challenger | 352,946 | 0.1852 | 0.5477 | 0.0038 |
-| Grand Slam | 28,536 | 0.1773 | 0.5272 | 0.0142 |
-| Masters 1000 | 40,326 | 0.1745 | 0.5201 | 0.0058 |
-| Tour (other) | 3,168 | 0.1800 | 0.5337 | 0.0256 |
+| ATP 250 | 9,328 | 0.1780 | 0.5277 | 0.0130 |
+| ATP 500 | 7,414 | 0.1742 | 0.5184 | 0.0094 |
+| Challenger | 94,468 | 0.1850 | 0.5469 | 0.0041 |
+| Grand Slam | 5,568 | 0.1836 | 0.5427 | 0.0176 |
+| Masters 1000 | 9,306 | 0.1769 | 0.5250 | 0.0124 |
+| Tour (other) | 550 | 0.1919 | 0.5590 | 0.0618 |
 
 ## By format rule and provenance
 
 | final-set rule | provenance | n | Brier | ECE |
 |---|---|---|---|---|
-| tiebreak | documented | 28,536 | 0.1773 | 0.0142 |
-| tiebreak | inferred | 471,790 | 0.1827 | 0.0022 |
+| tiebreak | documented | 5,568 | 0.1836 | 0.0176 |
+| tiebreak | inferred | 121,066 | 0.1832 | 0.0034 |
 
 ## Ablations
 
 | configuration | Brier | log-loss | ECE | games CRPS |
 |---|---|---|---|---|
-| full | 0.1824 | 0.5403 | 0.0018 | 3.3800 |
-| no_cohort | 0.1825 | 0.5405 | 0.0017 | 3.3809 |
-| no_venue | 0.1824 | 0.5404 | 0.0021 | 3.3812 |
-| no_corrections | 0.1929 | 0.5692 | 0.0403 | 3.5976 |
-| no_calibration | 0.1824 | 0.5403 | 0.0054 | 3.3800 |
+| full | 0.1832 | 0.5421 | 0.0034 | 3.4413 |
+| no_cohort | 0.1832 | 0.5422 | 0.0030 | 3.4419 |
+| no_venue | 0.1833 | 0.5424 | 0.0035 | 3.4421 |
+| no_corrections | 0.1933 | 0.5694 | 0.0363 | 3.6339 |
+| no_calibration | 0.1832 | 0.5421 | 0.0054 | 3.4413 |

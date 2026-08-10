@@ -95,6 +95,44 @@
   ],
   "test_touched_once": true,
   "gate_strictly_passed": false,
-  "shipped_by_human_acceptance": true
+  "shipped_by_human_acceptance": true,
+  "superseded_by": "calibration_refit (2026-08-08)",
+  "superseded_note": "The maps this entry describes (isotonic, families [match_winner, totals_under_high], fitted through 2022-06) are NO LONGER the maps at maps_path. calibration_refit overwrote that pickle with a blended map covering five families, fitted on an 8-year window through 2025-06. The metrics recorded here still describe the original run on the original TEST window and are kept as history, not as a description of what ships."
+ },
+ "calibration_refit": {
+  "method": "blended",
+  "window_years": 8,
+  "selected_on": "TUNE 2024-01-01..2025-06-30",
+  "tune_ece": 0.010823311225337705,
+  "tune_logloss": 0.5627944383949024,
+  "n_fitted": {
+   "match_winner": 52000,
+   "totals_under_low": 52000,
+   "totals_under_mid": 78000,
+   "totals_under_high": 52000,
+   "set_score": 107322
+  },
+  "families": [
+   "match_winner",
+   "set_score",
+   "totals_under_high",
+   "totals_under_low",
+   "totals_under_mid"
+  ],
+  "test_evaluated": true,
+  "test_ece_before": 0.027882511417035728,
+  "test_ece_after": 0.01980745013719331,
+  "test_all_improved": true
+ },
+ "fatigue": {
+  "rest_days": -0.01164709979964922,
+  "load7": 0.00902246691289101,
+  "is_qualifier": -0.02180651078681072,
+  "enabled": false,
+  "tune_logloss_baseline": 0.6620158873643232,
+  "tune_logloss": 0.6622516532475498,
+  "tune_spw_mae_baseline": 0.05964217459942603,
+  "tune_spw_mae": 0.05964854356148488,
+  "gate_passed": false
  }
 }

@@ -21,7 +21,7 @@ use of the pre-cutoff TEST set, and nothing is fitted on it.
 from __future__ import annotations
 
 import pickle
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -45,12 +45,122 @@ def totals_region(line: float, median_total: float) -> str:
     return "mid"
 
 
+#: Probabilities are clipped this far from 0/1 before taking a logit, so a
+#: p of exactly 0 or 1 cannot produce an infinite feature.
+_EPS = 1e-6
+
+
+def _logit(p: np.ndarray) -> np.ndarray:
+    q = np.clip(np.asarray(p, dtype=float), _EPS, 1 - _EPS)
+    return np.log(q / (1 - q))
+
+
+@dataclass
+class PlattMap:
+    """Two-parameter logistic recalibration in logit space.
+
+    ``p_cal = sigmoid(a * logit(p) + b)``.
+
+    Isotonic is the right default in the body of the distribution, where there
+    are enough samples per step. It is the wrong tool in a thin tail: it fits a
+    step function, and the match_winner map carries only seven steps below
+    p=0.2 — so a longshot's calibrated probability is decided by a handful of
+    matches and jumps discontinuously.
+
+    This has two parameters and is smooth everywhere, which is what a tail
+    wants. ``a`` is the interesting one: a < 1 shrinks every probability toward
+    even money, which is the correction a model that overrates longshots needs,
+    and it applies that correction as a continuous function of how extreme the
+    prediction is rather than as isolated steps.
+
+    Duck-types ``IsotonicRegression.predict`` so ``CalibrationMaps`` does not
+    need to know which kind of map it holds.
+    """
+
+    a: float
+    b: float
+
+    def predict(self, p: np.ndarray) -> np.ndarray:
+        z = self.a * _logit(p) + self.b
+        return 1.0 / (1.0 + np.exp(-z))
+
+    @staticmethod
+    def fit(p: np.ndarray, y: np.ndarray) -> "PlattMap":
+        from sklearn.linear_model import LogisticRegression
+
+        lr = LogisticRegression(C=1e6, solver="lbfgs")
+        lr.fit(_logit(p).reshape(-1, 1), (np.asarray(y) > 0.5).astype(int))
+        return PlattMap(a=float(lr.coef_[0][0]), b=float(lr.intercept_[0]))
+
+
+@dataclass
+class BlendedMap:
+    """Isotonic in the body, Platt in the tails, as a monotone lookup table.
+
+    Neither map is best everywhere: isotonic wins where the data is dense
+    because it can follow an arbitrary monotone shape, and Platt wins in the
+    tails because it does not run out of samples. This uses each where it is
+    strong and crossfades over a band so the result stays continuous — a hard
+    switch would put a jump in the middle of the price ladder.
+
+    The crossfade is baked onto a fixed grid at fit time rather than evaluated
+    per call. That is not an optimisation: a weighted average of two monotone
+    curves is NOT itself monotone, and a calibration map that is not monotone
+    can reorder two selections and invent discrimination the model never had.
+    Precomputing lets the running maximum enforce monotonicity once, on the
+    grid, instead of hoping the blend happens to behave.
+    """
+
+    xs: np.ndarray
+    ys: np.ndarray
+
+    def predict(self, p: np.ndarray) -> np.ndarray:
+        return np.interp(np.clip(np.asarray(p, dtype=float), 0.0, 1.0),
+                         self.xs, self.ys)
+
+    @staticmethod
+    def fit(iso: IsotonicRegression, platt: PlattMap, lo: float, hi: float,
+            band: float, n_grid: int = 2001) -> "BlendedMap":
+        xs = np.linspace(0.0, 1.0, n_grid)
+        w = np.ones_like(xs)
+        below, above = xs < lo, xs > hi
+        w[below] = np.clip((xs[below] - (lo - band)) / band, 0, 1)
+        w[above] = np.clip(((hi + band) - xs[above]) / band, 0, 1)
+        ys = w * iso.predict(xs) + (1 - w) * platt.predict(xs)
+        # The crossfade can dip where the two curves cross; the running max
+        # removes exactly those dips and leaves the rest of the curve alone.
+        ys = np.maximum.accumulate(np.clip(ys, 0.0, 1.0))
+        return BlendedMap(xs=xs, ys=ys)
+
+
+#: Candidate map families, tried head to head on TUNE. "isotonic" is the
+#: incumbent that shipped with the original build.
+METHODS = ("isotonic", "platt", "blended")
+
+
+def _fit_one(method: str, p: np.ndarray, y: np.ndarray):
+    if method == "isotonic":
+        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+        iso.fit(p, y)
+        return iso
+    if method == "platt":
+        return PlattMap.fit(p, y)
+    if method == "blended":
+        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+        iso.fit(p, y)
+        return BlendedMap.fit(iso, PlattMap.fit(p, y), lo=0.20, hi=0.80, band=0.10)
+    raise ValueError(f"unknown calibration method: {method!r}")
+
+
 @dataclass
 class CalibrationMaps:
     """Frozen isotonic maps, one per priced family."""
 
-    maps: dict[str, IsotonicRegression]
+    maps: dict[str, IsotonicRegression | PlattMap | BlendedMap]
     n_fitted: dict[str, int]
+    #: Which candidate family each map came from. Defaults to isotonic so a
+    #: pickle written by the original build still loads.
+    method: dict[str, str] = field(default_factory=dict)
 
     def apply(self, family: str, p: float | np.ndarray) -> float | np.ndarray:
         """Calibrated probability. Unknown families pass through unchanged."""
@@ -69,18 +179,24 @@ class CalibrationMaps:
         return pickle.loads(path.read_bytes())
 
 
-def fit_maps(samples: dict[str, tuple[np.ndarray, np.ndarray]]) -> CalibrationMaps:
-    """Fit one isotonic map per family from (predicted, outcome) pairs."""
-    maps, n = {}, {}
+def fit_maps(samples: dict[str, tuple[np.ndarray, np.ndarray]],
+             method: str | dict[str, str] = "isotonic") -> CalibrationMaps:
+    """Fit one map per family from (predicted, outcome) pairs.
+
+    ``method`` is either one name applied to every family, or a per-family
+    dict — families calibrate differently, so the winner need not be the same
+    for match_winner as for the totals ladder.
+    """
+    maps, n, used = {}, {}, {}
     for family, (p, y) in samples.items():
         ok = np.isfinite(p) & np.isfinite(y)
         if ok.sum() < 200:
             continue
-        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
-        iso.fit(p[ok], y[ok])
-        maps[family] = iso
+        how = method if isinstance(method, str) else method.get(family, "isotonic")
+        maps[family] = _fit_one(how, p[ok], y[ok])
         n[family] = int(ok.sum())
-    return CalibrationMaps(maps, n)
+        used[family] = how
+    return CalibrationMaps(maps, n, used)
 
 
 def reliability(p: np.ndarray, y: np.ndarray, n_bins: int = 10) -> list[dict]:
@@ -133,16 +249,45 @@ def demo() -> None:
 
     print(f"before: ECE {calibration_error(pred, y):.4f}, "
           f"Brier {brier(pred, y):.4f}, log-loss {log_loss(pred, y):.4f}")
-    maps = fit_maps({"match_winner": (pred, y)})
-    cal = maps.apply("match_winner", pred)
-    print(f"after:  ECE {calibration_error(cal, y):.4f}, "
-          f"Brier {brier(cal, y):.4f}, log-loss {log_loss(cal, y):.4f}")
-    print("\nreliability after:")
+    for how in METHODS:
+        maps = fit_maps({"match_winner": (pred, y)}, method=how)
+        cal = np.asarray(maps.apply("match_winner", pred))
+        print(f"{how:9s} ECE {calibration_error(cal, y):.4f}, "
+              f"Brier {brier(cal, y):.4f}, log-loss {log_loss(cal, y):.4f}")
+
+    maps = fit_maps({"match_winner": (pred, y)}, method="isotonic")
+    cal = np.asarray(maps.apply("match_winner", pred))
+    print("\nreliability after isotonic:")
     for r in reliability(cal, y):
         print(f"  bin {r['bin']} n={r['n']:5d} predicted {r['predicted']:.3f} "
               f"observed {r['observed']:.3f} gap {r['gap']:+.3f}")
     print(f"\nunknown families pass through: "
           f"{maps.apply('not_a_family', 0.37):.4f}")
+
+    # Self-check: the properties every map family must have.
+    grid = np.linspace(0.001, 0.999, 400)
+    for how in METHODS:
+        m = fit_maps({"f": (pred, y)}, method=how)
+        q = np.asarray(m.apply("f", grid))
+        assert np.all(np.diff(q) >= -1e-9), f"{how} is not monotone"
+        assert np.all((q >= 0) & (q <= 1)), f"{how} left [0, 1]"
+        assert m.method["f"] == how
+    # An overconfident forecaster needs its tail pulled in, so Platt's slope
+    # must come out below 1. This is the whole reason the family exists.
+    pl = PlattMap.fit(pred, y)
+    assert pl.a < 1.0, f"expected shrinkage, got a={pl.a:.3f}"
+    # Blended must be continuous across both crossfade bands.
+    b = _fit_one("blended", pred, y)
+    fine = np.linspace(0.0, 1.0, 5001)
+    assert np.max(np.abs(np.diff(b.predict(fine)))) < 0.02, "blend is not smooth"
+    # and it must agree with each parent where that parent has full weight
+    pure_iso = _fit_one("isotonic", pred, y)
+    assert abs(b.predict(np.array([0.5]))[0] - pure_iso.predict([0.5])[0]) < 0.02
+    # A map pickled without the method field (the original build's artifact)
+    # must still load and apply.
+    old = CalibrationMaps(maps={"f": pl}, n_fitted={"f": 10})
+    assert 0 < old.apply("f", 0.3) < 1 and old.method == {}
+    print(f"\nself-check passed: platt slope a={pl.a:.3f}, b={pl.b:+.3f}")
 
 
 if __name__ == "__main__":

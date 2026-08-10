@@ -88,12 +88,8 @@ OddsPortalMarketExtractor.scrape_markets = _dynamic_scrape
 
 
 async def _run(args: argparse.Namespace) -> None:
-    result = await run_scraper(
-        command=CommandEnum.HISTORIC,
-        match_links=[args.match_link],
+    common = dict(
         sport="tennis",
-        leagues=[args.league],
-        seasons=[args.season],
         markets=[args.family],
         target_bookmaker=args.target_bookmaker,
         headless=True,
@@ -102,6 +98,28 @@ async def _run(args: argparse.Namespace) -> None:
         request_delay=1.0,
         concurrency_tasks=1,
     )
+    if args.upcoming:
+        # Fixtures that have not been played. Same market discovery, different
+        # OddsPortal page family; `date` is YYYYMMDD in OddsPortal's own terms.
+        result = await run_scraper(
+            command=CommandEnum.UPCOMING_MATCHES,
+            date=args.date,
+            leagues=[args.league] if args.league else None,
+            links_only=args.links_only,
+            **common,
+        )
+    else:
+        # A match_links scrape short-circuits before the league/season path in
+        # scraper_app, so settlement re-scrapes need the link alone.
+        if not (args.match_link or (args.league and args.season)):
+            raise SystemExit("historic mode needs --match-link, or --league and --season")
+        result = await run_scraper(
+            command=CommandEnum.HISTORIC,
+            match_links=[args.match_link] if args.match_link else None,
+            leagues=[args.league] if args.league else None,
+            seasons=[args.season] if args.season else None,
+            **common,
+        )
     Path(args.output).write_text(json.dumps(result.success if result else [],
                                             indent=2))
     if not result or not result.success:
@@ -110,12 +128,17 @@ async def _run(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--league", required=True)
-    parser.add_argument("--season", required=True)
-    parser.add_argument("--match-link", required=True)
+    parser.add_argument("--league")
+    parser.add_argument("--season")
+    parser.add_argument("--match-link")
     parser.add_argument("--family", required=True)
     parser.add_argument("--target-bookmaker")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--upcoming", action="store_true",
+                        help="scrape unplayed fixtures instead of history")
+    parser.add_argument("--date", help="YYYYMMDD, upcoming mode only")
+    parser.add_argument("--links-only", action="store_true",
+                        help="discover fixture links without odds")
     asyncio.run(_run(parser.parse_args()))
 
 

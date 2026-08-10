@@ -802,5 +802,181 @@
   },
   "frozen": false,
   "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+ },
+ {
+  "stage": "fatigue",
+  "run_id": "20260808T125510Z-3a3a549",
+  "metric": "tune_match_logloss",
+  "baseline": "no context adjustment",
+  "selected": {
+   "rest_days": -0.008664826625106443,
+   "load7": 0.005736848601187937,
+   "is_qualifier": -0.022357978637552206,
+   "enabled": false
+  },
+  "tune_gain": -0.00022323340667262936,
+  "tune_metric_value": 0.6622391207709958,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_logloss": 0.6620158873643232,
+   "tune_spw_mae": 0.05964217459942603
+  },
+  "frozen": false,
+  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+ },
+ {
+  "stage": "fatigue",
+  "run_id": "20260808T125936Z-3a3a549",
+  "metric": "tune_match_logloss",
+  "baseline": "no context adjustment",
+  "selected": {
+   "rest_days": -0.01164709979964922,
+   "load7": 0.00902246691289101,
+   "is_qualifier": -0.02180651078681072,
+   "enabled": false
+  },
+  "tune_gain": -0.00023576588322660186,
+  "tune_metric_value": 0.6622516532475498,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_logloss": 0.6620158873643232,
+   "tune_spw_mae": 0.05964217459942603
+  },
+  "frozen": false,
+  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+ },
+ {
+  "stage": "calibration_refit",
+  "run_id": "20260808T131728Z-3a3a549",
+  "metric": "tune_expected_calibration_error",
+  "baseline": "isotonic on all history (the shipped incumbent)",
+  "selected": {
+   "method": "blended",
+   "window_years": 8
+  },
+  "tune_gain": 0.0019327761957201178,
+  "tune_metric_value": 0.010823311225337705,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.018806781966026167,
+   "tune_logloss": 0.5633081137222561,
+   "tune_brier": 0.19193658982123232
+  },
+  "frozen": true,
+  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
+ },
+ {
+  "stage": "fatigue",
+  "run_id": "20260808T133656Z-3a3a549",
+  "metric": "tune_match_logloss",
+  "baseline": "no context adjustment",
+  "selected": {
+   "rest_days": -0.01164709979964922,
+   "load7": 0.00902246691289101,
+   "is_qualifier": -0.02180651078681072,
+   "enabled": false
+  },
+  "tune_gain": -0.00023576588322660186,
+  "tune_metric_value": 0.6622516532475498,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_logloss": 0.6620158873643232,
+   "tune_spw_mae": 0.05964217459942603
+  },
+  "frozen": false,
+  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+ },
+ {
+  "stage": "unknown_players",
+  "run_id": "20260808T163108Z-3a3a549",
+  "metric": "tune_match_winner_ece",
+  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+  "selected": {
+   "inactivity_half_life": 540.0,
+   "rank_seed_scale": 120.0
+  },
+  "tune_gain": 0.012586415698457625,
+  "tune_metric_value": 0.0061660383176909165,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.018752454016148543,
+   "ece_known": 0.021386321880389567,
+   "ece_debut": 0.12680259190856613,
+   "ece_stale": 0.031068961424343396
+  },
+  "frozen": true,
+  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched"
+ },
+ {
+  "stage": "unknown_players",
+  "run_id": "20260808T163323Z-3a3a549",
+  "metric": "tune_size_weighted_group_ece",
+  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+  "selected": {
+   "inactivity_half_life": 270.0,
+   "rank_seed_scale": 160.0
+  },
+  "tune_gain": 0.011894458191953679,
+  "tune_metric_value": 0.012225573659986711,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "grouped_ece": 0.02412003185194039,
+   "pooled_ece": 0.018752454016148543,
+   "ece_known": 0.021386321880389567,
+   "ece_debut": 0.12680259190856613,
+   "ece_stale": 0.031068961424343396
+  },
+  "frozen": false,
+  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
+ },
+ {
+  "stage": "unknown_players",
+  "run_id": "20260808T163537Z-3a3a549",
+  "metric": "tune_size_weighted_group_ece",
+  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+  "selected": {
+   "inactivity_half_life": 540.0,
+   "rank_seed_scale": 160.0
+  },
+  "tune_gain": 0.010619459109438439,
+  "tune_metric_value": 0.013500572742501951,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "grouped_ece": 0.02412003185194039,
+   "pooled_ece": 0.018752454016148543,
+   "ece_known": 0.021386321880389567,
+   "ece_debut": 0.12680259190856613,
+   "ece_stale": 0.031068961424343396
+  },
+  "frozen": true,
+  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
  }
 ]

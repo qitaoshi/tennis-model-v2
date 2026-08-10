@@ -5,32 +5,59 @@ decision (the four-way split), a path, a seed, or a threshold derived from
 theory / spec text. Fitted quantities live in ``fitted_params.json`` per
 ground rule 4 of MODEL_PROMPT.md.
 
-The four-way split (ground rule 1)
-----------------------------------
+RE-SPLIT of 2026-08-08 — read this before trusting any pre-2026 report
+---------------------------------------------------------------------
+The original build ran to completion: every stage gate passed, and the
+HOLDOUT backtest ran once on 2024-01-01 .. 2026-07-20. That spent the
+original holdout. The project goal then changed from "find mispriced betting
+lines" to "produce accurate match projections", and the accuracy work that
+follows (recalibration, fatigue features, recency weighting) needs an
+evaluation window that has not been used for selection.
+
+No unused window existed: the vendor data ends 2026-07-20 and the backtest
+had read all of it. The human chose, explicitly, to re-split rather than wait
+for new seasons to accrue. **The original HOLDOUT_CUTOFF of 2024-01-01 was
+moved on 2026-08-08.** The module previously said that date was permanently
+fixed; it was, for the original build, and moving it is the cost of the
+re-split, paid knowingly. See ``PRIOR_EVALUATION_WINDOWS`` below.
+
+What that costs: the 2024-01-01 .. 2026-07-20 backtest is no longer an
+unbiased out-of-sample estimate of anything fitted after 2026-08-08. Its
+recorded numbers stand as a description of the frozen original model on data
+that model had never seen — that much is still true — but they must not be
+quoted as validation of any later change.
+
+The four-way split (ground rule 1), as of 2026-08-08
+----------------------------------------------------
 The match data is TML-Database season files (``vendor/``), one per calendar
 year per tour (ATP main tour and Challenger), 2010 onward.
 
-    FIT      2010-01-01 .. 2020-12-31   parameter fitting only
-    TUNE     2021-01-01 .. 2022-06-30   hyperparameter selection, Stages 2-7
-    TEST     2023-07-01 .. 2023-12-31   pre-cutoff test, Stage 8 only, once
-    HOLDOUT  2024-01-01 ..              final backtest only
+    FIT      2010-01-01 .. 2023-12-31   parameter fitting only
+    TUNE     2024-01-01 .. 2025-06-30   hyperparameter selection
+    TEST     2025-07-01 .. 2025-12-31   pre-cutoff test, touched once
+    HOLDOUT  2026-01-01 ..              final evaluation only
 
-    burned   2022-07-01 .. 2023-06-30   spent by Stage 8's first run
+    burned   2022-07-01 .. 2023-06-30   spent by the original Stage 8's
+                                        first run; now inside FIT
 
-Stage 8 failed on its first TEST window. Per MODEL_PROMPT.md's failure
-protocol the window is burned, the TUNE/TEST boundary moves forward into what
-was held in reserve, and the fix that prompted the move was chosen without
-consulting the burned window's results. Nothing else moved — in particular
-``HOLDOUT_CUTOFF`` is exactly where it was on the day it was first written.
+FIT absorbs the original FIT, TUNE, burned window and TEST. Data spent as a
+*test* set is legitimate *fitting* data once the boundary has moved past it —
+what it can never again be is a test set, which is why the burned window
+keeps its own ``split_of`` label instead of silently becoming "fit".
 
-``HOLDOUT_CUTOFF`` IS PERMANENTLY FIXED. It never moves, including after a
-Stage 8 failure. The only boundary that may move during iteration is the
-TUNE/TEST boundary, which is what ``RESERVE`` exists to fund.
+CONTAMINATION NOTE, stated plainly: the new TUNE, TEST and HOLDOUT windows
+were all read once by the original backtest, at the aggregate level only
+(family Brier / ECE / CRPS, ablation totals). No parameter was ever fitted or
+selected against them, and no per-match result from them informed a modelling
+decision. That is far weaker contamination than a selection set, but it is
+not zero, and any 2026 result should be reported with this caveat attached
+rather than as a pristine holdout.
 
-The TEST window spans a full 12 months (Jul->Jun) so it contains the whole
-surface cycle — fall hard, Australian hard, spring clay, grass — rather than
-a single surface season. RESERVE (Jul-Dec) is hard-court-heavy; that is a
-known limitation of the contingency window, not of TEST.
+The pre-2026 windows keep a full surface cycle each; HOLDOUT 2026 covers
+January through July only, so it is hard/clay/grass with no fall hard-court
+season. Sample size on the new HOLDOUT is ~6,200 raw matches versus the
+original backtest's 24,572 — smaller, and seasonally incomplete. Both are
+limitations of the re-split, not of the model.
 
 A match's split is assigned from ``tourney_date``, the tournament START date,
 which is the only date TML records. A tournament straddling a boundary is
@@ -74,29 +101,46 @@ Split = Literal["pre_data", "fit", "tune", "burned_test", "test", "reserve",
                 "holdout"]
 
 DATA_START: date = date(2010, 1, 1)
-FIT_END: date = date(2020, 12, 31)
-TUNE_START: date = date(2021, 1, 1)
-TUNE_END: date = date(2022, 6, 30)
+FIT_END: date = date(2023, 12, 31)
+TUNE_START: date = date(2024, 1, 1)
+TUNE_END: date = date(2025, 6, 30)
 
-#: TEST windows already spent. Stage 8's first run consumed 2022-07-01 ..
-#: 2023-06-30; per MODEL_PROMPT.md's Stage 8 failure protocol that window is
-#: burned and the TUNE/TEST boundary moves forward into what was RESERVE. The
-#: HOLDOUT cutoff below did not move and never will.
+#: TEST windows already spent. The original Stage 8's first run consumed
+#: 2022-07-01 .. 2023-06-30. Both that window and the original TEST
+#: (2023-07-01 .. 2023-12-31) now sit inside FIT; the burned one keeps its own
+#: label so it stays visible that a hyperparameter was once selected on it.
 BURNED_TEST_WINDOWS: tuple[tuple[date, date], ...] = (
     (date(2022, 7, 1), date(2023, 6, 30)),
 )
 
-TEST_START: date = date(2023, 7, 1)
-TEST_END: date = date(2023, 12, 31)
-#: No reserve remains: the window is empty by construction, so ``split_of``
-#: can never return "reserve". A further Stage 8 failure cannot be answered
-#: with another replacement window inside the pre-holdout data — that is a
-#: finding to report, never a reason to move the holdout cutoff.
-RESERVE_START: date = date(2024, 1, 1)
-RESERVE_END: date = date(2024, 1, 1)
+#: Windows already read by an evaluation run, with the run that read them.
+#: Documentation only — ``split_of`` does not consult this. It exists so the
+#: contamination described in the module docstring cannot be forgotten: every
+#: window listed here has been observed at least once, so a result measured on
+#: it carries a caveat even when no parameter was fitted against it.
+PRIOR_EVALUATION_WINDOWS: tuple[tuple[date, date, str], ...] = (
+    (date(2022, 7, 1), date(2023, 6, 30),
+     "original Stage 8, first run — FAILED, window burned for selection"),
+    (date(2023, 7, 1), date(2023, 12, 31),
+     "original Stage 8, replacement run — isotonic maps selected here"),
+    (date(2024, 1, 1), date(2026, 7, 20),
+     "original HOLDOUT backtest, 2026-07-31, aggregate metrics only; "
+     "now re-split into TUNE + TEST + HOLDOUT"),
+)
 
-#: PERMANENTLY FIXED. Everything on or after this date is HOLDOUT.
-HOLDOUT_CUTOFF: date = date(2024, 1, 1)
+TEST_START: date = date(2025, 7, 1)
+TEST_END: date = date(2025, 12, 31)
+#: No reserve remains: the window is empty by construction, so ``split_of``
+#: can never return "reserve". A gate failure cannot be answered with another
+#: replacement window inside the pre-holdout data — that is a finding to
+#: report, never a reason to move the holdout cutoff again.
+RESERVE_START: date = date(2026, 1, 1)
+RESERVE_END: date = date(2026, 1, 1)
+
+#: Everything on or after this date is HOLDOUT. Moved once, on 2026-08-08,
+#: from 2024-01-01, as part of the documented re-split — see the module
+#: docstring. Fixed again from that date: it does not move for a failing gate.
+HOLDOUT_CUTOFF: date = date(2026, 1, 1)
 
 # --------------------------------------------------------------------------
 # Determinism (ground rule 9)
@@ -191,15 +235,20 @@ def demo() -> None:
     print("\nsplit_of() spot checks:")
     for d in [
         date(2012, 12, 31),
-        date(2020, 12, 31),
-        date(2021, 1, 1),
         date(2022, 6, 30),
         date(2022, 7, 1),
         date(2023, 6, 30),
-        date(2023, 7, 1),
+        date(2023, 12, 31),
         date(2024, 1, 1),
+        date(2025, 6, 30),
+        date(2025, 7, 1),
+        date(2026, 1, 1),
     ]:
         print(f"  {d} -> {split_of(d)}")
+
+    print("\nwindows already observed (documentation, not a split rule):")
+    for lo, hi, why in PRIOR_EVALUATION_WINDOWS:
+        print(f"  {lo} .. {hi}  {why}")
 
     print("\nassert_no_holdout() on a holdout date:")
     try:

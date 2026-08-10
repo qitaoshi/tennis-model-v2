@@ -88,7 +88,16 @@ class Pricer:
     """
 
     def __init__(self, as_of_date: date, fitted: dict | None = None,
-                 allow_holdout: bool = False) -> None:
+                 allow_holdout: bool = False,
+                 history_parquet: str = "matches.parquet") -> None:
+        """``history_parquet`` names the match table to replay history from.
+
+        The default stops at the holdout cutoff, which is what every
+        evaluation caller wants. Forward pricing — a fixture that has not
+        been played — needs history right up to today, so the paper-trading
+        job passes the holdout-inclusive table. It is a source-of-history
+        switch, not a change to any fitted parameter or pricing step.
+        """
         import json
 
         self.as_of_date = as_of_date
@@ -100,7 +109,7 @@ class Pricer:
                 "backtest only"
             )
 
-        m = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
+        m = pd.read_parquet(C.PROCESSED_DIR / history_parquet)
         self.history = m[m["in_scope"] & (m["date"] < as_of_date)]
 
         s2 = self.fitted["stage_2"]
@@ -279,17 +288,44 @@ class Pricer:
             return p, False
         return float(self.maps.apply(family, p)), True
 
+    def _cal_partition(self, family: str, ps: list[float]
+                       ) -> tuple[list[float], bool]:
+        """Calibrate outcomes that partition the sample space, then renormalise.
+
+        A calibration map is fitted per family against a binary outcome, so it
+        knows nothing about the fact that these particular probabilities have
+        to sum to one. Mapping each one independently breaks that: exact set
+        scores came back summing to 1.006, which prices the whole market
+        cheap. The totals ladder already had this problem and solved it by
+        clamping the over/under/push triple; this is the same fix for families
+        with more than two outcomes.
+
+        Renormalising rather than clamping because every outcome here is a
+        genuine alternative — there is no distinguished residual to absorb the
+        error into, so the error is spread in proportion.
+        """
+        qs, cal = [], False
+        for p in ps:
+            q, c = self._cal(family, p)
+            qs.append(q)
+            cal = cal or c
+        total = sum(qs)
+        if cal and total > 0:
+            qs = [q / total for q in qs]
+        return qs, cal
+
     def _selections(self, dist: MatchDistribution, spec: FormatSpec) -> list[Selection]:
         out: list[Selection] = []
 
         # --- match winner -------------------------------------------------
-        for who, p in (("A", dist.p_a), ("B", 1 - dist.p_a)):
-            q, cal = self._cal("match_winner", p)
+        qs, cal = self._cal_partition("match_winner", [dist.p_a, 1 - dist.p_a])
+        for who, q in zip(("A", "B"), qs):
             out.append(Selection("match_winner", who, q, fair_price(q), 0.0, cal))
 
         # --- set betting (exact sets) -------------------------------------
-        for (sa, sb), p in sorted(dist.sets.items()):
-            q, cal = self._cal("set_score", p)
+        scores = sorted(dist.sets.items())
+        qs, cal = self._cal_partition("set_score", [p for _, p in scores])
+        for ((sa, sb), _), q in zip(scores, qs):
             out.append(Selection("set_betting", f"{sa}-{sb}", q, fair_price(q),
                                  0.0, cal))
 
