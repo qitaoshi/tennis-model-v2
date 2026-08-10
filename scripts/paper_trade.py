@@ -808,92 +808,127 @@ def post_slack(text: str, dry_run: bool) -> None:
         print(f"WARNING: Slack rejected the post: {payload[:300]}")
 
 
+def _market_label(market: object) -> str:
+    """Short market name for Slack. The ledger keeps the full one."""
+    return {"total_games": "games", "games_handicap": "hcap"}.get(
+        str(market), str(market))
+
+
 def summary(day: date, bets: list[dict], settlements: list[dict],
             skips: dict[str, list[str]], totals: dict, run_day: int,
             board: list[dict] | None = None,
             scores: dict | None = None) -> str:
-    lines = [f"*Tennis paper trading — day {run_day} of {RUN_DAYS}* "
-             f"(run {day.isoformat()})",
-             "_Paper only. Expected outcome is flat-to-negative; this is a "
-             "forward measurement, not a strategy._",
-             "_Odds: PointsBet AU only (OddsPortal is Cloudflare-blocked from "
-             "this host). One book, not a consensus — not comparable to the "
-             "Bet365-based 2024 reports. Results from ESPN._",
-             ""]
+    # Read top to bottom, each block is skippable once the one above it is
+    # read: today's result, then today's actions, then the running totals,
+    # then the standing caveats. The caveats are not decoration — they are
+    # what stops a +2u day being read as an edge — but they are identical
+    # every day, so they sit at the bottom where they can be skimmed past
+    # rather than in front of the numbers.
+    settled_today = [s for s in settlements
+                     if str(s.get("result")) in ("win", "loss", "push")]
+    won = sum(1 for s in settled_today if s["result"] == "win")
+    day_flat = sum(float(s["pnl_flat"] or 0) for s in settlements)
+    day_kelly = sum(float(s["pnl_kelly"] or 0) for s in settlements)
 
-    if bets:
-        lines.append(f"*{len(bets)} bet(s) placed*")
-        for b in bets:
-            lines.append(
-                f"• {b['player_a']} v {b['player_b']} — {b['market']} "
-                f"{b['book_side']} {b['line']} @ {b['decimal_odds']:.2f} "
-                f"({b['bookmaker']}) · model {b['model_p']:.1%} vs price "
-                f"{1 / b['decimal_odds']:.1%} · edge {b['edge_raw']:+.1%} · "
-                f"flat {b['stake_flat']:.2f}u / kelly {b['stake_kelly']:.2f}u")
-    else:
-        lines.append("*No bets placed.*")
+    lines = [f"*Tennis paper trading — day {run_day}/{RUN_DAYS}* "
+             f"· {day.isoformat()} · _paper only_"]
+
+    # The one line to read if you read nothing else.
+    if settlements:
+        # Voids are excluded from the won/played count on purpose — the stake
+        # came back, so there was no wager to win. Naming them keeps that
+        # count from looking like it lost track of a row in the list below.
+        voided = len(settlements) - len(settled_today)
+        note = f" · {voided} void" if voided else ""
+        lines.append(f"*Yesterday:* {day_flat:+.2f}u flat · "
+                     f"{day_kelly:+.2f}u kelly · "
+                     f"{won}/{len(settled_today)} won{note}")
+    lines.append(f"*Running:* {totals['flat_pnl']:+.2f}u flat "
+                 f"({totals['flat_roi']:+.1%}) · "
+                 f"{totals['kelly_pnl']:+.2f}u kelly "
+                 f"({totals['kelly_roi']:+.1%}) · "
+                 f"{totals['n_settled']} settled, {totals['n_open']} open")
     lines.append("")
 
-    if board:
-        lines.append(f"*Board — {len(board)} match(es) priced*")
-        for m in board:
-            lines.append(f"• {m['label']}  _(bo{m['best_of']}, {m['book']}, "
-                         f"{m['quotes']} quotes)_")
-            for ln in m["lines"]:
-                lines.append(
-                    f"    {ln['market']} {ln['side']} {ln['line']} "
-                    f"@ {ln['decimal_odds']:.2f} — model {ln['model_p']:.1%} "
-                    f"vs {ln['implied']:.1%} ({ln['edge']:+.1%})")
+    if settlements:
+        lines.append(f"*Settled ({len(settlements)})*")
+        for s in settlements:
+            mark = {"win": "✅", "loss": "❌", "push": "➖",
+                    "void": "⬜"}.get(str(s["result"]), "•")
+            lines.append(
+                f"{mark} {s['player_a']} v {s['player_b']} · "
+                f"{_market_label(s['market'])} {s['book_side']} {s['line']} · "
+                f"{float(s['pnl_flat']):+.2f}u")
         lines.append("")
 
-    if settlements:
-        lines.append(f"*{len(settlements)} position(s) settled*")
-        for s in settlements:
+    if bets:
+        lines.append(f"*New bets ({len(bets)})*")
+        for b in bets:
+            capped = " _(capped)_" if b["stake_kelly"] >= KELLY_CAP else ""
             lines.append(
-                f"• {s['player_a']} v {s['player_b']} — {s['market']} "
-                f"{s['book_side']} {s['line']}: {s['result']} · "
-                f"flat {float(s['pnl_flat']):+.2f}u / "
-                f"kelly {float(s['pnl_kelly']):+.2f}u")
+                f"• {b['player_a']} v {b['player_b']} · "
+                f"{_market_label(b['market'])} {b['book_side']} {b['line']} "
+                f"@ {b['decimal_odds']:.2f}")
+            lines.append(
+                f"    edge *{b['edge_raw']:+.1%}* "
+                f"(model {b['model_p']:.0%} vs {1 / b['decimal_odds']:.0%}) · "
+                f"{b['stake_flat']:.0f}u flat / "
+                f"{b['stake_kelly']:.2f}u kelly{capped}")
+    else:
+        lines.append("*No bets today.*")
+    lines.append("")
+
+    # Every match priced, bet or not. This is the calibration denominator, so
+    # it is reported as a count with the detail folded to one line per match —
+    # the per-line breakdown lives in the ledger, which is the durable record.
+    if board:
+        word = "match" if len(board) == 1 else "matches"
+        lines.append(f"*Board — {len(board)} {word} priced*")
+        for m in board:
+            best = max(m["lines"], key=lambda x: x["edge"], default=None)
+            if best is None:
+                continue
+            lines.append(f"• {m['label']} · best {_market_label(best['market'])}"
+                         f" {best['side']} {best['line']} "
+                         f"{best['edge']:+.1%}")
         lines.append("")
 
     if scores and scores.get("n"):
-        def cmp(model: float, book: float) -> str:
-            gap = model - book
-            return (f"{model:.4f} vs book {book:.4f} "
-                    f"({'model better' if gap < 0 else 'book better'})")
-        lines.append(f"*Projection accuracy* — {scores['n']} settled "
-                     f"projection(s), every match priced")
-        lines.append(f"• Brier {cmp(scores['brier'], scores['brier_book'])}")
-        lines.append(f"• Log-loss "
-                     f"{cmp(scores['log_loss'], scores['log_loss_book'])}")
-        lines.append(f"• ECE {cmp(scores['ece'], scores['ece_book'])}")
-        lines.append("_Lower is better on all three. This is the number the "
-                     "project is judged on; the book's is flattered slightly "
-                     "by the vig in its price._")
+        def verdict(model: float, book: float) -> str:
+            return "✅ model" if model < book else "❌ book"
+        lines.append(f"*Projection accuracy* _({scores['n']} scored)_")
+        lines.append(f"• Brier {scores['brier']:.3f} vs "
+                     f"{scores['brier_book']:.3f} "
+                     f"{verdict(scores['brier'], scores['brier_book'])}")
+        lines.append(f"• Log-loss {scores['log_loss']:.3f} vs "
+                     f"{scores['log_loss_book']:.3f} "
+                     f"{verdict(scores['log_loss'], scores['log_loss_book'])}")
+        lines.append(f"• ECE {scores['ece']:.3f} vs {scores['ece_book']:.3f} "
+                     f"{verdict(scores['ece'], scores['ece_book'])}")
         lines.append("")
-
-    lines.append(
-        f"*Running* — flat: {totals['flat_pnl']:+.2f}u, bankroll "
-        f"{totals['flat_bankroll']:.2f}u (ROI {totals['flat_roi']:+.2%}) · "
-        f"half-Kelly: {totals['kelly_pnl']:+.2f}u, bankroll "
-        f"{totals['kelly_bankroll']:.2f}u (ROI {totals['kelly_roi']:+.2%}) · "
-        f"{totals['n_settled']} settled, {totals['n_open']} open")
-    lines.append(
-        f"_Model claimed {totals['ev_roi']:+.2%} EV on those same bets; "
-        f"realised flat is {totals['flat_roi']:+.2%}. The gap is the model "
-        f"overrating its own edge, not variance alone — at this sample size "
-        f"neither number means much._")
 
     n_skip = sum(len(v) for v in skips.values())
     if n_skip:
-        lines.append(f"\n*{n_skip} match(es) skipped*")
+        lines.append(f"*Skipped ({n_skip})*")
         for reason, names in skips.items():
-            shown = ", ".join(names[:4]) + ("…" if len(names) > 4 else "")
+            shown = ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
             lines.append(f"• {reason}: {len(names)} — {shown}")
+        lines.append("")
 
-    lines.append("\n_Two weeks on two markets is a very small sample. Whatever "
-                 "this PnL comes out at, it is dominated by variance and "
-                 "cannot show an edge is present or absent._")
+    # Standing caveats. Identical every day and deliberately last, but never
+    # dropped: each one blocks a specific wrong reading of the numbers above.
+    # The EV line is the exception that changes daily — it is the model's own
+    # claim scored against what happened, which is the point of the exercise.
+    lines.append("───")
+    if totals["n_settled"]:
+        lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV on the "
+                     f"settled bets; realised {totals['flat_roi']:+.1%}._")
+    lines.append(
+        "_14 days on 2 markets is dominated by variance — this cannot show "
+        "an edge either way, and flat-to-negative is the expected outcome. "
+        "Odds: PointsBet AU only, one book, not comparable to the "
+        "Bet365-based 2024 reports. Results: ESPN. Lower is better on Brier, "
+        "log-loss and ECE; the book's is flattered slightly by its vig._")
     return "\n".join(lines)
 
 
