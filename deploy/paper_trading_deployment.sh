@@ -33,12 +33,24 @@ CRON_TIMEZONE="${CRON_TIMEZONE:-UTC}"
 MOUNT=/workspace/repo
 
 api() {  # api <method> <path> [body-on-stdin]
-  curl --fail-with-body -sS -X "$1" "https://api.anthropic.com/v1/$2" \
+  # The response body carries the reason a request was rejected, and a bare
+  # `curl --fail` throws it away — a 400 with no message is unactionable.
+  # Capture status and body separately and print the body on failure.
+  local out status
+  out=$(curl -sS -w '\n%{http_code}' -X "$1" "https://api.anthropic.com/v1/$2" \
     -H "x-api-key: $ANTHROPIC_API_KEY" \
     -H "anthropic-version: 2023-06-01" \
     -H "anthropic-beta: managed-agents-2026-04-01" \
     -H "content-type: application/json" \
-    ${3+--data @-}
+    ${3+--data @-})
+  status=${out##*$'\n'}
+  out=${out%$'\n'*}
+  if [[ $status != 2* ]]; then
+    echo "FAILED $1 /v1/$2 -> HTTP $status" >&2
+    echo "$out" | jq . >&2 2>/dev/null || echo "$out" >&2
+    return 1
+  fi
+  printf '%s' "$out"
 }
 
 # --- environment ------------------------------------------------------------
@@ -47,6 +59,18 @@ api() {  # api <method> <path> [body-on-stdin]
 # time, and Playwright downloads its browser build on first install. The Slack
 # credential below is separately scoped to slack.com, so the token cannot be
 # substituted into a request to anywhere else.
+find_by_name() {  # find_by_name <collection> <name-field> <name>
+  api GET "$1?limit=100" 2>/dev/null \
+    | jq -r --arg n "$3" ".data[]? | select(.$2 == \$n) | .id" | head -1
+}
+
+# Reruns are expected — the first attempt can fail late, at the deployment or
+# on billing. Reuse anything already created rather than leaving a trail of
+# duplicate environments and vaults behind each attempt.
+ENVIRONMENT_ID=$(find_by_name environments name "tennis-paper-trading")
+if [[ -n $ENVIRONMENT_ID ]]; then
+  echo "environment: $ENVIRONMENT_ID (reused)"
+else
 ENVIRONMENT_ID=$(api POST environments body <<'JSON' | jq -er '.id'
 {
   "name": "tennis-paper-trading",
@@ -62,12 +86,27 @@ ENVIRONMENT_ID=$(api POST environments body <<'JSON' | jq -er '.id'
 JSON
 )
 echo "environment: $ENVIRONMENT_ID"
+fi
 
 # --- vault: the Slack token -------------------------------------------------
+VAULT_ID=$(find_by_name vaults display_name "tennis paper trading")
+if [[ -n $VAULT_ID ]]; then
+  echo "vault: $VAULT_ID (reused)"
+else
 VAULT_ID=$(api POST vaults body <<'JSON' | jq -er '.id'
 {"display_name": "tennis paper trading"}
 JSON
 )
+fi
+# A credential key is unique per vault and a duplicate returns 409, so a rerun
+# rotates the stored value in place rather than adding a second one.
+CREDENTIAL_ID=$(api GET "vaults/$VAULT_ID/credentials" 2>/dev/null \
+  | jq -r '.data[]? | select(.auth.secret_name == "SLACK_BOT_TOKEN") | .id' | head -1)
+if [[ -n $CREDENTIAL_ID ]]; then
+api POST "vaults/$VAULT_ID/credentials/$CREDENTIAL_ID" body >/dev/null <<JSON
+{"auth": {"type": "environment_variable", "secret_value": "$SLACK_BOT_TOKEN"}}
+JSON
+else
 api POST "vaults/$VAULT_ID/credentials" body >/dev/null <<JSON
 {
   "display_name": "Slack bot token",
@@ -80,6 +119,7 @@ api POST "vaults/$VAULT_ID/credentials" body >/dev/null <<JSON
   }
 }
 JSON
+fi
 echo "vault: $VAULT_ID"
 
 # --- agent ------------------------------------------------------------------
@@ -88,6 +128,10 @@ echo "vault: $VAULT_ID"
 # which is deterministic and reviewable. The agent runs it, reconciles the
 # names it could not resolve, judges whether the data looks wrong, and writes
 # the summary in readable prose.
+AGENT_ID=$(find_by_name agents name "Tennis paper trading")
+if [[ -n $AGENT_ID ]]; then
+  echo "agent: $AGENT_ID (reused)"
+else
 AGENT_ID=$(api POST agents body <<'JSON' | jq -er '.id'
 {
   "name": "Tennis paper trading",
@@ -104,6 +148,7 @@ AGENT_ID=$(api POST agents body <<'JSON' | jq -er '.id'
 JSON
 )
 echo "agent: $AGENT_ID"
+fi
 
 # --- deployment -------------------------------------------------------------
 read -r -d '' DAILY_TASK <<TASK || true

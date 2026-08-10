@@ -1,0 +1,80 @@
+# Daily paper-trading run, on GitHub's runners rather than a laptop.
+#
+# This replaces the Managed Agents deployment. Every step that decides money
+# already lives in scripts/paper_trade.py, which posts to Slack itself; the
+# agent was only writing prose and flagging oddities, so dropping it costs
+# judgment commentary and nothing else. The skip reasons and the absurd-edge
+# guard still reach Slack.
+name: paper trade
+
+on:
+  schedule:
+    # 09:00 UTC. Deliberately not a local wall clock: a time skipped by a
+    # spring-forward never fires and one repeated by a fall-back fires twice,
+    # and a fourteen-day run cannot absorb either.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run the full path without writing the ledger or posting"
+        type: boolean
+        default: false
+
+# The ledger is append-only and committed back to this repo. Two runs writing
+# at once would race on that commit.
+concurrency:
+  group: paper-trade
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy pyarrow scipy beautifulsoup4 lxml tabulate \
+                      playwright 'oddsharvester==0.8.0'
+          python -m playwright install --with-deps chromium
+
+      - name: Verify the arithmetic before trusting it with money
+        run: python -m scripts.paper_trade --self-check
+
+      - name: Rehearse the whole chain on a cached match
+        run: python -m scripts.paper_trade --rehearse
+
+      - name: Run the daily job
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python -m scripts.paper_trade --dry-run
+          else
+            python -m scripts.paper_trade
+          fi
+
+      - name: Commit the ledger
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          if [ -z "$(git status --porcelain paper/)" ]; then
+            echo "no ledger change today"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Only paper/. Nothing else this job touches belongs in a commit,
+          # and a past ledger row is never amended — settlement appends.
+          git add paper/
+          git commit -m "paper trading: $(date -u +%Y-%m-%d)"
+          git push

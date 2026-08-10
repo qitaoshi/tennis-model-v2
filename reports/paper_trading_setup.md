@@ -145,14 +145,26 @@ wrong number.
 
 ## Where it runs
 
-**Chosen: a private GitHub repo plus a Managed Agents scheduled deployment.**
-The alternative was launchd on the Mac: no new infrastructure and nothing
-leaving the machine, but it only fires when the laptop is awake and online,
-which over fourteen days means missed days. The forward window is the whole
-point of the exercise, so unattended execution won.
+**Chosen: GitHub Actions on a private repo**
+(`.github/workflows/paper-trade.yml`), on a 09:00 UTC cron.
 
-`deploy/paper_trading_deployment.sh` creates the environment, the vault, the
-agent and the deployment. Costs and caveats of this path:
+The first choice was a Managed Agents scheduled deployment, and the setup
+script for it is still here (`deploy/paper_trading_deployment.sh`) and still
+works. It was dropped for cost: Managed Agents bills per run against API
+credit, and this job does not need an agent. Every step that decides money is
+already deterministic and in `scripts/paper_trade.py`, which posts to Slack
+itself. The agent was doing three things — writing the summary in prose,
+reconciling unmatched player names, and flagging odd-looking data — and only
+the first is genuinely lost. Unresolvable names were always going to be
+skipped rather than guessed, and the absurd-edge guard is in the script. The
+Slack summary is now assembled by the script and still carries the skip counts
+and reasons.
+
+launchd on the Mac was the other free option and lost for the original reason:
+it only fires when the laptop is awake and online, which over fourteen days
+means missed days. The forward window is the whole point.
+
+Costs and caveats of running on GitHub:
 
 - The repo goes to GitHub, including `fitted_params.json` and about 11 MB of
   vendored match data. `.gitignore` now tracks exactly three files under
@@ -160,23 +172,29 @@ agent and the deployment. Costs and caveats of this path:
   `calibration_maps.pkl` — because the sandbox mounts the repo and the pricer
   cannot run without them. Everything else under `data/processed/` stays out.
   **Make the repo private.**
-- **Slack delivery is a bot token, not an incoming webhook.** Vault secrets
-  are substituted at egress into headers or the request body, and a webhook
-  keeps its secret in the URL path, where nothing substitutes it. The script
-  supports both transports and prefers the bot token when
-  `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` are set; `SLACK_WEBHOOK_URL` still
-  works for local runs. No secret is committed either way.
-- **Sandboxes do not share a filesystem between sessions**, so the ledger has
-  to be committed back to the repo at the end of every run. The agent does
-  that through the GitHub MCP. An uncommitted ledger is a lost day.
-- **Unverified: whether headless Chromium can drive OddsPortal from the cloud
-  sandbox.** The environment installs Playwright and networking is
-  unrestricted, but this has not been executed there. Trigger one manual run
-  and confirm before trusting the schedule — the command is printed by the
-  setup script.
-- The schedule defaults to 09:00 **UTC** rather than a local wall clock: a
-  time skipped by a spring-forward never fires and one repeated by a
-  fall-back fires twice, and a fourteen-day run cannot absorb either.
+- **Free at this volume.** A private repo gets 2,000 Actions minutes a month;
+  fourteen runs at roughly fifteen minutes is about 200.
+- **Two repository secrets**, `SLACK_BOT_TOKEN` and `SLACK_CHANNEL`. The
+  script prefers the bot token when both are set and falls back to
+  `SLACK_WEBHOOK_URL` for local runs. No secret is committed either way.
+  (The bot token, rather than an incoming webhook, was originally forced by
+  the Managed Agents sandbox — vault secrets substitute at egress into headers
+  or the body, and a webhook keeps its secret in the URL path. It is kept
+  because it also works everywhere else.)
+- **The runner's filesystem is discarded**, so the workflow commits
+  `paper/` back to the repo at the end of every run. An uncommitted ledger is
+  a lost day. The commit step adds `paper/` only and never amends.
+- **Unverified: whether headless Chromium can drive OddsPortal from a GitHub
+  runner.** OddsPortal sits behind Cloudflare and datacentre IPs are the ones
+  most likely to be challenged. This is the single biggest open risk in the
+  whole setup. Trigger the workflow manually with `dry_run: true` and confirm
+  before trusting the schedule; if it is blocked, launchd on the Mac is the
+  fallback, at the cost of missed days.
+- The schedule is 09:00 **UTC** rather than a local wall clock: a time skipped
+  by a spring-forward never fires and one repeated by a fall-back fires twice,
+  and a fourteen-day run cannot absorb either.
+- The workflow runs `--self-check` and `--rehearse` before the live job, so a
+  broken build fails before it can write a ledger row.
 
 ## Reading the result at the end
 
