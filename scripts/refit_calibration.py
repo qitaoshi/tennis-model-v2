@@ -97,6 +97,38 @@ def _score(maps: RC.CalibrationMaps, samples: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+#: A map is degenerate if it answers a wide stretch of its input with a single
+#: number: saturated at 0/1 (certainty from a handful of matches) or flat
+#: anywhere (the input is being ignored). Measured on a grid rather than from
+#: the fitted knots so it applies to every method the same way.
+DEGENERATE_GRID = np.linspace(0.02, 0.98, 49)
+#: Fraction of the grid that may map into the saturated band before the map is
+#: rejected. Some saturation at the very edges is normal and harmless.
+MAX_SATURATED_FRAC = 0.10
+#: The longest run of identical outputs tolerated, as a fraction of the grid.
+MAX_FLAT_FRAC = 0.25
+
+
+def _is_degenerate(maps: RC.CalibrationMaps) -> bool:
+    """True if any family's map saturates or flatlines across the grid."""
+    for fam in FAMILIES:
+        if fam not in maps.maps:
+            continue
+        out = np.asarray(maps.apply(fam, DEGENERATE_GRID), dtype=float)
+        sat = ((out <= 1e-6) | (out >= 1 - 1e-6)).mean()
+        if sat > MAX_SATURATED_FRAC:
+            return True
+        # Longest constant run, which catches a map collapsed to one value
+        # even when that value is nowhere near 0 or 1.
+        longest = best_run = 1
+        for a, b in zip(out, out[1:]):
+            best_run = best_run + 1 if abs(a - b) < 1e-9 else 1
+            longest = max(longest, best_run)
+        if longest / len(out) > MAX_FLAT_FRAC:
+            return True
+    return False
+
+
 def _tail_table(maps: RC.CalibrationMaps, fam: str) -> pd.DataFrame:
     """What each candidate does to a longshot, which is the point of all this."""
     grid = np.array([0.02, 0.05, 0.08, 0.12, 0.16, 0.20, 0.30, 0.50])
@@ -153,7 +185,34 @@ def select() -> None:
     # SELECTION RULE, fixed before the numbers were seen: calibration is what
     # these maps exist for, so ECE decides. Log-loss breaks a tie and also
     # guards against an ECE win bought by destroying sharpness.
-    grid = grid.sort_values(["tune_ece", "tune_logloss"]).reset_index(drop=True)
+    #
+    # Amended 2026-08-10, after the first run of this script shipped a map
+    # that was degenerate rather than merely imperfect: a candidate is only
+    # eligible if no family saturates. Isotonic regression is a step
+    # function, so a top bin holding few same-resolving samples returns
+    # exactly 1.0 — the fair price becomes 1.00, every quote above evens
+    # reads as free money, and one loss at p=1 dominates log-loss for the
+    # whole run. `totals_under_mid` did this above p≈0.68 and
+    # `totals_under_low` collapsed to a constant 0.50.
+    #
+    # This is a constraint on what counts as a usable map, not a new metric
+    # chosen to favour a candidate: it rejects on shape alone and is applied
+    # before any ECE is compared. Ranking among the survivors is unchanged.
+    grid["degenerate"] = [
+        _is_degenerate(fitted_maps[(m, None if w == "all" else int(w))])
+        for m, w in zip(grid["method"], grid["window_years"])]
+    usable = grid[~grid["degenerate"]]
+    if usable.empty:
+        raise SystemExit(
+            "every candidate produced a saturated or constant map; refusing "
+            "to ship one. Widen WINDOWS or revisit the sampling before "
+            "trusting any of these.")
+    if len(usable) < len(grid):
+        dropped = grid[grid["degenerate"]]
+        print(f"\n{len(dropped)} candidate(s) rejected as degenerate: "
+              + ", ".join(f"{r.method}/{r.window_years}"
+                          for r in dropped.itertuples()))
+    grid = usable.sort_values(["tune_ece", "tune_logloss"]).reset_index(drop=True)
     best = grid.iloc[0]
     sel_method = str(best["method"])
     sel_window = None if best["window_years"] == "all" else int(best["window_years"])
@@ -294,8 +353,41 @@ def evaluate_test() -> None:
     print(f"\nall families improved on ECE: {improved}")
 
 
+def demo() -> None:
+    """The degeneracy screen, asserted (ground rule 10).
+
+    Both failure modes are real ones this screen was written for: the first
+    run of this script shipped `totals_under_high` saturated across 67% of
+    its range and `totals_under_low` flat at 0.50 across 59% of it.
+    """
+    class _Const:
+        def __init__(self, v): self.v = v
+        def predict(self, x): return np.full(np.shape(x), self.v)
+
+    class _Step:
+        def predict(self, x): return np.where(np.asarray(x) < 0.5, 0.0, 1.0)
+
+    class _Identity:
+        def predict(self, x): return np.asarray(x, dtype=float)
+
+    def maps_of(obj):
+        return RC.CalibrationMaps({"match_winner": obj}, {"match_winner": 1})
+
+    assert _is_degenerate(maps_of(_Step())), "saturation must be rejected"
+    assert _is_degenerate(maps_of(_Const(0.5))), "a flat map must be rejected"
+    assert not _is_degenerate(maps_of(_Identity())), \
+        "a monotone non-saturating map must survive"
+    # An empty map set is the uncalibrated baseline, not a degenerate map.
+    assert not _is_degenerate(RC.CalibrationMaps({}, {}))
+    print("refit_calibration degeneracy self-check passed")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--evaluate-test", action="store_true")
+    ap.add_argument("--self-check", action="store_true")
     a = ap.parse_args()
-    evaluate_test() if a.evaluate_test else select()
+    if a.self_check:
+        demo()
+    else:
+        evaluate_test() if a.evaluate_test else select()

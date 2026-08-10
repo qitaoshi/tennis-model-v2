@@ -41,6 +41,17 @@ from model import venue as V
 from model.engine import MatchDistribution, fair_price
 from model.rules import FormatSpec, rules_for
 
+#: Isotonic regression is a step function, so when the top or bottom bin of a
+#: fitted map holds few samples that all resolved the same way, the map
+#: returns exactly 0 or 1 — certainty inferred from a handful of matches.
+#: `reports/calibration_refit.md` documents this for the tail of the original
+#: match_winner map; the totals maps do it at the head. A calibrated 1.0 makes
+#: the fair price 1.00, so every quote above evens reads as free money and the
+#: bet selector fires on all of them. Not a fitted quantity — a floor on what
+#: the engine is willing to call certain, so it belongs here and not in
+#: fitted_params.json.
+CAL_FLOOR = 0.02
+
 
 @dataclass
 class Selection:
@@ -286,7 +297,8 @@ class Pricer:
     def _cal(self, family: str, p: float) -> tuple[float, bool]:
         if self.maps is None or family not in self.maps.maps:
             return p, False
-        return float(self.maps.apply(family, p)), True
+        return float(np.clip(self.maps.apply(family, p),
+                             CAL_FLOOR, 1.0 - CAL_FLOOR)), True
 
     def _cal_partition(self, family: str, ps: list[float]
                        ) -> tuple[list[float], bool]:
@@ -418,8 +430,36 @@ def price_match(player_a: str, player_b: str, tournament_id: str, year: int,
         player_a, player_b, tournament_id, year, surface, venue)
 
 
+def _check_cal_clamp() -> None:
+    """A calibration map may not hand the engine a certainty.
+
+    An isotonic map whose top bin holds a few same-resolving samples returns
+    exactly 1.0. That makes the fair price 1.00, so every quote above evens
+    scores as free money and the bet selector takes all of them; one loss at
+    p=1 then dominates log-loss for the whole run. The clamp in `_cal` is the
+    last line of defence, so it is asserted against a map that is entirely
+    saturated by construction.
+    """
+    class _Saturated:
+        def predict(self, x):
+            return np.where(np.asarray(x) < 0.5, 0.0, 1.0)
+
+    pricer = object.__new__(Pricer)
+    pricer.maps = RC.CalibrationMaps({"match_winner": _Saturated()},
+                                     {"match_winner": 1})
+    lo, _ = pricer._cal("match_winner", 0.01)
+    hi, _ = pricer._cal("match_winner", 0.99)
+    assert lo == CAL_FLOOR, lo
+    assert abs(hi - (1.0 - CAL_FLOOR)) < 1e-12, hi
+    # An unmapped family still passes through untouched, clamp included.
+    raw, cal = pricer._cal("no_such_family", 0.999)
+    assert raw == 0.999 and not cal, (raw, cal)
+    print("calibration clamp self-check passed")
+
+
 def demo() -> None:
     """Worked example (ground rule 10)."""
+    _check_cal_clamp()
     m = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
     sample = m[(m["split"] == "tune") & m["in_scope"]
                & m["outcome"].eq("completed")].iloc[500]
