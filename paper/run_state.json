@@ -1,0 +1,17 @@
+{
+  "start_date": "2026-08-10",
+  "run_days": 14,
+  "bankroll_start": 100.0,
+  "flat_stake": 2.0,
+  "kelly_scale": 0.5,
+  "kelly_cap": 5.0,
+  "markets": [
+    "total_games",
+    "games_handicap"
+  ],
+  "fingerprint": {
+    "fitted_params": "ad7ad9fc35576cdf",
+    "calibration_maps": "588cf1efeb66e0bc",
+    "staking": "flat=2.0 scale=0.5 cap=5.0 markets=games_handicap,total_games"
+  }
+}
