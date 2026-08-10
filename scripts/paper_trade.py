@@ -32,6 +32,7 @@ Run:  python -m scripts.paper_trade --dry-run
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -554,6 +555,46 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def model_fingerprint() -> dict:
+    """Hash of everything that decides a projection, plus the staking rule.
+
+    A forward test is only evidence if the thing being tested held still for
+    the whole window. Swap a calibration map on day 6 and days 1-5 measure a
+    model that no longer exists — silently, because nothing in the output
+    would look different.
+    """
+    out = {}
+    for label, path in (("fitted_params", C.FITTED_PARAMS_PATH),
+                        ("calibration_maps", RC.MAPS_PATH)):
+        out[label] = (hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+                      if path.exists() else "absent")
+    out["staking"] = (f"flat={FLAT_STAKE} scale={KELLY_SCALE} "
+                      f"cap={KELLY_CAP} markets={','.join(sorted(MARKETS))}")
+    return out
+
+
+def check_unchanged(state: dict) -> None:
+    """Refuse to add to a ledger whose model or staking rule has moved.
+
+    Loud on purpose. The failure this prevents is not a crash — it is a
+    fortnight of rows that look fine and mean nothing. Continuing after a
+    real change requires a NEW ledger, per the module docstring, not a
+    quieter check.
+    """
+    was = state.get("fingerprint")
+    if not was:
+        return
+    now = model_fingerprint()
+    moved = [k for k, v in now.items() if was.get(k) != v]
+    if moved:
+        raise SystemExit(
+            "model or staking rule changed mid-run: "
+            + ", ".join(f"{k} {was.get(k)!r} -> {now[k]!r}" for k in moved)
+            + f"\nThe run started {state.get('start_date')} and every row "
+              "since assumes these held still. Start a new ledger rather "
+              "than continuing this one.")
+
+
 def calibration_scores(ledger: pd.DataFrame) -> dict:
     """Brier, log-loss and ECE on settled board rows, model against book.
 
@@ -766,6 +807,7 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
 def run(today: date, dry_run: bool) -> str:
     ledger = _load_ledger()
     state = json.loads(STATE.read_text()) if STATE.exists() else {}
+    check_unchanged(state)
     start = date.fromisoformat(state.get("start_date", today.isoformat()))
     run_day = (today - start).days + 1
 
@@ -940,7 +982,9 @@ def run(today: date, dry_run: bool) -> str:
                                      "flat_stake": FLAT_STAKE,
                                      "kelly_scale": KELLY_SCALE,
                                      "kelly_cap": KELLY_CAP,
-                                     "markets": list(MARKETS)}, indent=2))
+                                     "markets": list(MARKETS),
+                                     "fingerprint": model_fingerprint()},
+                                    indent=2))
     return text
 
 
@@ -1119,6 +1163,20 @@ def demo() -> None:
     assert sc["n"] == 1, sc
     assert abs(sc["brier"] - (0.7 - 1.0) ** 2) < 1e-9, sc
     assert calibration_scores(book)["n"] == 0, "picks must not be scored"
+
+    # The mid-run guard: an unchanged model passes, a moved one stops the run
+    # rather than quietly appending rows that measure something else. The
+    # first run has no fingerprint yet and must not be blocked by one.
+    fp = model_fingerprint()
+    check_unchanged({})
+    check_unchanged({"start_date": "2026-08-10", "fingerprint": fp})
+    try:
+        check_unchanged({"start_date": "2026-08-10",
+                         "fingerprint": {**fp, "calibration_maps": "stale"}})
+    except SystemExit as exc:
+        assert "changed mid-run" in str(exc), exc
+    else:
+        raise AssertionError("a changed calibration map must stop the run")
     print("paper_trade self-check passed")
 
 
