@@ -978,5 +978,53 @@
   },
   "frozen": true,
   "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
+ },
+ {
+  "stage": "calibration_refit",
+  "run_id": "20260810T054645Z-52c7113",
+  "metric": "tune_expected_calibration_error",
+  "baseline": "isotonic on all history (the shipped incumbent)",
+  "selected": {
+   "method": "isotonic",
+   "window_years": 8
+  },
+  "tune_gain": 0.00119273795496873,
+  "tune_metric_value": 0.01078372887224066,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.01949644834546446,
+   "tune_logloss": 0.5413801556616393,
+   "tune_brier": 0.18421738836567278
+  },
+  "frozen": true,
+  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
+ },
+ {
+  "stage": "calibration_refit",
+  "run_id": "20260810T084737Z-b41e484",
+  "metric": "tune_expected_calibration_error",
+  "baseline": "isotonic on all history (the shipped incumbent)",
+  "selected": {
+   "method": "platt",
+   "window_years": 8
+  },
+  "tune_gain": -0.0023892221687823335,
+  "tune_metric_value": 0.014365688995991723,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.01949644834546446,
+   "tune_logloss": 0.5413801556616393,
+   "tune_brier": 0.18421738836567278
+  },
+  "frozen": true,
+  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
  }
 ]

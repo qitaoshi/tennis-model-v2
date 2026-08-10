@@ -212,6 +212,10 @@ def select() -> None:
         print(f"\n{len(dropped)} candidate(s) rejected as degenerate: "
               + ", ".join(f"{r.method}/{r.window_years}"
                           for r in dropped.itertuples()))
+    # Keep the unscreened grid: the incumbent baseline below is looked up in
+    # it by name, and the incumbent may itself have been rejected — as it was
+    # on 2026-08-10, when every isotonic and blended candidate saturated.
+    all_candidates = grid
     grid = usable.sort_values(["tune_ece", "tune_logloss"]).reset_index(drop=True)
     best = grid.iloc[0]
     sel_method = str(best["method"])
@@ -232,8 +236,10 @@ def select() -> None:
     print(f"refit on {len(full_sl):,} FIT+TUNE matches "
           f"({full_sl['t'].min()}..{full_sl['t'].max()}), saved to {RC.MAPS_PATH}")
 
-    incumbent = grid[(grid["method"] == "isotonic") & (grid["window_years"] == "all")]
+    incumbent = all_candidates[(all_candidates["method"] == "isotonic")
+                               & (all_candidates["window_years"] == "all")]
     gain = float(incumbent["tune_ece"].iloc[0] - best["tune_ece"])
+    incumbent_degenerate = bool(incumbent["degenerate"].iloc[0])
     ledger.append(
         stage="calibration_refit", metric="tune_expected_calibration_error",
         selected={"method": sel_method, "window_years": best["window_years"]},
@@ -242,7 +248,15 @@ def select() -> None:
         tune_metric_value=float(best["tune_ece"]),
         baselines=baseline, frozen=True,
         notes="selected on the post-re-split TUNE (2024-01-01..2025-06-30); "
-              "TEST and HOLDOUT not consulted")
+              "TEST and HOLDOUT not consulted. "
+              + (f"{int(all_candidates['degenerate'].sum())} of "
+                 f"{len(all_candidates)} candidates were rejected as "
+                 "degenerate (saturated or flat) before ranking"
+                 + (", the incumbent among them, so `tune_gain` compares "
+                    "against a baseline that is not itself shippable"
+                    if incumbent_degenerate else "")
+                 if bool(all_candidates["degenerate"].any())
+                 else "no candidate was rejected as degenerate"))
 
     lines = [
         "# Calibration refit — method and fitting window\n",
