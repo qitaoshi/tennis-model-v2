@@ -34,22 +34,51 @@ unclear.
    today's, sizes both staking schemes, appends to `paper/ledger.csv` and
    posts its own summary to Slack.
 
-3. Read the script's output for skipped matches. For anything skipped as
-   "unknown or ambiguous player", check whether it is a real reconciliation
-   failure: look the player up in `data/processed/matches_with_holdout.parquet`
-   and read `reports/unknown_players.md` for why this model is overconfident
-   about players it does not know. Report what you found in a short follow-up
-   Slack message. Do NOT edit the resolver or force a match — a wrong player
-   id is worse than no bet.
+3. Resolve names, so the same fixture is not skipped again tomorrow.
+
+   Read `paper/unresolved_names.json`. Each entry is an OddsPortal display
+   name the resolver could not match, with candidate model players. For each
+   one, decide whether it is genuinely the same person.
+
+   Confirm before you write anything. Check
+   `data/processed/matches_with_holdout.parquet` for the candidate's
+   `winner_name` / `loser_name` spellings and recent matches, and satisfy
+   yourself the surname and given-name initial actually agree. Read
+   `reports/unknown_players.md` for why this model is overconfident about
+   players it does not know.
+
+   Only when a name resolves to exactly ONE player beyond doubt, add it to
+   `paper/player_aliases.json`:
+
+       {
+         "Alcaraz Garfia C.": {
+           "player_id": "A0E2",
+           "model_name": "Carlos Alcaraz",
+           "added": "2026-08-11",
+           "reason": "OddsPortal prints both surnames; sole active match"
+         }
+       }
+
+   Rules for that file, no exceptions:
+   - One player only. If two candidates are plausible, add NOTHING and say so
+     in Slack. A wrong id prices the wrong player, which is worse than no bet.
+   - Never remove or overwrite an existing entry.
+   - Never edit `scripts/paper_trade.py` to force a match. The resolver is not
+     yours to change mid-run; the alias file is data, and it shows in a diff.
+   - An alias only affects FUTURE picks. Never revisit a past ledger row
+     because a name resolved later.
+
+   Say in Slack which aliases you added and which you refused, and why.
 
 4. Sanity-check the day: a fixture that was on yesterday's board and has
    vanished, a market with no lines at all, a price implying an edge far
    outside anything this model has shown. Flag it in that same Slack message.
    Flag it; do not correct it.
 
-5. Commit `paper/ledger.csv` and `paper/run_state.json` to the default branch,
-   message "paper trading: <today's date in YYYY-MM-DD>". Commit only those
-   two files. Never amend, never force-push, never edit an existing ledger
+5. Commit `paper/ledger.csv`, `paper/run_state.json`,
+   `paper/player_aliases.json` and `paper/unresolved_names.json` to the
+   default branch, message "paper trading: <today's date in YYYY-MM-DD>".
+   Commit only files under `paper/`. Never amend, never force-push, never edit an existing ledger
    row — settlement appends a new row. If the push to the default branch is
    rejected, push to `claude/paper-ledger` instead and say so in Slack, so the
    ledger stays in one place rather than being split silently.
@@ -69,5 +98,15 @@ Rules that override anything else in this prompt:
   is far too small a sample to show an edge either way. Never write a summary
   that implies otherwise.
 
-If the scrape fails outright, post that to Slack, commit nothing, and stop. A
-missed day is a gap in the record, which is honest. A guessed day is not.
+Handling failures:
+
+- OddsPortal sits behind Cloudflare and this run comes from a datacentre IP.
+  If the scrape returns nothing, retry the job ONCE. If it fails again, post
+  what the error actually was to Slack — say plainly whether it looks like a
+  block, a timeout, or an empty board, since an empty board is a normal quiet
+  day and a block is not — then commit nothing and stop.
+- If settlement cannot reach a played match, the script voids it and returns
+  the stake. Leave that alone; do not settle it by hand from another source.
+- Never retry by weakening a check, widening a threshold, or editing the
+  script. A missed day is a gap in the record, which is honest. A guessed day
+  is not.

@@ -61,6 +61,13 @@ RUN_DAYS = 14
 PAPER_DIR = C.REPO_ROOT / "paper"
 LEDGER = PAPER_DIR / "ledger.csv"
 STATE = PAPER_DIR / "run_state.json"
+# Curated OddsPortal display name -> model player id. Reviewed and committed,
+# so every entry is visible in a diff. Only ever affects FUTURE picks: a past
+# ledger row is never revisited because a name was resolved later.
+ALIASES = PAPER_DIR / "player_aliases.json"
+# Written fresh each run: the names that could not be resolved, with the
+# model players that might match. A work list, not a decision.
+UNRESOLVED = PAPER_DIR / "unresolved_names.json"
 
 LEDGER_COLUMNS = [
     "row_type", "ts_utc", "run_date", "match_key", "match_link", "league_slug",
@@ -196,6 +203,8 @@ class Reference:
 
     players: dict[str, list[tuple[frozenset, str]]]
     tournaments: dict[str, tuple[str, str]]
+    aliases: dict[str, str]
+    known_ids: set[str]
 
     @classmethod
     def build(cls, as_of: date, active_years: int = 2) -> "Reference":
@@ -220,20 +229,53 @@ class Reference:
         for row in m.sort_values("date").itertuples(index=False):
             tourns[_norm(row.tourney_name)] = (str(row.tourney_code),
                                                str(row.surface))
-        return cls(players, tourns)
+        aliases = {}
+        if ALIASES.exists():
+            raw = json.loads(ALIASES.read_text())
+            aliases = {_norm(k): str(v["player_id"]) if isinstance(v, dict)
+                       else str(v) for k, v in raw.items()}
+        ids = set(m["winner_id"].astype(str)) | set(m["loser_id"].astype(str))
+        return cls(players, tourns, aliases, ids)
 
     def player(self, display_name: str) -> str | None:
         """Resolve one OddsPortal display name to a model player id.
 
+        The curated alias file wins, then the automatic match on given-name
+        initial plus a shared surname token.
+
         Ambiguity is left unresolved rather than guessed: a name compatible
         with two active players returns None and the match is skipped. The
         model is already overconfident about players it does not know
-        (`reports/unknown_players.md`), so a wrong id is worse than no bet.
+        (`reports/unknown_players.md`), so a wrong id is worse than no bet —
+        which is also why an alias is only honoured when its player id exists
+        in the match table. A typo in the alias file must fail loudly as a
+        skip, not quietly price the wrong player.
         """
+        alias = self.aliases.get(_norm(display_name))
+        if alias:
+            return alias if alias in self.known_ids else None
         initial, surnames = _keys(display_name, odds_style=True)
         hits = {pid for known, pid in self.players.get(initial, ())
                 if known & surnames}
         return hits.pop() if len(hits) == 1 else None
+
+    def candidates(self, display_name: str, limit: int = 6) -> list[dict]:
+        """Plausible model players for a name the resolver could not match.
+
+        This is the work list handed to whoever reviews unresolved names. It
+        proposes; it never decides. Anything acted on has to be written into
+        the alias file explicitly, where it shows up in a diff.
+        """
+        _, surnames = _keys(display_name, odds_style=True)
+        out = []
+        for initial, entries in self.players.items():
+            for known, pid in entries:
+                shared = known & surnames
+                if shared:
+                    out.append({"player_id": pid, "initial": initial,
+                                "shared_surname_tokens": sorted(shared),
+                                "model_name_tokens": sorted(known)})
+        return out[:limit]
 
     def tournament(self, league_name: str) -> tuple[str, str] | None:
         """Resolve an OddsPortal league name to (tourney_code, surface)."""
@@ -601,6 +643,7 @@ def run(today: date, dry_run: bool) -> str:
                        history_parquet="matches_with_holdout.parquet")
 
     skips: dict[str, list[str]] = {}
+    unresolved: dict[str, dict] = {}
     bets: list[dict] = []
     bankroll_kelly = totals["kelly_bankroll"]
     already = set(ledger[ledger["row_type"] == "pick"]["match_key"] + "|"
@@ -615,6 +658,14 @@ def run(today: date, dry_run: bool) -> str:
         id_a = ref.player(rec.get("home_team", ""))
         id_b = ref.player(rec.get("away_team", ""))
         if not id_a or not id_b:
+            for who, resolved in ((rec.get("home_team", ""), id_a),
+                                  (rec.get("away_team", ""), id_b)):
+                if not resolved and who:
+                    unresolved[who] = {
+                        "odds_name": who,
+                        "seen_on": match_day(rec, tomorrow).isoformat(),
+                        "example_match": label,
+                        "candidates": ref.candidates(who)}
             skip("unknown or ambiguous player")
             continue
         resolved = ref.tournament(rec.get("league_name", ""))
@@ -670,6 +721,15 @@ def run(today: date, dry_run: bool) -> str:
             })
 
     _append(bets, dry_run)
+    if dry_run:
+        print(f"[dry-run] would write {len(unresolved)} unresolved name(s) "
+              f"to {UNRESOLVED}")
+    else:
+        PAPER_DIR.mkdir(parents=True, exist_ok=True)
+        UNRESOLVED.write_text(json.dumps(
+            {"run_date": today.isoformat(),
+             "names": sorted(unresolved.values(), key=lambda r: r["odds_name"])},
+            indent=2, ensure_ascii=False) + "\n")
     text = summary(today, bets, settlements, skips, totals, run_day)
     post_slack(text, dry_run)
 
@@ -813,6 +873,16 @@ def demo() -> None:
         {"row_type": "settle", "stake_flat": "2", "stake_kelly": "3",
          "pnl_flat": "1.8", "pnl_kelly": "2.7"},
     ])
+    # A curated alias resolves; an alias pointing at an id the match table
+    # does not contain must fail to a skip, never to the wrong player.
+    ref = Reference({"c": [(frozenset({"alcaraz", "garfia"}), "A0E2")]}, {},
+                    {"nadal r": "N409", "typo": "NOT_AN_ID"}, {"A0E2", "N409"})
+    assert ref.player("Nadal R.") == "N409"
+    assert ref.player("typo") is None
+    assert ref.player("Alcaraz Garfia C.") == "A0E2"
+    assert ref.player("Someone Unknown X.") is None
+    assert ref.candidates("Alcaraz Garfia C.")[0]["player_id"] == "A0E2"
+
     totals = pnl(book)
     assert totals["n_settled"] == 1 and totals["n_open"] == 1, totals
     assert abs(totals["flat_bankroll"] - 101.8) < 1e-9, totals
