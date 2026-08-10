@@ -7,8 +7,19 @@ ledger gets two rows for the same pick.
 
 Environment: network access Custom with `oddsportal.com`, `www.oddsportal.com`
 and `slack.com` plus the default package list; variables `SLACK_BOT_TOKEN` and
-`SLACK_CHANNEL`; setup script installs the deps and Chromium. Remove every
-connector — this routine needs none.
+`SLACK_CHANNEL`. Remove every connector — this routine needs none.
+
+Setup script. The cloud sandbox ships Python 3.11 and every `oddsharvester`
+release requires 3.12 or newer, so `uv` fetches a standalone 3.12 rather than
+fighting the base image's interpreter. Every command below runs against that
+venv, not bare `python`:
+
+    pip install uv
+    uv venv --python 3.12 /root/venv
+    uv pip install --python /root/venv/bin/python pandas numpy pyarrow scipy \
+        beautifulsoup4 lxml tabulate playwright oddsharvester==0.8.0
+    /root/venv/bin/python -m playwright install --with-deps chromium
+    /root/venv/bin/python -c "import oddsharvester, playwright; print('deps ok')"
 
 ---
 
@@ -20,15 +31,15 @@ unclear.
 
 1. Verify before trusting the run with money:
 
-       python -m scripts.paper_trade --self-check
-       python -m scripts.paper_trade --rehearse
+       /root/venv/bin/python -m scripts.paper_trade --self-check
+       /root/venv/bin/python -m scripts.paper_trade --rehearse
 
    If either fails, post the failure to Slack and stop. Do not run the job on
    unverified arithmetic and do not try to fix the failure yourself.
 
 2. Run the job:
 
-       python -m scripts.paper_trade
+       /root/venv/bin/python -m scripts.paper_trade
 
    The script scrapes fixtures, settles yesterday's open positions, prices
    today's, sizes both staking schemes, appends to `paper/ledger.csv` and
