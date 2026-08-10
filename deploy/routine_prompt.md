@@ -17,9 +17,9 @@ venv, not bare `python`:
     pip install uv
     uv venv --python 3.12 /root/venv
     uv pip install --python /root/venv/bin/python pandas numpy pyarrow scipy \
-        beautifulsoup4 lxml tabulate playwright oddsharvester==0.8.0
+        scikit-learn beautifulsoup4 lxml tabulate playwright oddsharvester==0.8.0
     /root/venv/bin/python -m playwright install --with-deps chromium
-    /root/venv/bin/python -c "import oddsharvester, playwright; print('deps ok')"
+    /root/venv/bin/python -c "import oddsharvester, playwright, sklearn; print('deps ok')"
 
 ---
 

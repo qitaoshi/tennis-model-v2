@@ -5,6 +5,13 @@ data/processed/*
 !data/processed/matches.parquet
 !data/processed/matches_with_holdout.parquet
 !data/processed/calibration_maps.pkl
+# --rehearse replays one cached 2024 match through the whole chain, and it
+# merges the five market families back into a single record, so the fixture
+# is a whole tournament's family set or nothing. Cincinnati is the smallest
+# at ~1.2 MB. The other eleven tournaments stay out.
+!data/processed/odds_portal/
+data/processed/odds_portal/*
+!data/processed/odds_portal/tennis_atp-cincinnati_2024_*.json
 __pycache__/
 .pytest_cache/
 data/raw/mcp/*.csv

@@ -1,0 +1,4950 @@
+{
+  "metadata": {
+    "scraped_at_utc": "2026-08-07T02:25:09.473845+00:00",
+    "oddsharvester_version": "0.8.0",
+    "sport": "tennis",
+    "league": "atp-cincinnati",
+    "season": "2024",
+    "full_scrape": true,
+    "bookies_filter": "all",
+    "target_bookmaker": null,
+    "market_family": "set_betting",
+    "market_args": [
+      "correct_score_2_0",
+      "correct_score_2_1",
+      "correct_score_0_2",
+      "correct_score_1_2",
+      "correct_score_3_0",
+      "correct_score_0_3",
+      "correct_score_1_3",
+      "correct_score_2_3",
+      "correct_score_3_1",
+      "correct_score_3_2",
+      "correct_score_6_0",
+      "correct_score_6_1",
+      "correct_score_6_2",
+      "correct_score_6_3",
+      "correct_score_6_4",
+      "correct_score_7_5",
+      "correct_score_7_6",
+      "correct_score_0_6",
+      "correct_score_1_6",
+      "correct_score_2_6",
+      "correct_score_3_6",
+      "correct_score_4_6",
+      "correct_score_5_7",
+      "correct_score_6_7"
+    ]
+  },
+  "records": [
+    {
+      "scraped_date": "2026-08-07 03:23:33 UTC",
+      "match_date": "2024-08-18 02:00:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/draper-jack-SWxNhpmK/rune-holger-2kRS8swG/#06BNmWef",
+      "home_team": "Draper J.",
+      "away_team": "Rune H.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(4:6, 2:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.22",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.03",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:23:34 UTC",
+      "match_date": "2024-08-17 23:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/hurkacz-hubert-zuHOBnY9/tiafoe-frances-AHDLJaph/#KhTRUW75",
+      "home_team": "Hurkacz H.",
+      "away_team": "Tiafoe F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "3",
+      "away_score": "6",
+      "partial_results": "7:65, 65:7, 4:6, 7:61, 4:6",
+      "venue": "Stade Roland-Garros",
+      "venue_town": "Paris",
+      "venue_country": "France",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.63",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.86",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.41",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:23:34 UTC",
+      "match_date": "2024-08-19 22:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/sinner-jannik-6HdC3z4H/tiafoe-frances-AHDLJaph/#rB0NYxcM",
+      "home_team": "Sinner J.",
+      "away_team": "Tiafoe F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 4 , 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.73",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.77",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "7.08",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "7.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "6.54",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:23:35 UTC",
+      "match_date": "2024-08-18 21:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/sinner-jannik-6HdC3z4H/zverev-alexander-dGbUhw9m/#KU6MrzG8",
+      "home_team": "Sinner J.",
+      "away_team": "Zverev A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(7:6 9 , 5:7, 7:6 4)",
+      "venue": "Centre Court",
+      "venue_town": "London",
+      "venue_country": "England",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.38",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.44",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.69",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.68",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:23:37 UTC",
+      "match_date": "2024-08-19 01:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/rune-holger-2kRS8swG/tiafoe-frances-AHDLJaph/#Khk9ZVxe",
+      "home_team": "Tiafoe F.",
+      "away_team": "Rune H.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(4:6, 6:1, 7:6 4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.17",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.56",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.63",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.52",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.71",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:15 UTC",
+      "match_date": "2024-08-17 21:00:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/shelton-ben-QNuG0Gzb/zverev-alexander-dGbUhw9m/#Kv8Gfhq4",
+      "home_team": "Zverev A.",
+      "away_team": "Shelton B.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 7:6 3 , 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.91",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.90",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.68",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "6.74",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "6.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:19 UTC",
+      "match_date": "2024-08-16 23:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/auger-aliassime-felix-CzXh4LAb/draper-jack-SWxNhpmK/#jw3rv8m3",
+      "home_team": "Auger-Aliassime F.",
+      "away_team": "Draper J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(7:5, 4:6, 4:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.67",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.77",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.56",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.37",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:23 UTC",
+      "match_date": "2024-08-16 21:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/monfils-gael-fm7G8o0m/rune-holger-2kRS8swG/#Iiq79drC",
+      "home_team": "Rune H.",
+      "away_team": "Monfils G.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 6:3, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.08",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.53",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.04",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:47 UTC",
+      "match_date": "2024-08-17 02:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/lehecka-jiri-6PlgfXKR/tiafoe-frances-AHDLJaph/#nDxmWxZO",
+      "home_team": "Tiafoe F.",
+      "away_team": "Lehecka J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:4, 6 10 :7, 7:6 5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.83",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.12",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:48 UTC",
+      "match_date": "2024-08-17 18:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/rublev-andrey-AeAn4gP0/sinner-jannik-6HdC3z4H/#EmQvQVVj",
+      "home_team": "Sinner J.",
+      "away_team": "Rublev A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(4:6, 7:5, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.83",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.95",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.74",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "7.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "6.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "6.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:24:59 UTC",
+      "match_date": "2024-08-16 19:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/marozsan-fabian-I1mux0lj/shelton-ben-QNuG0Gzb/#YiZ7B3Ts",
+      "home_team": "Shelton B.",
+      "away_team": "Marozsan F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.38",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.38",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.66",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:03 UTC",
+      "match_date": "2024-08-16 19:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/sinner-jannik-6HdC3z4H/thompson-jordan-8pwfoWMP/#pQ7XcRMr",
+      "home_team": "Sinner J.",
+      "away_team": "Thompson J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "",
+      "away_score": "",
+      "partial_results": "",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.43",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "13.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "9.71",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "10.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "8.57",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:23 UTC",
+      "match_date": "2024-08-16 21:00:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/cobolli-flavio-zDtaCcPe/hurkacz-hubert-zuHOBnY9/#QVZ4gaSj",
+      "home_team": "Hurkacz H.",
+      "away_team": "Cobolli F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:3, 3:6, 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.63",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.60",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.67",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.82",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:37 UTC",
+      "match_date": "2024-08-16 16:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/nakashima-brandon-ETGnbrpH/rublev-andrey-AeAn4gP0/#WWzUwywh",
+      "home_team": "Nakashima B.",
+      "away_team": "Rublev A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(6 5 :7, 1:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.94",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "5.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.20",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.14",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.55",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:40 UTC",
+      "match_date": "2024-08-16 16:25:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/carreno-busta-pablo-W8WmcXdq/zverev-alexander-dGbUhw9m/#IDUVAtGE",
+      "home_team": "Zverev A.",
+      "away_team": "Carreno-Busta P.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:5, 7:6 6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.44",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "13.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "9.99",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "11.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "8.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:54 UTC",
+      "match_date": "2024-08-16 18:00:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/alcaraz-garfia-carlos-UkhgIFEq/monfils-gael-fm7G8o0m/#Kzl2yUGs",
+      "home_team": "Monfils G.",
+      "away_team": "Alcaraz C.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(4:6, 7:6 5 , 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "17.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "14.12",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "15.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "12.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.78",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:25:56 UTC",
+      "match_date": "2024-08-16 18:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/auger-aliassime-felix-CzXh4LAb/ruud-casper-zN9UpRqp/#KlcmF2rR",
+      "home_team": "Ruud C.",
+      "away_team": "Auger-Aliassime F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(3:6, 1:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.31",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.63",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.62",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:03 UTC",
+      "match_date": "2024-08-15 20:25:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/borges-nuno-hzbEPIOa/rune-holger-2kRS8swG/#d4qhmHUj",
+      "home_team": "Rune H.",
+      "away_team": "Borges N.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 7:6 8)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.05",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.62",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.21",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:15 UTC",
+      "match_date": "2024-08-15 20:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/draper-jack-SWxNhpmK/tsitsipas-stefanos-hb6oWfc6/#vHSSMU1l",
+      "home_team": "Draper J.",
+      "away_team": "Tsitsipas S.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 6:4, 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.19",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.86",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.63",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.28",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:20 UTC",
+      "match_date": "2024-08-15 19:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/etcheverry-tomas-martin-AXL5qpKa/shelton-ben-QNuG0Gzb/#Qq1lO8Ic",
+      "home_team": "Shelton B.",
+      "away_team": "Etcheverry T. M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6 6 :7, 7:6 7 , 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.20",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.17",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.55",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.94",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:33 UTC",
+      "match_date": "2024-08-15 18:05:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/rublev-andrey-AeAn4gP0/zhang-zhizhen-IFKEHRGG/#fXYdrPI0",
+      "home_team": "Zhang Z.",
+      "away_team": "Rublev A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(4:6, 3:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "6.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "5.36",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "5.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.91",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.59",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:43 UTC",
+      "match_date": "2024-08-15 17:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/dimitrov-grigor-SQgEEKh4/marozsan-fabian-I1mux0lj/#UR6LzVR1",
+      "home_team": "Marozsan F.",
+      "away_team": "Dimitrov G.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(4:6, 6:4, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "6.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "7.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "6.05",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.80",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.69",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:52 UTC",
+      "match_date": "2024-08-15 16:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/carreno-busta-pablo-W8WmcXdq/purcell-max-GMK1R241/#Ei6RbOE5",
+      "home_team": "Purcell M.",
+      "away_team": "Carreno-Busta P.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(3:6, 3:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Change of nomination.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.10",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.88",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.87",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:26:58 UTC",
+      "match_date": "2024-08-15 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/khachanov-karen-4bNPtZT5/zverev-alexander-dGbUhw9m/#nJqWPTfJ",
+      "home_team": "Zverev A.",
+      "away_team": "Khachanov K.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.80",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.63",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "6.46",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "7.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "6.08",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:02 UTC",
+      "match_date": "2024-08-15 18:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/arthur-fils-IoIhUqIN/nakashima-brandon-ETGnbrpH/#6ggXZs8M",
+      "home_team": "Nakashima B.",
+      "away_team": "Fils A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:5, 7:6 3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.90",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.35",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.07",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:11 UTC",
+      "match_date": "2024-08-15 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/cobolli-flavio-zDtaCcPe/darderi-luciano-jeXTxMIp/#zDFH6Nxh",
+      "home_team": "Darderi L.",
+      "away_team": "Cobolli F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "4",
+      "away_score": "7",
+      "partial_results": "4:6, 4:6",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.09",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.78",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.82",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:22 UTC",
+      "match_date": "2024-08-15 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/hurkacz-hubert-zuHOBnY9/nishioka-yoshihito-neAMoGXa/#zTaOB11c",
+      "home_team": "Hurkacz H.",
+      "away_team": "Nishioka Y.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 7:6 4 , 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.56",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.94",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.02",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:30 UTC",
+      "match_date": "2024-08-15 01:40:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/lehecka-jiri-6PlgfXKR/medvedev-daniil-O8qG0Nhb/#0pKKPvT1",
+      "home_team": "Lehecka J.",
+      "away_team": "Medvedev D.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 2 , 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "9.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "7.76",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "7.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.67",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.72",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.91",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:36 UTC",
+      "match_date": "2024-08-14 23:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/baez-sebastian-dd8jLjtO/thompson-jordan-8pwfoWMP/#vT2UFhtA",
+      "home_team": "Baez S.",
+      "away_team": "Thompson J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(2:6, 4:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.34",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "5.16",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.10",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:41 UTC",
+      "match_date": "2024-08-14 23:00:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/musetti-lorenzo-xtH2ODVI/tiafoe-frances-AHDLJaph/#IHdQXQ1e",
+      "home_team": "Musetti L.",
+      "away_team": "Tiafoe F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(3:6, 2:6)",
+      "venue": "Court Philippe-Chatrier",
+      "venue_town": "Paris",
+      "venue_country": "France",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.18",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.08",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.15",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:27:51 UTC",
+      "match_date": "2024-08-14 20:25:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/arnaldi-matteo-hlVLAfZK/etcheverry-tomas-martin-AXL5qpKa/#YNoDV133",
+      "home_team": "Etcheverry T. M.",
+      "away_team": "Arnaldi M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:3, 6 3 :7, 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.32",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:01 UTC",
+      "match_date": "2024-08-14 19:40:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/carreno-busta-pablo-W8WmcXdq/korda-sebastian-SYklCTPO/#ITraMcQk",
+      "home_team": "Carreno-Busta P.",
+      "away_team": "Korda S.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:5, 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "11.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "7.11",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "9.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "7.38",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.53",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.60",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.89",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:08 UTC",
+      "match_date": "2024-08-14 18:55:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/monfils-gael-fm7G8o0m/popyrin-alexei-fJjLpuNq/#j1mpSSdB",
+      "home_team": "Monfils G.",
+      "away_team": "Popyrin A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:5, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.43",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.35",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.66",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.95",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:16 UTC",
+      "match_date": "2024-08-14 17:35:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/draper-jack-SWxNhpmK/munar-jaume-zZieQm4D/#r34evF1E",
+      "home_team": "Draper J.",
+      "away_team": "Munar J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(7:5, 3:6, 7:6 5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.80",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.68",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.81",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "7.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "6.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:19 UTC",
+      "match_date": "2024-08-14 17:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/michelsen-alex-nDIhfm9l/sinner-jannik-6HdC3z4H/#Y9Ci11It",
+      "home_team": "Sinner J.",
+      "away_team": "Michelsen A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.36",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.24",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "17.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "9.26",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "13.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "8.87",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:29 UTC",
+      "match_date": "2024-08-14 17:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/machac-tomas-S44E7UYr/purcell-max-GMK1R241/#dzWQzcuq",
+      "home_team": "Purcell M.",
+      "away_team": "Machac T.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 7:6 1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.36",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "5.02",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.20",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.14",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.92",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:39 UTC",
+      "match_date": "2024-08-14 16:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/berrettini-matteo-OhwtM7N8/rune-holger-2kRS8swG/#p25I9Ktp",
+      "home_team": "Rune H.",
+      "away_team": "Berrettini M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(2:6, 6:1, 6:4)",
+      "venue": "John Cain Arena",
+      "venue_town": "Melbourne",
+      "venue_country": "Australia",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.64",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.67",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:46 UTC",
+      "match_date": "2024-08-14 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/auger-aliassime-felix-CzXh4LAb/kovacevic-aleksandar-AudsF90U/#W618IXve",
+      "home_team": "Auger-Aliassime F.",
+      "away_team": "Kovacevic A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Playing under a closed roof.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "1.91",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.84",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.81",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.75",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:52 UTC",
+      "match_date": "2024-08-14 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/marozsan-fabian-I1mux0lj/moutet-corentin-bX0EWcV9/#jT73xgWQ",
+      "home_team": "Marozsan F.",
+      "away_team": "Moutet C.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 7:6 2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.04",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.99",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.08",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.07",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:28:55 UTC",
+      "match_date": "2024-08-14 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/struff-jan-lennard-Ek3bDDo2/tsitsipas-stefanos-hb6oWfc6/#IkKZYzAe",
+      "home_team": "Struff J-L.",
+      "away_team": "Tsitsipas S.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(6:4, 4:6, 3:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.15",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.70",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.40",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.57",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:05 UTC",
+      "match_date": "2024-08-14 15:05:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/borges-nuno-hzbEPIOa/mannarino-adrian-fLOdtByM/#rRnrVAO0",
+      "home_team": "Mannarino A.",
+      "away_team": "Borges N.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(4:6, 6:3, 1:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "5.07",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "5.56",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.95",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.81",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:15 UTC",
+      "match_date": "2024-08-14 01:40:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/arthur-fils-IoIhUqIN/holt-brandon-GtTV1GfD/#xQuiTlgD",
+      "home_team": "Holt B.",
+      "away_team": "Fils A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(4:6, 1:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "9.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "6.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "8.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "6.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.67",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "1.65",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.92",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:22 UTC",
+      "match_date": "2024-08-13 23:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/fritz-taylor-UH09iaZ6/nakashima-brandon-ETGnbrpH/#rV0TVAcn",
+      "home_team": "Fritz T.",
+      "away_team": "Nakashima B.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(4:6, 6:4, 6 4 :7)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.05",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.51",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.17",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.39",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:32 UTC",
+      "match_date": "2024-08-13 20:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/jarry-nicolas-W24W9IyU/musetti-lorenzo-xtH2ODVI/#Eex8Kye2",
+      "home_team": "Musetti L.",
+      "away_team": "Jarry N.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(4:6, 7:6 5 , 7:6 4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.20",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.21",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.65",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.24",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:43 UTC",
+      "match_date": "2024-08-13 19:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/opelka-reilly-fqKkCJdJ/shelton-ben-QNuG0Gzb/#nohTRJ2S",
+      "home_team": "Shelton B.",
+      "away_team": "Opelka R.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 3 , 7:6 3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.37",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.40",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.48",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.38",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.69",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:51 UTC",
+      "match_date": "2024-08-13 19:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/humbert-ugo-O4ywE5Ah/thompson-jordan-8pwfoWMP/#h6LJB7CU",
+      "home_team": "Thompson J.",
+      "away_team": "Humbert U.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 6:3, 7:6 4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "4.31",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.93",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.28",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.61",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:29:59 UTC",
+      "match_date": "2024-08-13 18:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/griekspoor-tallon-f3zfMU5i/michelsen-alex-nDIhfm9l/#4KaGGB97",
+      "home_team": "Michelsen A.",
+      "away_team": "Griekspoor T.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:1, 5:7, 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.03",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.77",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.24",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:04 UTC",
+      "match_date": "2024-08-13 22:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/kecmanovic-miomir-MTQ5CPOR/nishioka-yoshihito-neAMoGXa/#z1qzXWgl",
+      "home_team": "Nishioka Y.",
+      "away_team": "Kecmanovic M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Nishioka Yoshihito - withdrawn.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.91",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.99",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.23",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:09 UTC",
+      "match_date": "2024-08-13 17:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/lehecka-jiri-6PlgfXKR/navone-mariano-YoPUeL3o/#IF3Q7bBd",
+      "home_team": "Lehecka J.",
+      "away_team": "Navone M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 3 , 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "1.99",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.68",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.07",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.53",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:20 UTC",
+      "match_date": "2024-08-13 16:50:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/davidovich-fokina-alejandro-0zQXLfz4/tiafoe-frances-AHDLJaph/#QiuetJHL",
+      "home_team": "Davidovich Fokina A.",
+      "away_team": "Tiafoe F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(3:6, 6 6 :7)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.55",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "4.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "2.71",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "3.76",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:28 UTC",
+      "match_date": "2024-08-13 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/baez-sebastian-dd8jLjtO/giron-marcos-OWOgryOk/#dvSADTsI",
+      "home_team": "Giron M.",
+      "away_team": "Baez S.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(4:6, 7:5, 6 6 :7)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.96",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.87",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.74",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:35 UTC",
+      "match_date": "2024-08-13 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/darderi-luciano-jeXTxMIp/tabilo-alejandro-YgVnM5vO/#QV3KTuYF",
+      "home_team": "Tabilo A.",
+      "away_team": "Darderi L.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(3:6, 6 5 :7)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.04",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.56",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "5.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "5.41",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:30:44 UTC",
+      "match_date": "2024-08-13 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/mpetshi-perricard-giovanni-ITe9m2F8/zhang-zhizhen-IFKEHRGG/#6kPgrum9",
+      "home_team": "Zhang Z.",
+      "away_team": "Mpetshi Perricard G.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 7:6 4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.25",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "3.04",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.86",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "3.17",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.00",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:00 UTC",
+      "match_date": "2024-08-12 19:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/cobolli-flavio-zDtaCcPe/paul-tommy-pd3ye1BS/#txZKJ4i5",
+      "home_team": "Cobolli F.",
+      "away_team": "Paul T.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:2, 4:6, 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "7.94",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "7.21",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.57",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "3.89",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:18 UTC",
+      "match_date": "2024-08-12 23:50:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/cerundolo-francisco-lWQ3G6gB/khachanov-karen-4bNPtZT5/#4pkxUlSb",
+      "home_team": "Khachanov K.",
+      "away_team": "Cerundolo F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:0, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.50",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        },
+        {
+          "correct_score": "2.39",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.60",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        },
+        {
+          "correct_score": "3.72",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.33",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        },
+        {
+          "correct_score": "4.09",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.75",
+          "bookmaker_name": "bet365",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        },
+        {
+          "correct_score": "4.59",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:36 UTC",
+      "match_date": "2024-08-12 16:50:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/munar-jaume-zZieQm4D/sonego-lorenzo-zVuMEJTT/#dUKrtwnn",
+      "home_team": "Sonego L.",
+      "away_team": "Munar J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(3:6, 6:3, 2:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.59",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.75",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.62",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:04 UTC",
+      "match_date": "2024-08-12 17:50:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/hijikata-rinky-f9eT4NTQ/kovacevic-aleksandar-AudsF90U/#roqQhGVi",
+      "home_team": "Kovacevic A.",
+      "away_team": "Hijikata R.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:1, 7:6 5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:57 UTC",
+      "match_date": "2024-08-12 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/cazaux-arthur-bJR9AFq5/nishioka-yoshihito-neAMoGXa/#dzvI3OQQ",
+      "home_team": "Nishioka Y.",
+      "away_team": "Cazaux A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:4, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.51",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.61",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.49",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.24",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:14 UTC",
+      "match_date": "2024-08-12 17:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/mcdonald-mackenzie-WWi3O0v6/michelsen-alex-nDIhfm9l/#OAVYeXOH",
+      "home_team": "Michelsen A.",
+      "away_team": "McDonald M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    },
+    {
+      "scraped_date": "2026-08-07 03:31:21 UTC",
+      "match_date": "2024-08-12 17:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/borges-nuno-hzbEPIOa/vukic-aleksandar-O2CmIROi/#jFUx76j2",
+      "home_team": "Borges N.",
+      "away_team": "Vukic A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 4 , 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    },
+    {
+      "scraped_date": "2026-08-07 03:32:33 UTC",
+      "match_date": "2024-08-11 21:05:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/borges-nuno-hzbEPIOa/wolf-jeffrey-john-f5Zc3wW6/#GUwj9zY7",
+      "home_team": "Borges N.",
+      "away_team": "Wolf J.J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(5:7, 6:3, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.97",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.76",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.10",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:32:37 UTC",
+      "match_date": "2024-08-11 20:40:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/mensik-jakub-UFj257G8/vukic-aleksandar-O2CmIROi/#fFksBd3e",
+      "home_team": "Vukic A.",
+      "away_team": "Mensik J.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 5 , 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.12",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.31",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.62",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.05",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:32:44 UTC",
+      "match_date": "2024-08-11 20:30:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/gaston-hugo-hGqnSub7/munar-jaume-zZieQm4D/#UTeGPGZo",
+      "home_team": "Munar J.",
+      "away_team": "Gaston H.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(7:6 5 , 6:2)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.43",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.98",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.90",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.49",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:32:14 UTC",
+      "match_date": "2024-08-12 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/fucsovics-marton-GhQFzFli/moutet-corentin-bX0EWcV9/#OYwn3Ke4",
+      "home_team": "Fucsovics M.",
+      "away_team": "Moutet C.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(2:6, 6:2, 3:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    },
+    {
+      "scraped_date": "2026-08-07 03:32:24 UTC",
+      "match_date": "2024-08-12 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/holt-brandon-GtTV1GfD/svajda-zachary-vynGYhMa/#Wv9UEWC6",
+      "home_team": "Holt B.",
+      "away_team": "Svajda Z.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:4, 2:6, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:09 UTC",
+      "match_date": "2024-08-11 20:20:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/kovacevic-aleksandar-AudsF90U/martinez-pedro-WtiN88eD/#GSrAEV9m",
+      "home_team": "Martinez P.",
+      "away_team": "Kovacevic A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(6:4, 2:6, 4:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.34",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.61",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.10",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:17 UTC",
+      "match_date": "2024-08-11 19:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/mcdonald-mackenzie-WWi3O0v6/nagal-sumit-46aHbwDc/#jN8lBHKh",
+      "home_team": "McDonald M.",
+      "away_team": "Nagal S.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:2, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.04",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.94",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "5.70",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "7.13",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:20 UTC",
+      "match_date": "2024-08-11 18:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/angele-jaimee-floyd-xCLbLa6J/hijikata-rinky-f9eT4NTQ/#2aHDIEDs",
+      "home_team": "Angele J. F.",
+      "away_team": "Hijikata R.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(1:6, 1:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "25.98",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "18.87",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "1.29",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.17",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:36 UTC",
+      "match_date": "2024-08-11 18:45:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/duckworth-james-2JWHPUUb/hijikata-rinky-f9eT4NTQ/#ltsIC9v0",
+      "home_team": "Duckworth J.",
+      "away_team": "Hijikata R.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "",
+      "away_score": "",
+      "partial_results": "",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Duckworth James - withdrawn.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.09",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.47",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.34",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.69",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "blocked_outcomes": [
+            "correct_score"
+          ],
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:45 UTC",
+      "match_date": "2024-08-11 18:35:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/coric-borna-QZdb3dWH/sonego-lorenzo-zVuMEJTT/#MRQyXwQE",
+      "home_team": "Sonego L.",
+      "away_team": "Coric B.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(3:6, 6:2, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.69",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "3.06",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.39",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:46 UTC",
+      "match_date": "2024-08-11 17:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/bautista-agut-roberto-riOJC5jb/cazaux-arthur-bJR9AFq5/#K2057ZJH",
+      "home_team": "Cazaux A.",
+      "away_team": "Bautista-Agut R.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6 0 :7, 6:3, 7:5)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.86",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.16",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.72",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.18",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:55 UTC",
+      "match_date": "2024-08-11 16:50:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/daniel-taro-h4fpmGci/nishioka-yoshihito-neAMoGXa/#nk2c9ek5",
+      "home_team": "Nishioka Y.",
+      "away_team": "Daniel T.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "0",
+      "partial_results": "(6:3, 6:1)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Nishioka Yoshihito - withdrawn.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.41",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.09",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.36",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.85",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:33:58 UTC",
+      "match_date": "2024-08-11 16:35:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/bergs-zizou-SbeTx1o8/michelsen-alex-nDIhfm9l/#rc5tDwjt",
+      "home_team": "Michelsen A.",
+      "away_team": "Bergs Z.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(6:3, 4:6, 6:4)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.41",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.48",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.81",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:34:16 UTC",
+      "match_date": "2024-08-11 16:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/diaz-acosta-facundo-AsRYv2m2/svajda-zachary-vynGYhMa/#xGhY8RwP",
+      "home_team": "Svajda Z.",
+      "away_team": "Diaz Acosta F.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "",
+      "away_score": "",
+      "partial_results": "",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": "Diaz Acosta Facundo - withdrawn.",
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.64",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "4.12",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.01",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "5.30",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:34:23 UTC",
+      "match_date": "2024-08-11 15:15:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/fucsovics-marton-GhQFzFli/shevchenko-alexander-jTIB3FIA/#p8zRAm9C",
+      "home_team": "Shevchenko A.",
+      "away_team": "Fucsovics M.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(2:6, 4:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "4.44",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.79",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.42",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.03",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:34:33 UTC",
+      "match_date": "2024-08-11 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/altmaier-daniel-IPR8h9gM/moutet-corentin-bX0EWcV9/#jqpPNf4b",
+      "home_team": "Altmaier D.",
+      "away_team": "Moutet C.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "0",
+      "away_score": "2",
+      "partial_results": "(1:6, 4:6)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "3.73",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "5.16",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "2.74",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "4.28",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:34:35 UTC",
+      "match_date": "2024-08-11 15:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/holt-brandon-GtTV1GfD/lajovic-dusan-bJf33z45/#v5G65DlU",
+      "home_team": "Lajovic D.",
+      "away_team": "Holt B.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "1",
+      "away_score": "2",
+      "partial_results": "(6:2, 3:6, 5:7)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null,
+      "correct_score_2_0_market": [
+        {
+          "correct_score": "2.23",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:0"
+        }
+      ],
+      "correct_score_2_1_market": [
+        {
+          "correct_score": "3.96",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "2:1"
+        }
+      ],
+      "correct_score_0_2_market": [
+        {
+          "correct_score": "4.96",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "0:2"
+        }
+      ],
+      "correct_score_1_2_market": [
+        {
+          "correct_score": "6.33",
+          "bookmaker_name": "GGBET",
+          "period": "FullTime",
+          "submarket_name": "1:2"
+        }
+      ]
+    },
+    {
+      "scraped_date": "2026-08-07 03:34:23 UTC",
+      "match_date": "2024-08-11 16:10:00 UTC",
+      "season": null,
+      "match_link": "https://www.oddsportal.com/tennis/h2h/svajda-zachary-vynGYhMa/zakharov-alexey-z5zQWPlr/#xpxxkUzf",
+      "home_team": "Svajda Z.",
+      "away_team": "Zakharov A.",
+      "league_name": "ATP Cincinnati 2024",
+      "home_score": "2",
+      "away_score": "1",
+      "partial_results": "(2:6, 6:4, 6:3)",
+      "venue": null,
+      "venue_town": null,
+      "venue_country": "",
+      "match_info": null
+    }
+  ],
+  "failed": {}
+}

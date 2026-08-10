@@ -77,8 +77,9 @@ ENVIRONMENT_ID=$(api POST environments body <<'JSON' | jq -er '.id'
   "config": {
     "type": "cloud",
     "packages": {
-      "pip": ["pandas", "numpy", "pyarrow", "scipy", "beautifulsoup4", "lxml",
-              "playwright", "oddsharvester", "tabulate"]
+      "pip": ["pandas", "numpy", "pyarrow", "scipy", "scikit-learn",
+              "beautifulsoup4", "lxml", "playwright", "oddsharvester",
+              "tabulate"]
     },
     "networking": {"type": "unrestricted"}
   }
