@@ -1,0 +1,13 @@
+{
+  "_comment": "PointsBet competition name -> tourney_name in matches_with_holdout.parquet. PointsBet names Masters events by city ('ATP Montreal'); the match history names them by the event ('Canada Masters'), so the fuzzy resolver in Reference.tournament matches neither and the fixture is skipped. Data, not code: an entry here shows up in a diff. Only map a name when the event is unambiguously the same tournament. Reviewed and committed, same rules as player_aliases.json.",
+  "ATP Montreal": "Canada Masters",
+  "ATP Toronto": "Canada Masters",
+  "ATP Cincinnati": "Cincinnati Masters",
+  "ATP Indian Wells": "Indian Wells Masters",
+  "ATP Miami": "Miami Masters",
+  "ATP Madrid": "Madrid Masters",
+  "ATP Rome": "Rome Masters",
+  "ATP Monte Carlo": "Monte Carlo Masters",
+  "ATP Shanghai": "Shanghai Masters",
+  "ATP Paris": "Paris Masters"
+}

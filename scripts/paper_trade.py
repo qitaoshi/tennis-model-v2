@@ -40,7 +40,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -50,6 +50,8 @@ import pandas as pd
 from model import constants as C
 from model import price as PZ
 from model import recalibrate as RC
+from scripts import fetch_pointsbet as PB
+from scripts import fetch_results as RES
 from scripts.multi_market_clv import _keys
 from scripts.odds_portal_table import _rows
 
@@ -71,6 +73,10 @@ ALIASES = PAPER_DIR / "player_aliases.json"
 # Written fresh each run: the names that could not be resolved, with the
 # model players that might match. A work list, not a decision.
 UNRESOLVED = PAPER_DIR / "unresolved_names.json"
+# Curated bookmaker competition name -> tourney_name in the match history.
+# PointsBet names Masters events by city, the history by event, so the fuzzy
+# resolver matches neither. Same rules as ALIASES: data, reviewed, in a diff.
+TOURNAMENT_ALIASES = PAPER_DIR / "tournament_aliases.json"
 
 LEDGER_COLUMNS = [
     "row_type", "ts_utc", "run_date", "match_key", "match_link", "league_slug",
@@ -137,40 +143,36 @@ def _scrape(args: list[str]) -> list[dict]:
 
 
 def fixtures(days: list[date]) -> dict[str, dict]:
-    """Unstarted ATP fixtures on ``days``, with totals and handicap quotes.
+    """Unstarted ATP main-tour singles fixtures on ``days``, with quotes.
 
-    One scrape per date per market family, merged by match link — OddsPortal's
-    listing is per-date, so this is a page walk per date rather than a scrape
-    per fixture.
+    Sourced from PointsBet AU's JSON API, not OddsPortal. OddsPortal is behind
+    Cloudflare and reset every headless-Chromium connection from the routine's
+    datacentre IP, collecting nothing on 2026-08-10 (day 1 of this run);
+    `scripts/fetch_pointsbet` explains the swap. The records come back in the
+    OddsPortal shape, so everything downstream of here is unchanged.
 
-    Both today and tomorrow are scanned. OddsPortal does not reliably post a
-    full board a day ahead: on 2026-08-10 the next day's tennis page rendered
-    zero rows while the same day's rendered three. Scanning only tomorrow
-    would silently produce empty days. The listing itself drops matches that
-    have already started, so nothing here can bet a match in progress.
+    Both today and tomorrow are scanned, because a book does not post a full
+    board a day ahead — on 2026-08-10 the next day's two Montreal matches were
+    listed with no totals or handicap open yet. Scanning only tomorrow would
+    silently produce empty days. `includeLive=false` drops matches already
+    under way, so nothing here can bet a match in progress.
+
+    One book means one price. OddsPortal quoted many and the harness picked
+    Bet365; every quote here is PointsBet's, which is a different measurement
+    from the 2024 reports and must be reported as such.
     """
+    try:
+        records = PB.fetch_records(set(days))
+    except Exception as exc:
+        # Same contract the OddsPortal path had: a source failure is loud and
+        # empty, never a quiet day. The routine treats an empty board and a
+        # blocked source differently, so this must not be swallowed.
+        raise RuntimeError(f"PointsBet fetch failed: {exc}") from exc
     merged: dict[str, dict] = {}
-    for day in days:
-        for family in MARKETS:
-            try:
-                # The dated listing is /matches/tennis/YYYYMMDD/ despite the
-                # library docstring saying YYYY-MM-DD; the hyphenated form
-                # returns an empty document.
-                records = _scrape(["--upcoming", "--date",
-                                   day.strftime("%Y%m%d"), "--family", family])
-            except RuntimeError as exc:
-                print(f"WARNING: {family} scrape failed for {day}: {exc}")
-                continue
-            for rec in records:
-                name = str(rec.get("league_name", "")).lower()
-                # The date page carries every tour. The model is fitted on ATP
-                # main tour; Challenger and WTA fixtures are not ours to price.
-                if "atp" not in name or "challenger" in name:
-                    continue
-                link = rec.get("match_link")
-                if not link:
-                    continue
-                merged.setdefault(link, {}).update(rec)
+    for rec in records:
+        link = rec.get("match_link")
+        if link:
+            merged[link] = rec
     return merged
 
 
@@ -180,7 +182,12 @@ def match_day(record: dict, fallback: date) -> date:
 
 
 def settle_scrape(link: str) -> dict | None:
-    """Re-scrape one played match for its final score."""
+    """Re-scrape one played OddsPortal match for its final score.
+
+    Only reachable for ledger rows written before the 2026-08-10 source
+    change. PointsBet picks settle from ESPN instead (`_final_score`), because
+    PointsBet carries no score and drops the event once the match ends.
+    """
     try:
         rows = _scrape(["--match-link", link, "--family", "total_games"])
     except RuntimeError as exc:
@@ -208,6 +215,7 @@ class Reference:
     tournaments: dict[str, tuple[str, str]]
     aliases: dict[str, str]
     known_ids: set[str]
+    tournament_aliases: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def build(cls, as_of: date, active_years: int = 2) -> "Reference":
@@ -238,7 +246,13 @@ class Reference:
             aliases = {_norm(k): str(v["player_id"]) if isinstance(v, dict)
                        else str(v) for k, v in raw.items()}
         ids = set(m["winner_id"].astype(str)) | set(m["loser_id"].astype(str))
-        return cls(players, tourns, aliases, ids)
+        t_alias = {}
+        if TOURNAMENT_ALIASES.exists():
+            t_alias = {_norm(k): str(v)
+                       for k, v in json.loads(
+                           TOURNAMENT_ALIASES.read_text()).items()
+                       if not k.startswith("_")}
+        return cls(players, tourns, aliases, ids, t_alias)
 
     def player(self, display_name: str) -> str | None:
         """Resolve one OddsPortal display name to a model player id.
@@ -281,7 +295,19 @@ class Reference:
         return out[:limit]
 
     def tournament(self, league_name: str) -> tuple[str, str] | None:
-        """Resolve an OddsPortal league name to (tourney_code, surface)."""
+        """Resolve a bookmaker league name to (tourney_code, surface).
+
+        The curated alias file wins, then the fuzzy match. PointsBet names
+        Masters events by city ('ATP Montreal') where the history names them
+        by event ('Canada Masters'), and no amount of substring matching
+        bridges that — it is a fact about the two naming schemes, so it is
+        recorded as data rather than guessed at.
+        """
+        alias = self.tournament_aliases.get(_norm(league_name))
+        if alias:
+            # An alias naming a tournament the history does not contain is a
+            # typo; fail to a skip rather than price on the wrong surface.
+            return self.tournaments.get(_norm(alias))
         key = _norm(re.sub(r"\b(19|20)\d{2}\b", "",
                            re.sub(r"^atp\b", "", str(league_name).strip(),
                                   flags=re.IGNORECASE)))
@@ -505,6 +531,62 @@ def settle_one(row: pd.Series, total: int, diff: int) -> tuple[str, float]:
     return "loss", -1.0
 
 
+def _results_by_day(days: set[str]) -> dict[str, list[dict]]:
+    """ESPN results for each date that has an open pick on it.
+
+    A fetch failure yields no results for that day, which leaves its picks
+    open rather than voiding them — the same distinction `settle` draws
+    everywhere else. An unreachable feed must never close a live position.
+    """
+    out: dict[str, list[dict]] = {}
+    for day in sorted(d for d in days if d):
+        try:
+            out[day] = RES.results_for(date.fromisoformat(day))
+        except (RuntimeError, ValueError) as exc:
+            print(f"WARNING: results fetch failed for {day}: {exc}")
+            out[day] = []
+    return out
+
+
+def _final_score(link: str, row: pd.Series, results: dict[str, list[dict]],
+                 best_of: int) -> tuple[tuple[int, int, int] | None, str | None]:
+    """Resolve one match to (score, note).
+
+    Three outcomes, and the difference between the last two is the whole
+    point of this function:
+
+    * ``(score, None)``  settle it;
+    * ``(None, reason)`` void it — the match is known not to have finished;
+    * ``(None, None)``   leave it open — no result is available yet.
+
+    PointsBet picks settle from ESPN. OddsPortal links keep their original
+    path, so a ledger written before 2026-08-10 still settles the way it was
+    written.
+    """
+    if not link.startswith("pointsbet:"):
+        record = settle_scrape(link)
+        parsed = parse_score(record, best_of) if record else None
+        if parsed is None:
+            return None, ("match did not finish or result unavailable; "
+                          "stake returned")
+        return parsed, None
+
+    day = str(row["match_date"])
+    hit = RES.find_result(results.get(day, []), str(row["player_a"]),
+                          str(row["player_b"]))
+    if hit is None:
+        return None, None  # not in the feed yet, or ambiguous: stay open
+    if not hit["finished"]:
+        return None, (f"{hit['status']} — match did not finish; "
+                      f"stake returned")
+    # The harness's player A is the bookmaker's home player, which need not be
+    # ESPN's. Getting this backwards would invert every handicap settlement
+    # while leaving totals looking correct, so the margin is flipped here
+    # rather than assumed to agree.
+    margin = -hit["game_margin"] if hit["flipped"] else hit["game_margin"]
+    return (hit["total_games"], margin, hit["sets_played"]), None
+
+
 def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
     # Board rows settle by the same arithmetic as picks — they carry a
     # `model_selection` and a line like any other row — but they settle into
@@ -525,19 +607,28 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
     for r in open_picks:
         by_link.setdefault(str(r["match_link"]), []).append(r)
 
+    # Results are fetched once per match date, not once per pick.
+    results = _results_by_day({str(r["match_date"]) for r in open_picks})
+
+    still_open: list[str] = []
     for link, group in by_link.items():
-        record = settle_scrape(link)
         best_of = int(float(group[0].get("best_of") or 3))
-        parsed = parse_score(record, best_of) if record else None
+        parsed, note = _final_score(link, group[0], results, best_of)
+        if parsed is None and note is None:
+            # No result yet — NOT a void. A void returns the stake and marks
+            # the row settled, so voiding a match merely missing from the feed
+            # would quietly close a live position and let a ledger of
+            # unresolved bets read as a completed test. Leave it open; the
+            # next run tries again.
+            still_open.append(link)
+            continue
         for r in group:
             kind = SETTLES[r["row_type"]]
             if parsed is None:
                 rows.append({**r.to_dict(), "row_type": kind,
                              "ts_utc": _now(), "run_date": today.isoformat(),
                              "result": "void", "pnl_flat": 0.0,
-                             "pnl_kelly": 0.0,
-                             "note": "match did not finish or result "
-                                     "unavailable; stake returned"})
+                             "pnl_kelly": 0.0, "note": note})
                 continue
             total, diff, _ = parsed
             result, per_unit = settle_one(r, total, diff)
@@ -547,6 +638,9 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
                          "pnl_flat": per_unit * float(r["stake_flat"] or 0.0),
                          "pnl_kelly": per_unit * float(r["stake_kelly"] or 0.0),
                          "note": f"final {total} games, margin {diff:+d}"})
+    if still_open:
+        print(f"{len(still_open)} played match(es) have no result yet; left "
+              f"open, not voided. They settle on a later run.")
     return rows
 
 
@@ -721,7 +815,11 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     lines = [f"*Tennis paper trading — day {run_day} of {RUN_DAYS}* "
              f"(run {day.isoformat()})",
              "_Paper only. Expected outcome is flat-to-negative; this is a "
-             "forward measurement, not a strategy._", ""]
+             "forward measurement, not a strategy._",
+             "_Odds: PointsBet AU only (OddsPortal is Cloudflare-blocked from "
+             "this host). One book, not a consensus — not comparable to the "
+             "Bet365-based 2024 reports. Results from ESPN._",
+             ""]
 
     if bets:
         lines.append(f"*{len(bets)} bet(s) placed*")
@@ -878,7 +976,8 @@ def run(today: date, dry_run: bool) -> str:
         # One book, so the de-vig and the price come from the same market.
         # Bet365 when it is quoting, otherwise whichever book has the most
         # lines up — not the best price across books, which assumes perfect
-        # shopping and is fiction (`reports/totals_roi.md`).
+        # shopping and is fiction (`reports/totals_roi.md`). Under the
+        # PointsBet source there is only ever one book, so this selects it.
         books = q["bookmaker"].value_counts()
         book = "bet365" if "bet365" in books.index else books.index[0]
         q = q[q["bookmaker"] == book]
@@ -1109,6 +1208,46 @@ def demo() -> None:
                        5) == (52, 0, 5)
     assert league_slug("ATP Australian Open 2024") == "atp-australian-open"
 
+    # Settlement of a PointsBet pick runs off the ESPN results feed, and the
+    # three outcomes must stay distinct. Voiding a match that merely has no
+    # result yet would return the stake and CLOSE a live position; leaving a
+    # genuine retirement open would never resolve it.
+    pick = pd.Series({
+        "row_type": "pick", "match_key": "pointsbet:1",
+        "match_link": "pointsbet:1", "market": "total_games", "line": "22.5",
+        "model_selection": "over 22.5", "decimal_odds": "1.90",
+        "match_date": "2026-08-10", "best_of": "3", "stake_flat": "2",
+        "stake_kelly": "1", "player_a": "Jodar R.", "player_b": "Fils A."})
+    finished = {"finished": True, "total_games": 26, "game_margin": 4,
+                "sets_played": 3, "status": "STATUS_FINAL",
+                "home_name": "Rafael Jodar", "away_name": "Arthur Fils"}
+    feed = {"2026-08-10": [finished]}
+    assert _final_score("pointsbet:1", pick, feed, 3) == ((26, 4, 3), None)
+    # Not in the feed: open, never void.
+    assert _final_score("pointsbet:1", pick, {"2026-08-10": []}, 3) \
+        == (None, None)
+    # Retired: void, with the status named in the note.
+    ret = {**finished, "finished": False, "status": "STATUS_RETIRED",
+           "total_games": None, "game_margin": None}
+    score, note = _final_score("pointsbet:1", pick, {"2026-08-10": [ret]}, 3)
+    assert score is None and note and "STATUS_RETIRED" in note, note
+    # Orientation: ESPN listing the players the other way round must flip the
+    # margin, or every handicap settles backwards while totals look fine.
+    flip = pd.Series({**pick.to_dict(), "player_a": "Fils A.",
+                      "player_b": "Jodar R."})
+    assert _final_score("pointsbet:1", flip, feed, 3) == ((26, -4, 3), None)
+
+    # And the loop leaves an unresolved position open: zero rows, not a void.
+    # The feed is stubbed rather than called; a self-check that needs the
+    # network is a self-check that fails on a flaky day for no reason.
+    real = RES.results_for
+    RES.results_for = lambda day, tour="atp": []
+    try:
+        assert settle(pd.DataFrame([pick.to_dict()]), date(2026, 8, 12),
+                      dry_run=True) == []
+    finally:
+        RES.results_for = real
+
     # Running PnL keeps the two schemes separate and counts open positions.
     book = pd.DataFrame([
         {"row_type": "pick", "stake_flat": "2", "stake_kelly": "3",
@@ -1125,8 +1264,15 @@ def demo() -> None:
     ])
     # A curated alias resolves; an alias pointing at an id the match table
     # does not contain must fail to a skip, never to the wrong player.
-    ref = Reference({"c": [(frozenset({"alcaraz", "garfia"}), "A0E2")]}, {},
-                    {"nadal r": "N409", "typo": "NOT_AN_ID"}, {"A0E2", "N409"})
+    ref = Reference({"c": [(frozenset({"alcaraz", "garfia"}), "A0E2")]},
+                    {"canada masters": ("M001", "Hard")},
+                    {"nadal r": "N409", "typo": "NOT_AN_ID"}, {"A0E2", "N409"},
+                    {"atp montreal": "Canada Masters",
+                     "atp nowhere": "No Such Masters"})
+    # The bookmaker's city name resolves through the alias file; an alias
+    # naming a tournament the history lacks must skip, not price blind.
+    assert ref.tournament("ATP Montreal") == ("M001", "Hard")
+    assert ref.tournament("ATP Nowhere") is None
     assert ref.player("Nadal R.") == "N409"
     assert ref.player("typo") is None
     assert ref.player("Alcaraz Garfia C.") == "A0E2"

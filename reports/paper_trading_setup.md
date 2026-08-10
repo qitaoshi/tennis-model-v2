@@ -53,7 +53,7 @@ That property is the deliverable and it is fragile. Two rules protect it:
 | Excluded | `match_winner` — proven to have no edge; the CLV that looked positive traced to overrating longshots (`reports/match_winner_diagnosis.md`) |
 | Bankroll | 100 units, paper |
 | Staking | Both schemes run in parallel on the same picks: **flat** 2 units per bet, and **half-Kelly** (0.5 x Kelly fraction x bankroll) hard-capped at 5 units |
-| Odds | OddsPortal via the existing OddsHarvester wrapper, in its upcoming-fixtures mode |
+| Odds | **PointsBet AU's JSON API** (`scripts/fetch_pointsbet.py`), since 2026-08-10. One book, not a consensus — see "The odds source changed on day 1" below. Was: OddsPortal via the OddsHarvester wrapper |
 | Probabilities | This repo's model: `model/price.py` over `model/engine.py`, `model/corrections.py` and `data/processed/calibration_maps.pkl` |
 | Delivery | Slack |
 | Duration | 14 days |
@@ -70,8 +70,10 @@ pricing, Kelly arithmetic, ledger writes, settlement and PnL all live there,
 where they can be read and re-run. Order of the daily job:
 
 1. **Settle** yesterday's open positions first, so today's Kelly bankroll
-   reflects them. Each settlement re-scrapes that match link for its final
-   score and appends a settlement row.
+   reflects them. Final scores come from ESPN (`scripts/fetch_results.py`),
+   fetched once per match date, and a settlement row is appended. A match with
+   no result yet stays open rather than voiding — see "The odds source changed
+   on day 1".
 2. **Fetch** unstarted ATP fixtures for today and tomorrow, with totals and
    handicap quotes.
 3. **Price** each fixture with the model as of today, and compute edge.
@@ -184,17 +186,77 @@ Costs and caveats of running on GitHub:
 - **The runner's filesystem is discarded**, so the workflow commits
   `paper/` back to the repo at the end of every run. An uncommitted ledger is
   a lost day. The commit step adds `paper/` only and never amends.
-- **Unverified: whether headless Chromium can drive OddsPortal from a GitHub
-  runner.** OddsPortal sits behind Cloudflare and datacentre IPs are the ones
-  most likely to be challenged. This is the single biggest open risk in the
-  whole setup. Trigger the workflow manually with `dry_run: true` and confirm
-  before trusting the schedule; if it is blocked, launchd on the Mac is the
-  fallback, at the cost of missed days.
+- ~~**Unverified: whether headless Chromium can drive OddsPortal from a GitHub
+  runner.**~~ **This risk fired on day 1** and the source was replaced. See
+  the next section.
 - The schedule is 09:00 **UTC** rather than a local wall clock: a time skipped
   by a spring-forward never fires and one repeated by a fall-back fires twice,
   and a fourteen-day run cannot absorb either.
 - The workflow runs `--self-check` and `--rehearse` before the live job, so a
   broken build fails before it can write a ledger row.
+
+## The odds source changed on day 1 (2026-08-10)
+
+The biggest named risk in this document fired immediately. On day 1 the job
+scraped nothing: a plain `curl` to oddsportal.com returned HTTP 200 instantly,
+while a headless-Chromium navigation to the same page failed at once with
+`net::ERR_CONNECTION_RESET`, on both markets and both dates, twice. That is
+Cloudflare rejecting the headless fingerprint from a datacentre IP — not a
+timeout, and not a quiet day with no matches. Nothing was committed.
+
+The replacement is **PointsBet AU's unofficial JSON API**
+(`scripts/fetch_pointsbet.py`), ported from the v1 model's `data/fetch_odds.py`
+with the `Handicap Games` market added. It answers plain `urllib` from the
+same host in about 0.14s. No browser, no fingerprint to defeat, and the
+sandbox allowlist narrows to `api.pointsbet.com` plus Slack and GitHub.
+
+It emits records in the OddsPortal shape, so de-vig, name resolution, pricing,
+staking, edge and the ledger are untouched by the swap.
+
+**What it costs, stated plainly:**
+
+- **One book, not a consensus.** OddsPortal quoted many bookmakers and the
+  harness picked Bet365. Every price is now PointsBet's. Any number from this
+  run is measured against a different market than every 2024 report in this
+  repo, and is not directly comparable to them.
+- **Settlement needed a second source.** PointsBet's endpoints carry
+  `score: null` and the event disappears once the match ends, so there is no
+  result behind a pick. Results now come from **ESPN's scoreboard API**
+  (`scripts/fetch_results.py`), the same source the v1 model used for the same
+  job — though its host has moved, `site.api.espn.com` now answering 403 where
+  `site.web.api.espn.com` answers 200. It gives per-set `linescores`, so total
+  games and the game margin are exact rather than inferred, and an explicit
+  `STATUS_RETIRED` / `STATUS_WALKOVER`, so an unfinished match is identified
+  by status rather than by parsing "ret" out of prose.
+
+  Three settlement outcomes are kept strictly distinct, which is the part
+  worth reviewing: a finished match **settles**; a retirement or walkover
+  **voids**; a match simply *not in the feed yet* stays **open**. Collapsing
+  the last two is the dangerous bug — a void returns the stake and marks the
+  row settled, so voiding a match that merely has no result yet would close a
+  live position and let a ledger of unresolved bets read as a completed test.
+  A failed results fetch leaves picks open for the same reason.
+- **Two new failure modes, handled.** PointsBet's competition names pass the
+  harness's `atp`-and-not-`challenger` filter for doubles, futures and
+  outrights, which a singles model would have priced as though two players had
+  walked on court; and it names Masters events by city ("ATP Montreal") where
+  the match history names them by event ("Canada Masters"), which the fuzzy
+  resolver cannot bridge. The first is filtered in the adapter, the second is
+  `paper/tournament_aliases.json` — data, reviewed, visible in a diff, on the
+  same rules as `player_aliases.json`.
+
+Verified on the live board for 2026-08-10: both ATP Montreal singles matches
+priced, both markets, 8 of 8 players resolved, no skips. Settlement verified
+against real played matches on 2026-08-09: Berrettini v Navone settled from
+ESPN at 31 games and margin −5 (over 22.5 won, home −3.5 lost), and the
+Popyrin v Kokkinakis retirement voided rather than settling.
+
+Whether these runners are blocked the same way was never actually tested, only
+inferred. `.github/workflows/cloudflare-probe.yml` is a manual-only diagnostic
+that answers it: it compares a plain `curl` against a Playwright navigation to
+the same OddsPortal page and reports which of block / challenge / success it
+got. Even a green result is not on its own a reason to move pricing back — a
+source that can begin challenging mid-run is what cost day 1.
 
 ## Reading the result at the end
 
@@ -208,10 +270,10 @@ the caveat.
 
 What the run *can* deliver:
 
-- Whether the whole chain works forward — fixtures, names, pricing, settlement
-  — on data nobody has seen. Several of the failure modes here (unknown
-  players, missing lines, vanished matches) have never been exercised outside
-  a backtest.
+- Whether the whole chain works forward — fixtures, names, pricing,
+  settlement — on data nobody has seen. Several of the failure modes here
+  (unknown players, missing lines, vanished matches) have never been
+  exercised outside a backtest.
 - An honest count of how often the model can price a fixture at all, and why
   it cannot when it cannot.
 - A committed, timestamped record that later work can extend rather than

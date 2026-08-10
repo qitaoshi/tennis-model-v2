@@ -54,11 +54,12 @@ api() {  # api <method> <path> [body-on-stdin]
 }
 
 # --- environment ------------------------------------------------------------
-# Networking is unrestricted because the scrape drives a real Chromium against
-# OddsPortal, which pulls assets from CDNs that cannot be enumerated ahead of
-# time, and Playwright downloads its browser build on first install. The Slack
-# credential below is separately scoped to slack.com, so the token cannot be
-# substituted into a request to anywhere else.
+# Networking was unrestricted while the odds came from OddsPortal via a real
+# Chromium. That source is gone (2026-08-10: Cloudflare reset every headless
+# connection from this runner's IP, collecting nothing on day 1). Odds now
+# come from PointsBet's JSON API and results from ESPN's, both over urllib, so
+# the hosts are enumerable and the allowlist is tight. The Slack credential
+# below is separately scoped to slack.com regardless.
 find_by_name() {  # find_by_name <collection> <name-field> <name>
   api GET "$1?limit=100" 2>/dev/null \
     | jq -r --arg n "$3" ".data[]? | select(.$2 == \$n) | .id" | head -1
@@ -78,10 +79,15 @@ ENVIRONMENT_ID=$(api POST environments body <<'JSON' | jq -er '.id'
     "type": "cloud",
     "packages": {
       "pip": ["pandas", "numpy", "pyarrow", "scipy", "scikit-learn",
-              "beautifulsoup4", "lxml", "playwright", "oddsharvester",
-              "tabulate"]
+              "beautifulsoup4", "lxml", "tabulate"]
     },
-    "networking": {"type": "unrestricted"}
+    "networking": {"type": "limited",
+                   "allowed_hosts": ["api.pointsbet.com",
+                                     "site.web.api.espn.com",
+                                     "slack.com",
+                                     "api.github.com",
+                                     "api.githubcopilot.com",
+                                     "github.com"]}
   }
 }
 JSON
@@ -155,18 +161,24 @@ fi
 read -r -d '' DAILY_TASK <<TASK || true
 Run today's tennis paper-trading job.
 
-1. cd $MOUNT and make sure the environment is ready:
-   python -m playwright install --with-deps chromium
+1. cd $MOUNT and verify before trusting the run:
+   python -m scripts.fetch_pointsbet --self-check
+   python -m scripts.fetch_results --self-check
    python -m scripts.paper_trade --self-check
-   If the self-check fails, post that failure to Slack and stop. Do not run
+   If any fails, post that failure to Slack and stop. Do not run
    the job on unverified arithmetic.
 
 2. Run the job for real:
    SLACK_CHANNEL=$SLACK_CHANNEL python -m scripts.paper_trade
 
-   The script scrapes fixtures, settles yesterday's open positions, prices
-   today's, sizes both staking schemes, appends to paper/ledger.csv and posts
-   the summary to Slack itself.
+   The script fetches fixtures from PointsBet's JSON API, settles yesterday's
+   open positions from ESPN's results API, prices today's, sizes both staking
+   schemes, appends to paper/ledger.csv and posts the summary to Slack itself.
+
+   The script decides settlement, never you: a finished match settles, a
+   retirement or walkover voids, and a match with no result yet stays OPEN
+   and settles on a later run. Never settle a position by hand from another
+   source and never mark one void to tidy the ledger.
 
 3. Read the script's own output for skipped matches. For any skipped with
    "unknown or ambiguous player", check whether it is a real reconciliation
@@ -180,12 +192,14 @@ Run today's tennis paper-trading job.
    outside what this model has ever shown. Flag anything odd in a short
    follow-up Slack message. Flag it; do not correct it.
 
-5. Commit paper/ledger.csv and paper/run_state.json to the default branch
-   through the GitHub MCP, message "paper trading: <today's date>". The
-   sandbox filesystem does not survive the session, so an uncommitted ledger
-   is a lost day. Commit only those two files; never amend or force-push.
+5. Commit paper/ledger.csv, paper/run_state.json, paper/player_aliases.json,
+   paper/tournament_aliases.json and paper/unresolved_names.json to the
+   default branch through the GitHub MCP, message "paper trading: <today's
+   date>". The sandbox filesystem does not survive the session, so an
+   uncommitted ledger is a lost day. Commit only files under paper/; never
+   amend or force-push.
 
-If the scrape fails outright, post that to Slack, commit nothing, and stop.
+If the odds fetch fails outright, post that to Slack, commit nothing, and stop.
 A missed day is a gap in the record, which is honest. A guessed day is not.
 TASK
 

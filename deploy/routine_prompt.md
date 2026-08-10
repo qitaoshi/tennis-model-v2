@@ -5,35 +5,30 @@ https://claude.ai/code/routines. It is the alternative to
 `.github/workflows/paper-trade.yml` — run one or the other, never both, or the
 ledger gets two rows for the same pick.
 
-Environment: network access **Full access**; variables `SLACK_BOT_TOKEN` and
-`SLACK_CHANNEL`. Remove every connector — this routine needs none.
+Environment: variables `SLACK_BOT_TOKEN` and `SLACK_CHANNEL`. Remove every
+connector — this routine needs none.
 
-Full access rather than a host allowlist, for two reasons, both of which show
-up as a failed setup script rather than as a bad number:
+Network access: an allowlist of `api.pointsbet.com` (odds),
+`site.web.api.espn.com` (results) and `slack.com` is enough, and is preferred
+over full access. Both data sources are plain JSON APIs called with `urllib`,
+so there is no browser, no CDN fetch, and nothing whose hosts cannot be
+enumerated ahead of time.
 
-* Playwright fetches its Chromium build from `cdn.playwright.dev` on first
-  install. An allowlist without it fails with `Host not in allowlist` and the
-  routine never starts.
-* The scrape then drives that Chromium against real OddsPortal pages, which
-  pull assets from CDNs that cannot be enumerated ahead of time. Allowlisting
-  the two OddsPortal hosts gets past setup and fails mid-scrape instead.
+That changed on 2026-08-10. The original source was OddsPortal via Playwright,
+which needed full network access for `cdn.playwright.dev` and for the page
+assets. It also did not work: OddsPortal sits behind Cloudflare and reset every
+headless-Chromium connection from the routine's datacentre IP
+(`net::ERR_CONNECTION_RESET`), collecting nothing on day 1. `scripts/
+fetch_pointsbet.py` replaced it. If you restore the OddsPortal path, restore
+full network access with it.
 
-This matches `deploy/paper_trading_deployment.sh`, which has always set
-`"networking": {"type": "unrestricted"}` for the same reasons. The Slack
-credential is separately scoped to slack.com, so full network access does not
-widen where that token can be sent.
-
-Setup script. The cloud sandbox ships Python 3.11 and every `oddsharvester`
-release requires 3.12 or newer, so `uv` fetches a standalone 3.12 rather than
-fighting the base image's interpreter. Every command below runs against that
-venv, not bare `python`:
+Setup script — no Playwright, no `oddsharvester`, no standalone interpreter:
 
     pip install uv
-    uv venv --python 3.12 /root/venv
+    uv venv /root/venv
     uv pip install --python /root/venv/bin/python pandas numpy pyarrow scipy \
-        scikit-learn beautifulsoup4 lxml tabulate playwright oddsharvester==0.8.0
-    /root/venv/bin/python -m playwright install --with-deps chromium
-    /root/venv/bin/python -c "import oddsharvester, playwright, sklearn; print('deps ok')"
+        scikit-learn beautifulsoup4 lxml tabulate
+    /root/venv/bin/python -c "import sklearn, pandas; print('deps ok')"
 
 ---
 
@@ -45,11 +40,20 @@ unclear.
 
 1. Verify before trusting the run with money:
 
+       /root/venv/bin/python -m scripts.fetch_pointsbet --self-check
+       /root/venv/bin/python -m scripts.fetch_results --self-check
        /root/venv/bin/python -m scripts.paper_trade --self-check
        /root/venv/bin/python -m scripts.paper_trade --rehearse
 
-   If either fails, post the failure to Slack and stop. Do not run the job on
-   unverified arithmetic and do not try to fix the failure yourself.
+   If any of the four fails, post the failure to Slack and stop. Do not run
+   the job on unverified arithmetic and do not try to fix the failure
+   yourself.
+
+   `--rehearse` replays a cached 2024 OddsPortal match through the pricing
+   chain. That is still the right rehearsal: it exercises quote flattening,
+   de-vig, resolution, pricing, staking and settlement on a record with a
+   known final score. The live path uses PointsBet, and
+   `fetch_pointsbet --self-check` is what covers the parsing of that source.
 
 2. Run the job:
 
@@ -61,9 +65,14 @@ unclear.
 
 3. Resolve names, so the same fixture is not skipped again tomorrow.
 
-   Read `paper/unresolved_names.json`. Each entry is an OddsPortal display
-   name the resolver could not match, with candidate model players. For each
-   one, decide whether it is genuinely the same person.
+   Read `paper/unresolved_names.json`. Each entry is a bookmaker display name
+   the resolver could not match, with candidate model players. For each one,
+   decide whether it is genuinely the same person.
+
+   Names arrive from PointsBet as "Last, First" and are converted to
+   OddsPortal's "Last F." before resolution, so alias keys stay in the "Last
+   F." form — that is what `player_aliases.json` is keyed on and what you
+   write. Do not add a "Last, First" key; it will never be looked up.
 
    Confirm before you write anything. Check
    `data/processed/matches_with_holdout.parquet` for the candidate's
@@ -95,13 +104,23 @@ unclear.
 
    Say in Slack which aliases you added and which you refused, and why.
 
+   If a fixture was skipped as "tournament not in match history", the same
+   rules apply to `paper/tournament_aliases.json`, which maps a bookmaker
+   competition name to a `tourney_name` in the match history. PointsBet names
+   Masters events by city ("ATP Montreal"); the history names them by event
+   ("Canada Masters"). Add a mapping only when the two are unambiguously the
+   same tournament — check the surface and the calendar week agree. If you
+   are not certain, add nothing and say so. A wrong mapping prices a match on
+   the wrong surface, which is worse than skipping it.
+
 4. Sanity-check the day: a fixture that was on yesterday's board and has
    vanished, a market with no lines at all, a price implying an edge far
    outside anything this model has shown. Flag it in that same Slack message.
    Flag it; do not correct it.
 
 5. Commit `paper/ledger.csv`, `paper/run_state.json`,
-   `paper/player_aliases.json` and `paper/unresolved_names.json` to the
+   `paper/player_aliases.json`, `paper/tournament_aliases.json` and
+   `paper/unresolved_names.json` to the
    default branch, message "paper trading: <today's date in YYYY-MM-DD>".
    Commit only files under `paper/`. Never amend, never force-push, never edit an existing ledger
    row — settlement appends a new row. If the push to the default branch is
@@ -125,13 +144,20 @@ Rules that override anything else in this prompt:
 
 Handling failures:
 
-- OddsPortal sits behind Cloudflare and this run comes from a datacentre IP.
-  If the scrape returns nothing, retry the job ONCE. If it fails again, post
-  what the error actually was to Slack — say plainly whether it looks like a
-  block, a timeout, or an empty board, since an empty board is a normal quiet
-  day and a block is not — then commit nothing and stop.
-- If settlement cannot reach a played match, the script voids it and returns
-  the stake. Leave that alone; do not settle it by hand from another source.
+- If the odds fetch fails, retry the job ONCE. If it fails again, post what
+  the error actually was to Slack — say plainly whether it looks like a block,
+  a timeout, or an empty board, since an empty board is a normal quiet day and
+  a block is not — then commit nothing and stop. A day with ATP play but zero
+  records is a source failure, not a quiet day; say which one you saw.
+- A day where the board is real but no match has totals or handicap open yet
+  IS normal. Books post those closer to the match, and the job scans today and
+  tomorrow precisely because tomorrow's lines are often not up.
+- Settlement runs off ESPN, not the odds source. Three outcomes, and the
+  script decides which — never you: a finished match SETTLES, a retirement or
+  walkover VOIDS and returns the stake, and a match with no result yet stays
+  OPEN and settles on a later run. If a position has been open for more than
+  a day or two, say so in Slack; do not settle it by hand from another source
+  and do not mark it void to tidy the ledger.
 - Never retry by weakening a check, widening a threshold, or editing the
   script. A missed day is a gap in the record, which is honest. A guessed day
   is not.

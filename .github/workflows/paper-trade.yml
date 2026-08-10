@@ -40,12 +40,22 @@ jobs:
         with:
           python-version: "3.12"
 
+      # No Playwright and no oddsharvester: the odds source is PointsBet's
+      # JSON API over urllib since 2026-08-10, when Cloudflare blocked the
+      # headless-Chromium scrape of OddsPortal outright. See
+      # reports/paper_trading_setup.md, and .github/workflows/cloudflare-probe.yml
+      # for whether that block also applies to these runners.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pandas numpy pyarrow scipy scikit-learn beautifulsoup4 \
-                      lxml tabulate playwright 'oddsharvester==0.8.0'
-          python -m playwright install --with-deps chromium
+                      lxml tabulate
+
+      - name: Verify the odds parsing before trusting it with money
+        run: python -m scripts.fetch_pointsbet --self-check
+
+      - name: Verify the results parsing before trusting it with money
+        run: python -m scripts.fetch_results --self-check
 
       - name: Verify the arithmetic before trusting it with money
         run: python -m scripts.paper_trade --self-check
