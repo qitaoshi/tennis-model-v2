@@ -5,9 +5,23 @@ https://claude.ai/code/routines. It is the alternative to
 `.github/workflows/paper-trade.yml` — run one or the other, never both, or the
 ledger gets two rows for the same pick.
 
-Environment: network access Custom with `oddsportal.com`, `www.oddsportal.com`
-and `slack.com` plus the default package list; variables `SLACK_BOT_TOKEN` and
+Environment: network access **Full access**; variables `SLACK_BOT_TOKEN` and
 `SLACK_CHANNEL`. Remove every connector — this routine needs none.
+
+Full access rather than a host allowlist, for two reasons, both of which show
+up as a failed setup script rather than as a bad number:
+
+* Playwright fetches its Chromium build from `cdn.playwright.dev` on first
+  install. An allowlist without it fails with `Host not in allowlist` and the
+  routine never starts.
+* The scrape then drives that Chromium against real OddsPortal pages, which
+  pull assets from CDNs that cannot be enumerated ahead of time. Allowlisting
+  the two OddsPortal hosts gets past setup and fails mid-scrape instead.
+
+This matches `deploy/paper_trading_deployment.sh`, which has always set
+`"networking": {"type": "unrestricted"}` for the same reasons. The Slack
+credential is separately scoped to slack.com, so full network access does not
+widen where that token can be sent.
 
 Setup script. The cloud sandbox ships Python 3.11 and every `oddsharvester`
 release requires 3.12 or newer, so `uv` fetches a standalone 3.12 rather than
