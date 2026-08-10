@@ -52,7 +52,7 @@ WINDOWS: tuple[int | None, ...] = (None, 8, 5, 3)
 #: Families worth calibrating. Kept explicit rather than "whatever collect()
 #: returns" so a thinly-sampled ladder region cannot quietly acquire a map.
 FAMILIES = ("match_winner", "totals_under_low", "totals_under_mid",
-            "totals_under_high", "set_score")
+            "totals_under_high", "set_score", "games_handicap")
 
 REPORT = C.REPORTS_DIR / "calibration_refit.md"
 

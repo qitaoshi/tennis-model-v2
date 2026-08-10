@@ -28,6 +28,12 @@ from scripts import panel as P
 #: Lines sampled from each match's ladder, as offsets from its median total.
 LINE_OFFSETS = (-6.5, -4.5, -2.5, -0.5, 1.5, 3.5, 5.5)
 
+#: Handicaps sampled per match, in games, spanning both sides of a typical
+#: margin. The panel is winner-oriented so the realised margin is always
+#: positive; `collect` adds each line's opposite side as its own sample,
+#: which is what keeps the fitted base rate off 1.0.
+HANDICAP_LINES = (-9.5, -6.5, -4.5, -2.5, -0.5, 1.5, 3.5)
+
 
 def _median_of(pmf: dict[int, float]) -> float:
     cum = 0.0
@@ -49,9 +55,10 @@ def collect(pan: pd.DataFrame, params: CR.CorrectionParams
         fams[fam][1].append(y)
 
     from model.rules import FormatSpec
-    for pa, pb, key, total, sets_w, sets_l in zip(
+    for pa, pb, key, total, sets_w, sets_l, gw, gl in zip(
         pan["pa"], pan["pb"], pan["spec_key"], pan["total_games"],
         pan["n_sets"], pan["best_of"],
+        pan["winner_games"], pan["loser_games"],
     ):
         spec = FormatSpec(best_of=key[0], games_to_win_set=key[1], tb_at=key[2],
                           tb_to=key[3], final_set=key[4], final_tb_at=key[5],
@@ -74,6 +81,29 @@ def collect(pan: pd.DataFrame, params: CR.CorrectionParams
         actual_sets = (need, int(sets_w) - need)
         for (sa, sb), p in d.sets.items():
             add("set_score", p, float((sa, sb) == actual_sets))
+
+        # games handicap. The panel is winner-oriented, so `margin` is always
+        # positive: fitting on it alone would learn "the favourite always
+        # covers", which is the same degenerate outcome model/elo.py warns
+        # about for match_winner, not a calibration map. Both orientations
+        # are added — the match as played, and the same match mirrored — so
+        # the fitted map sees covers and non-covers in the real proportion.
+        diffs: dict[int, float] = {}
+        for (ga, gb), p in d.games.items():
+            diffs[ga - gb] = diffs.get(ga - gb, 0.0) + p
+        margin = int(gw) - int(gl)
+        for h in HANDICAP_LINES:
+            # As played: does the winner cover the line h?
+            add("games_handicap",
+                sum(p for dd, p in diffs.items() if dd > h),
+                float(margin > h))
+            # Mirrored: the *loser's* side, which is a genuinely different
+            # event — the loser covering +h, i.e. the winner failing to.
+            # (Writing this as `-margin < -h` would be the same event again
+            # and would leave the winner-orientation bias fully intact.)
+            add("games_handicap",
+                sum(p for dd, p in diffs.items() if dd < h),
+                float(margin < h))
 
     return {k: (np.array(v[0]), np.array(v[1])) for k, v in fams.items()}
 
@@ -238,5 +268,36 @@ def main() -> None:
     print(f"\nGate {'PASSED' if all_ok else 'FAILED'}; wrote {out}")
 
 
+def demo() -> None:
+    """The handicap orientation trap, asserted (ground rule 10).
+
+    The panel is winner-oriented, so a realised margin is always positive.
+    Sampling only the winner's side of each line gives a base rate near 1.0
+    and fits a map that has learned "the favourite always covers" — the same
+    degenerate outcome model/elo.py documents for match_winner. Both sides of
+    each line must appear, and `margin > h` / `margin < h` must be genuinely
+    different events: writing the mirror as `-margin < -h` is the same event
+    again and silently leaves the bias in place.
+    """
+    diffs = {2: 0.25, 4: 0.5, -3: 0.25}
+    margin = 4
+    for h in HANDICAP_LINES:
+        a = sum(p for d, p in diffs.items() if d > h)
+        b = sum(p for d, p in diffs.items() if d < h)
+        # No mass sits exactly on a half-game line, so the two sides are
+        # complements; if this drifts the two samples stop being one event
+        # and its negation.
+        assert abs(a + b - 1.0) < 1e-9, (h, a, b)
+        assert float(margin > h) + float(margin < h) == 1.0, h
+    # The mirror must not collapse back onto the original event.
+    h = -2.5
+    assert (margin > h) == (-margin < -h), "algebraic identity, for contrast"
+    assert (margin > h) != (margin < h), "the real mirror flips the outcome"
+    print("fit_stage8 handicap-orientation self-check passed")
+
+
 if __name__ == "__main__":
-    main()
+    if "--self-check" in sys.argv:
+        demo()
+    else:
+        main()
