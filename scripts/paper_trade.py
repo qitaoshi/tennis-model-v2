@@ -339,6 +339,43 @@ def kelly(p: float, decimal_odds: float) -> float:
     return max((b * p - (1.0 - p)) / b, 0.0)
 
 
+def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
+    """One representative quote per market, with the model's number beside it.
+
+    This is the reporting counterpart to `pick_bets`: same pairing of a
+    priced selection to a real quote, but with none of the edge, staking or
+    sanity filters, so a market shows up here whether or not it produced a
+    bet. Per market it shows the side the model likes best — the largest
+    model-minus-implied gap, negative if that is all there is. Picking by
+    price instead would always land on the same side of a two-sided total,
+    since both sides sit near even money, and would say nothing about what
+    the model actually thinks.
+    """
+    probs = {(s.market, s.selection): s for s in priced.selections}
+    out = []
+    for market in MARKETS:
+        rows = quote_frame[quote_frame["market"] == market]
+        pick = None
+        for row in rows.itertuples(index=False):
+            try:
+                line = float(row.line)
+            except (TypeError, ValueError):
+                continue
+            sel = probs.get((market, model_selection(market, row.side, line)))
+            if sel is None:
+                continue
+            implied = 1.0 / row.decimal_odds
+            cand = {"market": market, "line": f"{line:g}", "side": row.side,
+                    "decimal_odds": row.decimal_odds, "implied": implied,
+                    "model_p": sel.probability,
+                    "edge": sel.probability - implied}
+            if pick is None or cand["edge"] > pick["edge"]:
+                pick = cand
+        if pick is not None:
+            out.append(pick)
+    return out
+
+
 def pick_bets(priced, quote_frame: pd.DataFrame) -> list[dict]:
     """One bet per market: the highest positive raw-price edge.
 
@@ -506,8 +543,25 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def _ev_roi(rows: pd.DataFrame) -> float:
+    """Stake-weighted mean of the edge the model claimed, on settled bets."""
+    stake = pd.to_numeric(rows["stake_flat"], errors="coerce").fillna(0.0)
+    edge = pd.to_numeric(rows["edge_raw"], errors="coerce").fillna(0.0)
+    return float((edge * stake).sum() / stake.sum()) if stake.sum() else 0.0
+
+
 def pnl(ledger: pd.DataFrame) -> dict:
     s = ledger[ledger["row_type"] == "settle"]
+    # A void returned the stake, so it is neither a win nor a loss and does
+    # not belong in an ROI denominator — it would drag any ROI toward zero
+    # purely by sitting there. It still counts as settled.
+    resolved = s[s["result"] != "void"]
+    staked_flat_r = pd.to_numeric(
+        resolved["stake_flat"], errors="coerce").fillna(0.0)
+    staked_kel_r = pd.to_numeric(
+        resolved["stake_kelly"], errors="coerce").fillna(0.0)
+    flat_r = pd.to_numeric(resolved["pnl_flat"], errors="coerce").fillna(0.0)
+    kel_r = pd.to_numeric(resolved["pnl_kelly"], errors="coerce").fillna(0.0)
     flat = pd.to_numeric(s["pnl_flat"], errors="coerce").fillna(0.0)
     kel = pd.to_numeric(s["pnl_kelly"], errors="coerce").fillna(0.0)
     staked_flat = pd.to_numeric(s["stake_flat"], errors="coerce").fillna(0.0)
@@ -518,9 +572,18 @@ def pnl(ledger: pd.DataFrame) -> dict:
         "kelly_pnl": float(kel.sum()),
         "flat_bankroll": BANKROLL_START + float(flat.sum()),
         "kelly_bankroll": BANKROLL_START + float(kel.sum()),
-        "flat_roi": float(flat.sum() / staked_flat.sum()) if staked_flat.sum() else 0.0,
-        "kelly_roi": float(kel.sum() / staked_kel.sum()) if staked_kel.sum() else 0.0,
+        "flat_roi": float(flat_r.sum() / staked_flat_r.sum()) if staked_flat_r.sum() else 0.0,
+        "kelly_roi": float(kel_r.sum() / staked_kel_r.sum()) if staked_kel_r.sum() else 0.0,
         "n_open": int((ledger["row_type"] == "pick").sum() - len(s)),
+        # What the model *claimed* it would make, on the same settled bets:
+        # the edge it saw at the time, staked flat. Realised flat ROI landing
+        # far below this is the model overrating its own edge, which is the
+        # failure `reports/totals_roi.md` already found on 2024 data. It is
+        # not a forecast — it is the claim being scored.
+        # Voids are excluded: the stake came back, so there was no wager for
+        # the claim to be scored against. Counting them would credit the model
+        # with edge on bets that never resolved.
+        "ev_roi": _ev_roi(s[s["result"] != "void"]),
     }
 
 
@@ -562,7 +625,8 @@ def post_slack(text: str, dry_run: bool) -> None:
 
 
 def summary(day: date, bets: list[dict], settlements: list[dict],
-            skips: dict[str, list[str]], totals: dict, run_day: int) -> str:
+            skips: dict[str, list[str]], totals: dict, run_day: int,
+            board: list[dict] | None = None) -> str:
     lines = [f"*Tennis paper trading — day {run_day} of {RUN_DAYS}* "
              f"(run {day.isoformat()})",
              "_Paper only. Expected outcome is flat-to-negative; this is a "
@@ -581,6 +645,18 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         lines.append("*No bets placed.*")
     lines.append("")
 
+    if board:
+        lines.append(f"*Board — {len(board)} match(es) priced*")
+        for m in board:
+            lines.append(f"• {m['label']}  _(bo{m['best_of']}, {m['book']}, "
+                         f"{m['quotes']} quotes)_")
+            for ln in m["lines"]:
+                lines.append(
+                    f"    {ln['market']} {ln['side']} {ln['line']} "
+                    f"@ {ln['decimal_odds']:.2f} — model {ln['model_p']:.1%} "
+                    f"vs {ln['implied']:.1%} ({ln['edge']:+.1%})")
+        lines.append("")
+
     if settlements:
         lines.append(f"*{len(settlements)} position(s) settled*")
         for s in settlements:
@@ -597,6 +673,11 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         f"half-Kelly: {totals['kelly_pnl']:+.2f}u, bankroll "
         f"{totals['kelly_bankroll']:.2f}u (ROI {totals['kelly_roi']:+.2%}) · "
         f"{totals['n_settled']} settled, {totals['n_open']} open")
+    lines.append(
+        f"_Model claimed {totals['ev_roi']:+.2%} EV on those same bets; "
+        f"realised flat is {totals['flat_roi']:+.2%}. The gap is the model "
+        f"overrating its own edge, not variance alone — at this sample size "
+        f"neither number means much._")
 
     n_skip = sum(len(v) for v in skips.values())
     if n_skip:
@@ -645,6 +726,7 @@ def run(today: date, dry_run: bool) -> str:
     skips: dict[str, list[str]] = {}
     unresolved: dict[str, dict] = {}
     bets: list[dict] = []
+    board: list[dict] = []
     bankroll_kelly = totals["kelly_bankroll"]
     already = set(ledger[ledger["row_type"] == "pick"]["match_key"] + "|"
                   + ledger[ledger["row_type"] == "pick"]["market"])
@@ -696,6 +778,15 @@ def run(today: date, dry_run: bool) -> str:
             skip("format not priced by the engine")
             continue
 
+        # What the model thought and what was on offer, for every match that
+        # got as far as being priced — including the ones no bet came out of.
+        # A day with no bets is still a day the model made a projection, and
+        # that projection is the thing being measured, not the staking.
+        board.append({
+            "label": label, "book": book, "best_of":
+                priced.metadata["format"]["best_of"],
+            "quotes": len(q), "lines": board_lines(priced, q)})
+
         for bet in pick_bets(priced, q):
             key = f"{link}|{bet['market']}"
             if key in already:
@@ -730,7 +821,7 @@ def run(today: date, dry_run: bool) -> str:
             {"run_date": today.isoformat(),
              "names": sorted(unresolved.values(), key=lambda r: r["odds_name"])},
             indent=2, ensure_ascii=False) + "\n")
-    text = summary(today, bets, settlements, skips, totals, run_day)
+    text = summary(today, bets, settlements, skips, totals, run_day, board)
     post_slack(text, dry_run)
 
     if not dry_run and not STATE.exists():
@@ -868,10 +959,17 @@ def demo() -> None:
 
     # Running PnL keeps the two schemes separate and counts open positions.
     book = pd.DataFrame([
-        {"row_type": "pick", "stake_flat": "2", "stake_kelly": "3"},
-        {"row_type": "pick", "stake_flat": "2", "stake_kelly": "1"},
+        {"row_type": "pick", "stake_flat": "2", "stake_kelly": "3",
+         "result": "", "edge_raw": "0.04"},
+        {"row_type": "pick", "stake_flat": "2", "stake_kelly": "1",
+         "result": "", "edge_raw": "0.04"},
         {"row_type": "settle", "stake_flat": "2", "stake_kelly": "3",
-         "pnl_flat": "1.8", "pnl_kelly": "2.7"},
+         "pnl_flat": "1.8", "pnl_kelly": "2.7", "result": "win",
+         "edge_raw": "0.05"},
+        # A void: stake returned, so it settles but must not dilute any ROI.
+        {"row_type": "settle", "stake_flat": "2", "stake_kelly": "3",
+         "pnl_flat": "0.0", "pnl_kelly": "0.0", "result": "void",
+         "edge_raw": "0.99"},
     ])
     # A curated alias resolves; an alias pointing at an id the match table
     # does not contain must fail to a skip, never to the wrong player.
@@ -884,9 +982,15 @@ def demo() -> None:
     assert ref.candidates("Alcaraz Garfia C.")[0]["player_id"] == "A0E2"
 
     totals = pnl(book)
-    assert totals["n_settled"] == 1 and totals["n_open"] == 1, totals
+    assert totals["n_settled"] == 2 and totals["n_open"] == 0, totals
     assert abs(totals["flat_bankroll"] - 101.8) < 1e-9, totals
     assert abs(totals["kelly_bankroll"] - 102.7) < 1e-9, totals
+    # ROI is over the one resolved bet, not the void: 1.8/2, not 1.8/4. The
+    # void's absurd 99% edge must not reach EV either — it would be the
+    # loudest number in the Slack post and it would be meaningless.
+    assert abs(totals["flat_roi"] - 0.9) < 1e-9, totals
+    assert abs(totals["kelly_roi"] - 0.9) < 1e-9, totals
+    assert abs(totals["ev_roi"] - 0.05) < 1e-9, totals
     print("paper_trade self-check passed")
 
 
