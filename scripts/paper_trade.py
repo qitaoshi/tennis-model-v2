@@ -43,10 +43,12 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from model import constants as C
 from model import price as PZ
+from model import recalibrate as RC
 from scripts.multi_market_clv import _keys
 from scripts.odds_portal_table import _rows
 
@@ -503,13 +505,21 @@ def settle_one(row: pd.Series, total: int, diff: int) -> tuple[str, float]:
 
 
 def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
-    picks = ledger[ledger["row_type"] == "pick"]
-    settled = set(ledger[ledger["row_type"] == "settle"]["match_key"] + "|"
-                  + ledger[ledger["row_type"] == "settle"]["market"])
+    # Board rows settle by the same arithmetic as picks — they carry a
+    # `model_selection` and a line like any other row — but they settle into
+    # `board_settle`, never `settle`, so no downstream PnL query can pick
+    # them up by accident. Their stakes are zero regardless.
+    SETTLES = {"pick": "settle", "board": "board_settle"}
+    picks = ledger[ledger["row_type"].isin(SETTLES)]
+    done = ledger[ledger["row_type"].isin(SETTLES.values())]
+    settled = set(done["match_key"] + "|" + done["market"] + "|"
+                  + done["row_type"])
     rows = []
-    open_picks = [r for _, r in picks.iterrows()
-                  if f"{r['match_key']}|{r['market']}" not in settled
-                  and str(r["match_date"]) < today.isoformat()]
+    open_picks = [
+        r for _, r in picks.iterrows()
+        if f"{r['match_key']}|{r['market']}|{SETTLES[r['row_type']]}"
+        not in settled
+        and str(r["match_date"]) < today.isoformat()]
     by_link: dict[str, list] = {}
     for r in open_picks:
         by_link.setdefault(str(r["match_link"]), []).append(r)
@@ -519,8 +529,9 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
         best_of = int(float(group[0].get("best_of") or 3))
         parsed = parse_score(record, best_of) if record else None
         for r in group:
+            kind = SETTLES[r["row_type"]]
             if parsed is None:
-                rows.append({**r.to_dict(), "row_type": "settle",
+                rows.append({**r.to_dict(), "row_type": kind,
                              "ts_utc": _now(), "run_date": today.isoformat(),
                              "result": "void", "pnl_flat": 0.0,
                              "pnl_kelly": 0.0,
@@ -529,11 +540,11 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
                 continue
             total, diff, _ = parsed
             result, per_unit = settle_one(r, total, diff)
-            rows.append({**r.to_dict(), "row_type": "settle",
+            rows.append({**r.to_dict(), "row_type": kind,
                          "ts_utc": _now(), "run_date": today.isoformat(),
                          "result": result,
-                         "pnl_flat": per_unit * float(r["stake_flat"]),
-                         "pnl_kelly": per_unit * float(r["stake_kelly"]),
+                         "pnl_flat": per_unit * float(r["stake_flat"] or 0.0),
+                         "pnl_kelly": per_unit * float(r["stake_kelly"] or 0.0),
                          "note": f"final {total} games, margin {diff:+d}"})
     return rows
 
@@ -541,6 +552,44 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
 # ---------------------------------------------------------------------------
 # PnL
 # ---------------------------------------------------------------------------
+
+
+def calibration_scores(ledger: pd.DataFrame) -> dict:
+    """Brier, log-loss and ECE on settled board rows, model against book.
+
+    This is the metric the project is actually judged on (CLAUDE.md, goal
+    changed 2026-08-08); ROI is a benchmark. It runs over board rows rather
+    than bets so the denominator is every match priced, not the subset where
+    an edge cleared a threshold.
+
+    The book's implied probability is scored on exactly the same outcomes.
+    A Brier of 0.241 means nothing on its own — beside the book's 0.229 it
+    says the model is the worse forecaster on this sample, which is the
+    comparison worth reporting.
+    """
+    s = ledger[ledger["row_type"] == "board_settle"]
+    s = s[s["result"].isin(("win", "loss"))]
+    if s.empty:
+        return {"n": 0}
+    p = pd.to_numeric(s["model_p"], errors="coerce").to_numpy(float)
+    odds = pd.to_numeric(s["decimal_odds"], errors="coerce").to_numpy(float)
+    y = (s["result"] == "win").to_numpy(float)
+    # Implied price carries the vig, so the book's raw number is not a
+    # probability and is mildly flattered by this comparison. Normalising it
+    # needs both sides of each line, which a single row does not carry.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        implied = 1.0 / odds
+    ok = np.isfinite(p) & np.isfinite(implied) & np.isfinite(y)
+    if not ok.any():
+        return {"n": 0}
+    p, implied, y = p[ok], implied[ok], y[ok]
+    return {
+        "n": int(ok.sum()),
+        "brier": RC.brier(p, y), "brier_book": RC.brier(implied, y),
+        "log_loss": RC.log_loss(p, y), "log_loss_book": RC.log_loss(implied, y),
+        "ece": RC.calibration_error(p, y),
+        "ece_book": RC.calibration_error(implied, y),
+    }
 
 
 def _ev_roi(rows: pd.DataFrame) -> float:
@@ -626,7 +675,8 @@ def post_slack(text: str, dry_run: bool) -> None:
 
 def summary(day: date, bets: list[dict], settlements: list[dict],
             skips: dict[str, list[str]], totals: dict, run_day: int,
-            board: list[dict] | None = None) -> str:
+            board: list[dict] | None = None,
+            scores: dict | None = None) -> str:
     lines = [f"*Tennis paper trading — day {run_day} of {RUN_DAYS}* "
              f"(run {day.isoformat()})",
              "_Paper only. Expected outcome is flat-to-negative; this is a "
@@ -667,6 +717,22 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 f"kelly {float(s['pnl_kelly']):+.2f}u")
         lines.append("")
 
+    if scores and scores.get("n"):
+        def cmp(model: float, book: float) -> str:
+            gap = model - book
+            return (f"{model:.4f} vs book {book:.4f} "
+                    f"({'model better' if gap < 0 else 'book better'})")
+        lines.append(f"*Projection accuracy* — {scores['n']} settled "
+                     f"projection(s), every match priced")
+        lines.append(f"• Brier {cmp(scores['brier'], scores['brier_book'])}")
+        lines.append(f"• Log-loss "
+                     f"{cmp(scores['log_loss'], scores['log_loss_book'])}")
+        lines.append(f"• ECE {cmp(scores['ece'], scores['ece_book'])}")
+        lines.append("_Lower is better on all three. This is the number the "
+                     "project is judged on; the book's is flattered slightly "
+                     "by the vig in its price._")
+        lines.append("")
+
     lines.append(
         f"*Running* — flat: {totals['flat_pnl']:+.2f}u, bankroll "
         f"{totals['flat_bankroll']:.2f}u (ROI {totals['flat_roi']:+.2%}) · "
@@ -704,15 +770,19 @@ def run(today: date, dry_run: bool) -> str:
     run_day = (today - start).days + 1
 
     # 1. settle yesterday first, so today's Kelly bankroll includes it.
-    settlements = settle(ledger, today, dry_run)
-    _append(settlements, dry_run)
-    if settlements and not dry_run:
+    resolved = settle(ledger, today, dry_run)
+    _append(resolved, dry_run)
+    if resolved and not dry_run:
         ledger = _load_ledger()
-    elif settlements:
-        ledger = pd.concat([ledger, pd.DataFrame(settlements)
+    elif resolved:
+        ledger = pd.concat([ledger, pd.DataFrame(resolved)
                             .reindex(columns=LEDGER_COLUMNS)],
                            ignore_index=True)
+    # Only staked rows are reported as positions; board rows settled in the
+    # same pass feed the calibration score instead.
+    settlements = [r for r in resolved if r["row_type"] == "settle"]
     totals = pnl(ledger)
+    scores = calibration_scores(ledger)
 
     # 2. fixtures still to be played, today and tomorrow.
     tomorrow = today + timedelta(days=1)
@@ -727,9 +797,12 @@ def run(today: date, dry_run: bool) -> str:
     unresolved: dict[str, dict] = {}
     bets: list[dict] = []
     board: list[dict] = []
+    board_rows: list[dict] = []
     bankroll_kelly = totals["kelly_bankroll"]
     already = set(ledger[ledger["row_type"] == "pick"]["match_key"] + "|"
                   + ledger[ledger["row_type"] == "pick"]["market"])
+    already_board = set(ledger[ledger["row_type"] == "board"]["match_key"] + "|"
+                        + ledger[ledger["row_type"] == "board"]["market"])
 
     for link, rec in sorted(found.items()):
         label = f"{rec.get('home_team')} v {rec.get('away_team')}"
@@ -782,10 +855,44 @@ def run(today: date, dry_run: bool) -> str:
         # got as far as being priced — including the ones no bet came out of.
         # A day with no bets is still a day the model made a projection, and
         # that projection is the thing being measured, not the staking.
+        shown = board_lines(priced, q)
         board.append({
             "label": label, "book": book, "best_of":
                 priced.metadata["format"]["best_of"],
-            "quotes": len(q), "lines": board_lines(priced, q)})
+            "quotes": len(q), "lines": shown})
+
+        # The same projections as ledger rows, so they can be settled and
+        # scored later. These are measurement only and never stake anything:
+        # `pnl` reads settled *picks*, so a board row cannot reach PnL, ROI
+        # or the bankroll. Scoring only the bet rows would score only the
+        # matches where an edge cleared a threshold — a subsample chosen by
+        # the model's own errors, which is exactly the wrong denominator for
+        # a calibration metric.
+        for ln in shown:
+            key = f"{link}|{ln['market']}"
+            if key in already_board:
+                continue
+            board_rows.append({
+                "row_type": "board", "ts_utc": _now(),
+                "run_date": today.isoformat(), "match_key": link,
+                "match_link": link,
+                "league_slug": league_slug(rec.get("league_name", "")),
+                "match_date": played_on.isoformat(),
+                "tournament": rec.get("league_name", ""),
+                "player_a": rec.get("home_team", ""),
+                "player_b": rec.get("away_team", ""),
+                "model_id_a": id_a, "model_id_b": id_b,
+                "best_of": priced.metadata["format"]["best_of"],
+                "market": ln["market"], "line": ln["line"],
+                "book_side": ln["side"],
+                "model_selection": model_selection(
+                    ln["market"], ln["side"], float(ln["line"])),
+                "bookmaker": book, "decimal_odds": ln["decimal_odds"],
+                "model_p": ln["model_p"], "edge_raw": ln["edge"],
+                "stake_flat": 0.0, "stake_kelly": 0.0,
+                "result": "", "pnl_flat": "", "pnl_kelly": "",
+                "note": f"board, as_of {today.isoformat()}, book {book}",
+            })
 
         for bet in pick_bets(priced, q):
             key = f"{link}|{bet['market']}"
@@ -811,7 +918,7 @@ def run(today: date, dry_run: bool) -> str:
                 "note": f"as_of {today.isoformat()}, book {book}",
             })
 
-    _append(bets, dry_run)
+    _append(bets + board_rows, dry_run)
     if dry_run:
         print(f"[dry-run] would write {len(unresolved)} unresolved name(s) "
               f"to {UNRESOLVED}")
@@ -821,7 +928,8 @@ def run(today: date, dry_run: bool) -> str:
             {"run_date": today.isoformat(),
              "names": sorted(unresolved.values(), key=lambda r: r["odds_name"])},
             indent=2, ensure_ascii=False) + "\n")
-    text = summary(today, bets, settlements, skips, totals, run_day, board)
+    text = summary(today, bets, settlements, skips, totals, run_day, board,
+                   scores)
     post_slack(text, dry_run)
 
     if not dry_run and not STATE.exists():
@@ -991,6 +1099,26 @@ def demo() -> None:
     assert abs(totals["flat_roi"] - 0.9) < 1e-9, totals
     assert abs(totals["kelly_roi"] - 0.9) < 1e-9, totals
     assert abs(totals["ev_roi"] - 0.05) < 1e-9, totals
+
+    # Board rows are measurement only. Adding them — including settled ones
+    # carrying a result — must not move PnL, ROI, bankroll or the open count
+    # by any amount. If this ever fires, unstaked projections are leaking
+    # into the money numbers.
+    with_board = pd.concat([book, pd.DataFrame([
+        {"row_type": "board", "stake_flat": 0.0, "stake_kelly": 0.0,
+         "result": "", "edge_raw": "0.5", "model_p": "0.7",
+         "decimal_odds": "1.9"},
+        {"row_type": "board_settle", "stake_flat": 0.0, "stake_kelly": 0.0,
+         "pnl_flat": 0.0, "pnl_kelly": 0.0, "result": "win",
+         "edge_raw": "0.5", "model_p": "0.7", "decimal_odds": "1.9"},
+    ])], ignore_index=True)
+    assert pnl(with_board) == totals, pnl(with_board)
+
+    # And the calibration score reads those board rows, not the staked ones.
+    sc = calibration_scores(with_board)
+    assert sc["n"] == 1, sc
+    assert abs(sc["brier"] - (0.7 - 1.0) ** 2) < 1e-9, sc
+    assert calibration_scores(book)["n"] == 0, "picks must not be scored"
     print("paper_trade self-check passed")
 
 
