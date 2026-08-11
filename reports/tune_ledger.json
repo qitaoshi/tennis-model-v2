@@ -1155,5 +1155,69 @@
   },
   "frozen": true,
   "notes": "gate passed; frozen for downstream stages"
+ },
+ {
+  "stage": "stage_5",
+  "run_id": "20260811T145952Z-4f03a87",
+  "metric": "thin_match_winner_logloss",
+  "baseline": "tour_average_prior",
+  "selected": {
+   "k": 10,
+   "opponent_vs_cohort_n0": 0.0,
+   "thin_n": 1000.0,
+   "well_sampled_n": 3000.0,
+   "snapshot_days": 91,
+   "enabled": true
+  },
+  "tune_gain": 0.00034488105566565785,
+  "tune_metric_value": 0.6387395890281171,
+  "fit_rolling_origin_gain_folds": [
+   3.783390762190919e-05,
+   0.0005175235579750748,
+   0.0005495121672759451,
+   5.367138777156999e-05,
+   9.883226569529224e-05
+  ],
+  "fit_rolling_origin_gain_mean": 0.0002514746572679583,
+  "fit_rolling_origin_gain_std": 0.00025868734892580065,
+  "baselines": {
+   "tour_average_logloss": 0.6390844700837828,
+   "tour_average_crps": 3.6272659696171115
+  },
+  "frozen": false,
+  "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
+  "tune_crps": 3.6203380205987044
+ },
+ {
+  "stage": "stage_5",
+  "run_id": "20260811T145952Z-4f03a87",
+  "metric": "thin_match_winner_logloss",
+  "baseline": "tour_average_prior",
+  "selected": {
+   "k": 10,
+   "opponent_vs_cohort_n0": 0.0,
+   "thin_n": 1000.0,
+   "well_sampled_n": 3000.0,
+   "snapshot_days": 91,
+   "enabled": true
+  },
+  "tune_gain": 0.00034488105566565785,
+  "tune_metric_value": 0.6387395890281171,
+  "fit_rolling_origin_gain_folds": [
+   3.783390762190919e-05,
+   0.0005175235579750748,
+   0.0005495121672759451,
+   5.367138777156999e-05,
+   9.883226569529224e-05
+  ],
+  "fit_rolling_origin_gain_mean": 0.0002514746572679583,
+  "fit_rolling_origin_gain_std": 0.00025868734892580065,
+  "baselines": {
+   "tour_average_logloss": 0.6390844700837828,
+   "tour_average_crps": 3.6272659696171115
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen",
+  "tune_crps": 3.6203380205987044
  }
 ]
