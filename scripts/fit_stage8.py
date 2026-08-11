@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from model import constants as C
+from model import fitted as FP
 from model import corrections as CR
 from model import ledger
 from model import recalibrate as RC
@@ -251,17 +252,21 @@ def main() -> None:
     accepted = "--accept" in sys.argv
     if all_ok or accepted:
         maps.save()
-        fitted["stage_8"] = {
-            "families": sorted(maps.maps), "n_fitted": maps.n_fitted,
-            "maps_path": str(RC.MAPS_PATH.relative_to(C.REPO_ROOT)),
-            "test_ece_before": float(summary["ece_before"].mean()),
-            "test_ece_after": float(summary["ece_after"].mean()),
-            "test_window": [str(test["date"].min()), str(test["date"].max())],
-            "test_touched_once": True,
-            "gate_strictly_passed": bool(all_ok),
-            "shipped_by_human_acceptance": bool(accepted and not all_ok),
-        }
-        C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+        # `fitted` was read at the top of main(), before the TEST evaluation.
+        # Write through a fresh read: this is the exact pair of scripts whose
+        # overlap lost the `fatigue` key on 2026-08-08.
+        with FP.updating() as params_on_disk:
+            params_on_disk["stage_8"] = {
+                "families": sorted(maps.maps), "n_fitted": maps.n_fitted,
+                "maps_path": str(RC.MAPS_PATH.relative_to(C.REPO_ROOT)),
+                "test_ece_before": float(summary["ece_before"].mean()),
+                "test_ece_after": float(summary["ece_after"].mean()),
+                "test_window": [str(test["date"].min()),
+                                str(test["date"].max())],
+                "test_touched_once": True,
+                "gate_strictly_passed": bool(all_ok),
+                "shipped_by_human_acceptance": bool(accepted and not all_ok),
+            }
         print(f"\nmaps saved to {RC.MAPS_PATH}")
         if accepted and not all_ok:
             print("recorded: gate FAILED strictly, shipped by human acceptance")

@@ -21,6 +21,7 @@ import pandas as pd
 from model import cohort as CH
 from model import combine as CB
 from model import constants as C
+from model import fitted as FP
 from model import elo as E
 from model import ledger
 from model import player_rates as PR
@@ -287,13 +288,12 @@ def main() -> None:
                "price.py does not use it"),
         tune_crps=best_eval["crps"],
     )
-    fitted = json.loads(C.FITTED_PARAMS_PATH.read_text())
-    fitted["stage_5"] = {**selected, "selected_on": "tune",
-                         "tune_logloss": best_eval["logloss"],
-                         "tune_crps": best_eval["crps"],
-                         "baseline_logloss": base_eval["logloss"],
-                         "baseline_crps": base_eval["crps"]}
-    C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+    with FP.updating() as fitted:
+        fitted["stage_5"] = {**selected, "selected_on": "tune",
+                             "tune_logloss": best_eval["logloss"],
+                             "tune_crps": best_eval["crps"],
+                             "baseline_logloss": base_eval["logloss"],
+                             "baseline_crps": base_eval["crps"]}
     print(f"\nwrote {out}")
 
 

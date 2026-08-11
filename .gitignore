@@ -23,3 +23,7 @@ scratch_*.log
 .venv/
 .backtest_approved
 .backtest_cache/
+
+# Lock and temp files for the fitted_params writer (model/fitted.py)
+fitted_params.json.lock
+fitted_params.json.*.tmp

@@ -46,11 +46,19 @@ def load_fitted() -> dict:
 
 
 def build(splits: tuple[str, ...] = ("fit", "tune"),
-          venue_params: V.VenueParams | None = None) -> pd.DataFrame:
+          venue_params: V.VenueParams | None = None,
+          cohort: bool = True) -> pd.DataFrame:
     """Blended (pa, pb) per match with outcomes attached.
 
     ``venue_params`` applies the Stage 6 multiplier to the level. Passing None
     leaves the level untouched, which is the pre-Stage-6 baseline.
+
+    ``cohort=False`` switches off the Stage 5 cohort prior for this build only,
+    the way ``venue_params`` already switches off Stage 6. It exists so an
+    ablation can turn the component off by argument. The backtest used to do it
+    by writing ``enabled: false`` into fitted_params.json, running, and writing
+    it back — which made a shared file briefly wrong for every other reader and
+    left it wrong outright if the run died in between.
     """
     fitted = load_fitted()
     from model.data_audit import HOLDOUT_PARQUET
@@ -72,7 +80,7 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
 
     priors = None
     s5 = fitted.get("stage_5")
-    if s5 and s5.get("enabled"):
+    if s5 and s5.get("enabled") and cohort:
         cp = CH.CohortParams(k=s5["k"], thin_n=s5["thin_n"],
                              well_sampled_n=s5["well_sampled_n"],
                              opponent_vs_cohort_n0=s5["opponent_vs_cohort_n0"],

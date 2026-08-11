@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from model import constants as C
+from model import fitted as FP
 from model import ledger
 from model import venue as V
 from scripts import panel as P
@@ -173,12 +174,12 @@ def main() -> None:
         notes="gate passed; frozen" if passed else
               "gate failed; frozen as DISABLED so the lineage records it is unused",
     )
-    fitted = json.loads(C.FITTED_PARAMS_PATH.read_text())
-    fitted["stage_6"] = {**selected, "selected_on": "tune",
-                         "median_venue_history": median_n,
-                         "tune_crps_well_measured": best_row["crps_well_measured"],
-                         "baseline_crps_well_measured": base_eval["well_measured"]["crps"]}
-    C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+    with FP.updating() as fitted:
+        fitted["stage_6"] = {
+            **selected, "selected_on": "tune",
+            "median_venue_history": median_n,
+            "tune_crps_well_measured": best_row["crps_well_measured"],
+            "baseline_crps_well_measured": base_eval["well_measured"]["crps"]}
     print(f"\nwrote {out}")
 
 

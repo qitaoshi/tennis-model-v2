@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from model import constants as C
+from model import fitted as FP
 from model import corrections as CR
 from model import ledger
 from model import venue as V
@@ -300,20 +301,23 @@ def main() -> None:
                           tune_gain=gain, fit_rolling_origin_gains=folds,
                           baseline="uncorrected_engine", tune_metric_value=val,
                           frozen=True, notes="gate passed; frozen")
-        fitted["stage_7"] = {
-            "tiebreak_inflation": params.tiebreak_inflation,
-            "split_sigma": params.split_sigma, "level_sigma": params.level_sigma,
-            "recenter": params.recenter, "n_mix": params.n_mix,
-            "provenance_scheme": sel_scheme,
-            "inferred_weight": params.inferred_weight,
-            "selected_on": "tune",
-            "tune_tb_gap_before": before_tune["tb_gap"],
-            "tune_tb_gap_after": after_tune["tb_gap"],
-            "tune_pit_dev_before": before_tune["pit_dev"],
-            "tune_pit_dev_after": after_tune["pit_dev"],
-            "tune_coverage80_after": after_tune["coverage80"],
-        }
-        C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+        # `fitted` was read at the top of main(), before a long fit. Write
+        # through a fresh read so a run that finished meanwhile is not lost.
+        with FP.updating() as params_on_disk:
+            params_on_disk["stage_7"] = {
+                "tiebreak_inflation": params.tiebreak_inflation,
+                "split_sigma": params.split_sigma,
+                "level_sigma": params.level_sigma,
+                "recenter": params.recenter, "n_mix": params.n_mix,
+                "provenance_scheme": sel_scheme,
+                "inferred_weight": params.inferred_weight,
+                "selected_on": "tune",
+                "tune_tb_gap_before": before_tune["tb_gap"],
+                "tune_tb_gap_after": after_tune["tb_gap"],
+                "tune_pit_dev_before": before_tune["pit_dev"],
+                "tune_pit_dev_after": after_tune["pit_dev"],
+                "tune_coverage80_after": after_tune["coverage80"],
+            }
     print(f"\nwrote {out}")
 
 

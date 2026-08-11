@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from model import constants as C
+from model import fitted as FP
 from model import elo as E
 from model import ledger
 
@@ -199,12 +200,11 @@ def main() -> None:
             frozen=True, notes="gate passed; frozen for downstream stages",
             tune_brier=model_brier,
         )
-        fitted = json.loads(C.FITTED_PARAMS_PATH.read_text()) \
-            if C.FITTED_PARAMS_PATH.exists() else {}
-        fitted["stage_3"] = {**selected, "selected_on": "tune",
-                             "tune_logloss": model_ll, "tune_brier": model_brier,
-                             "cross_level": cross}
-        C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+        with FP.updating() as fitted:
+            fitted["stage_3"] = {**selected, "selected_on": "tune",
+                                 "tune_logloss": model_ll,
+                                 "tune_brier": model_brier,
+                                 "cross_level": cross}
     print(f"\nwrote {out}")
 
 

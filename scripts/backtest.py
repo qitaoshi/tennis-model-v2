@@ -170,8 +170,6 @@ def _cache_key() -> str:
 
 
 def _cached_rows(name: str, compute) -> pd.DataFrame:
-    # The ablation loop rewrites fitted_params.json while it runs, so the key
-    # is taken from the restored file, not from whatever is on disk mid-build.
     path = CACHE_DIR / f"{name}-{_cache_key()}.parquet"
     if path.exists():
         print(f"  {name:16s} reusing cached rows ({path.name})")
@@ -293,14 +291,12 @@ def main() -> None:
             split_sigma=s7["split_sigma"] if ab.corrections else 0.0,
             level_sigma=s7["level_sigma"] if ab.corrections else 0.0,
             recenter=s7["recenter"], scheme=s7["provenance_scheme"])
-        saved = fitted["stage_5"]["enabled"]
-        fitted["stage_5"]["enabled"] = saved and ab.cohort
-        C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
-        try:
-            pan = P.build(splits=("holdout",), venue_params=vp)
-        finally:
-            fitted["stage_5"]["enabled"] = saved
-            C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+        # The cohort toggle is an argument, not an edit to a shared file. This
+        # loop used to write `enabled: false` into fitted_params.json, build,
+        # and write it back — so for the length of a build the file on disk was
+        # wrong for anything else reading it, and a crash mid-build left it
+        # wrong permanently.
+        pan = P.build(splits=("holdout",), venue_params=vp, cohort=ab.cohort)
 
         maps = RC.CalibrationMaps.load() if ab.calibration else None
         scored = _cached_rows(ab.name, lambda: _families(pan, cp, maps))

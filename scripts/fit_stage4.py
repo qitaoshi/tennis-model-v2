@@ -20,6 +20,7 @@ import pandas as pd
 
 from model import combine as CB
 from model import constants as C
+from model import fitted as FP
 from model import elo as E
 from model import ledger
 from model import player_rates as PR
@@ -226,11 +227,11 @@ def main() -> None:
             baselines={"w0_logloss": ll_w0, "w1_logloss": ll_w1},
             frozen=True, notes="gate passed; frozen for downstream stages",
         )
-        fitted = json.loads(C.FITTED_PARAMS_PATH.read_text())
-        fitted["stage_4"] = {**selected, "selected_on": "tune",
-                             "tune_logloss": ll_bucketed,
-                             "disagreement_pp_mean_abs": float(dis.abs().mean())}
-        C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
+        with FP.updating() as fitted:
+            fitted["stage_4"] = {**selected, "selected_on": "tune",
+                                 "tune_logloss": ll_bucketed,
+                                 "disagreement_pp_mean_abs":
+                                     float(dis.abs().mean())}
     print(f"\nwrote {out}")
 
 
