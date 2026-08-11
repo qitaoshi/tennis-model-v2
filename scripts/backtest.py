@@ -19,6 +19,7 @@ Run:  touch .backtest_approved && python -m scripts.backtest
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 
@@ -92,11 +93,19 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
                   "provenance": r.format_provenance, "split": r.split}
 
         p = d.p_a if maps is None else float(maps.apply("match_winner", d.p_a))
-        # Panel rows are oriented winner-first, so scoring only that
-        # orientation would make every outcome a 1 by construction and turn
-        # calibration error into (1 - mean prediction). Emit both sides.
-        rows.append({**common, "family": "match_winner", "p": p, "y": 1.0})
-        rows.append({**common, "family": "match_winner", "p": 1.0 - p, "y": 0.0})
+        # Panel rows are oriented winner-first, so scoring that orientation
+        # alone would make every outcome a 1 by construction. The previous fix
+        # emitted BOTH sides, which cured the artefact and bought a new one:
+        # (p, 1) and (1 - p, 0) are the same forecast written twice, so every
+        # match counted double and n was twice the number of real predictions.
+        #
+        # Orient on player id instead — smaller id is side A. That is fixed
+        # before the match and cannot know who won, so y is a genuine 0/1 and
+        # each match contributes exactly one match_winner prediction.
+        a_won = int(r.winner_id) < int(r.loser_id)
+        rows.append({**common, "family": "match_winner",
+                     "p": p if a_won else 1.0 - p,
+                     "y": 1.0 if a_won else 0.0})
 
         pmf = d.total_games_pmf()
         median = _median_of(pmf)
@@ -123,8 +132,10 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
             diffs[ga - gb] = diffs.get(ga - gb, 0.0) + q
         margin = r.winner_games - r.loser_games
         for h in (-6.5, -2.5, 1.5, 5.5):
-            # Same orientation trap as the match winner: the row knows who won
-            # and the model does not, so score both perspectives.
+            # NOT the match-winner duplication. P(margin > h) and
+            # P(-margin > h) do not sum to 1 — the band between them is a
+            # push — so these are two genuinely different selections, both of
+            # which a book quotes. They stay.
             rows.append({**common, "family": "handicap",
                          "p": sum(q for dd, q in diffs.items() if dd > h),
                          "y": float(margin > h)})
@@ -141,10 +152,73 @@ def _score(df: pd.DataFrame) -> dict:
     scored = df[df["family"] != "_crps"]
     crps = df[df["family"] == "_crps"]["p"]
     return {"n": len(scored),
+            "n_matches": int(scored["match_id"].nunique()) if len(scored) else 0,
             "brier": RC.brier(scored["p"].to_numpy(), scored["y"].to_numpy()),
             "logloss": RC.log_loss(scored["p"].to_numpy(), scored["y"].to_numpy()),
             "ece": RC.calibration_error(scored["p"].to_numpy(), scored["y"].to_numpy()),
             "crps": float(crps.mean()) if len(crps) else float("nan")}
+
+
+# ---------------------------------------------------------------------------
+# Cluster bootstrap
+# ---------------------------------------------------------------------------
+
+#: Bootstrap replicates. 1,000 is enough to place a 95% interval to the fourth
+#: decimal, which is the precision the tables are reported at.
+N_BOOT = 1000
+
+
+def _ragged_indices(starts: np.ndarray, counts: np.ndarray) -> np.ndarray:
+    """Concatenate ``range(starts[i], starts[i] + counts[i])`` without a loop."""
+    total = int(counts.sum())
+    if total == 0:
+        return np.empty(0, dtype=np.int64)
+    idx = np.ones(total, dtype=np.int64)
+    idx[0] = starts[0]
+    if len(starts) > 1:
+        idx[np.cumsum(counts)[:-1]] = starts[1:] - (starts[:-1] + counts[:-1]) + 1
+    return np.cumsum(idx)
+
+
+def _cluster_ci(df: pd.DataFrame, metric: str, n_boot: int = N_BOOT) -> tuple:
+    """95% interval for a metric, resampling MATCHES rather than rows.
+
+    Every table in this report pools rows that are not independent: one match
+    emits a match winner, seven totals rungs, its set scores, a tiebreak and
+    eight handicap selections, all driven by the same two serve rates. Treating
+    those as ~21 independent observations makes any interval roughly sqrt(21)
+    times too narrow and invites reading a fourth-decimal difference as real.
+    Resampling whole matches keeps the within-match correlation intact.
+    """
+    scored = df[df["family"] != "_crps"] if metric != "crps" else df[df["family"] == "_crps"]
+    if len(scored) == 0:
+        return (float("nan"), float("nan"))
+    codes, uniques = pd.factorize(scored["match_id"], sort=False)
+    order = np.argsort(codes, kind="stable")
+    p = scored["p"].to_numpy()[order]
+    y = scored["y"].to_numpy()[order]
+    sc = codes[order]
+    n_clusters = len(uniques)
+    starts = np.searchsorted(sc, np.arange(n_clusters), side="left")
+    counts = np.searchsorted(sc, np.arange(n_clusters), side="right") - starts
+
+    fn = {"brier": RC.brier, "logloss": RC.log_loss,
+          "ece": RC.calibration_error,
+          "crps": lambda a, _b: float(np.mean(a))}[metric]
+
+    rng = np.random.default_rng(C.MC_SEED)
+    vals = np.empty(n_boot)
+    for b in range(n_boot):
+        pick = rng.integers(0, n_clusters, n_clusters)
+        idx = _ragged_indices(starts[pick], counts[pick])
+        vals[b] = fn(p[idx], y[idx])
+    lo, hi = np.percentile(vals, [2.5, 97.5])
+    return (float(lo), float(hi))
+
+
+def _ci_str(df: pd.DataFrame, metric: str) -> str:
+    lo, hi = _cluster_ci(df, metric)
+    return f"[{lo:.4f}, {hi:.4f}]"
 
 
 def main() -> None:
@@ -201,42 +275,89 @@ def main() -> None:
         print(f"  {ab.name:16s} {results[ab.name]['overall']}")
 
     full = results["full"]["rows"]
+    maps_now = RC.CalibrationMaps.load()
+    cal_hash = hashlib.sha256(RC.MAPS_PATH.read_bytes()).hexdigest()[:16]
+    method = sorted(set(maps_now.maps.values()))
+    lines.append(
+        f"\nCalibration map in force: `{'/'.join(method)}`, "
+        f"{len(maps_now.maps)} families, pickle sha256 `{cal_hash}`. "
+        f"`calibration_refit.test_evaluated` in fitted_params.json is "
+        f"`{json.loads(C.FITTED_PARAMS_PATH.read_text()).get('calibration_refit', {}).get('test_evaluated')}`"
+        " — see PROGRESS.json → calibration_platt_2026_08_10_ships_unevaluated.\n")
     lines.append(f"\nHoldout window: {C.HOLDOUT_CUTOFF} onward. "
                  f"{results['full']['panel']['match_id'].nunique():,} scoreable "
                  "matches (completed, in scope, clean score, usable serve stats).\n")
 
+    lines.append(
+        "\n## How to read these numbers\n\n"
+        "**A pooled figure across market families is not a score of anything.**\n"
+        "The families have different base rates and different numbers of\n"
+        "selections per match — seven totals rungs and eight handicap lines\n"
+        "against one match winner — so a pooled Brier is a weighted average\n"
+        "whose weights are an artefact of how the ladder was enumerated, and it\n"
+        "moves when the ladder changes even if no forecast does. Every table\n"
+        "below is therefore reported per family. The one pooled row that\n"
+        "remains is marked and carries an interval.\n\n"
+        "**Intervals are cluster bootstraps over matches, not rows.** One match\n"
+        "supplies every selection in the row count, all driven by the same two\n"
+        "serve rates. Row-level resampling would understate the spread by\n"
+        "roughly the square root of the selections per match.\n\n"
+        "**`n` is selections; `matches` is the real sample size.**\n")
+
     lines.append("\n## By market family\n")
-    lines.append("| family | n | Brier | log-loss | ECE |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| family | n | matches | Brier | Brier 95% CI | log-loss | ECE | ECE 95% CI |")
+    lines.append("|---|---|---|---|---|---|---|---|")
     for fam, grp in full[full["family"] != "_crps"].groupby("family"):
         s = _score(grp)
-        lines.append(f"| {fam} | {s['n']:,} | {s['brier']:.4f} | "
-                     f"{s['logloss']:.4f} | {s['ece']:.4f} |")
+        lines.append(f"| {fam} | {s['n']:,} | {s['n_matches']:,} | "
+                     f"{s['brier']:.4f} | {_ci_str(grp, 'brier')} | "
+                     f"{s['logloss']:.4f} | {s['ece']:.4f} | "
+                     f"{_ci_str(grp, 'ece')} |")
 
-    lines.append("\n## By tour level\n")
-    lines.append("| level | n | Brier | log-loss | ECE |")
-    lines.append("|---|---|---|---|---|")
-    for lvl, grp in full[full["family"] != "_crps"].groupby("level_label"):
+    pooled = _score(full)
+    lines.append(
+        f"\n**Pooled across families (kept for continuity with earlier reports, "
+        f"and not a meaningful score):** Brier {pooled['brier']:.4f} "
+        f"{_ci_str(full, 'brier')}, log-loss {pooled['logloss']:.4f}, "
+        f"ECE {pooled['ece']:.4f} {_ci_str(full, 'ece')} on "
+        f"{pooled['n']:,} selections from {pooled['n_matches']:,} matches.\n")
+
+    crps = _score(full)["crps"]
+    lines.append(f"\nTotal-games CRPS: {crps:.4f} {_ci_str(full, 'crps')} "
+                 "(one value per match, so no clustering issue).\n")
+
+    lines.append("\n## By market family and tour level\n")
+    lines.append("| family | level | n | matches | Brier | ECE |")
+    lines.append("|---|---|---|---|---|---|")
+    for (fam, lvl), grp in full[full["family"] != "_crps"].groupby(
+            ["family", "level_label"]):
         s = _score(grp)
-        lines.append(f"| {lvl} | {s['n']:,} | {s['brier']:.4f} | "
-                     f"{s['logloss']:.4f} | {s['ece']:.4f} |")
+        lines.append(f"| {fam} | {lvl} | {s['n']:,} | {s['n_matches']:,} | "
+                     f"{s['brier']:.4f} | {s['ece']:.4f} |")
 
-    lines.append("\n## By format rule and provenance\n")
-    lines.append("| final-set rule | provenance | n | Brier | ECE |")
-    lines.append("|---|---|---|---|---|")
-    for (rule, prov), grp in full[full["family"] != "_crps"].groupby(
-            ["final_set", "provenance"]):
+    lines.append("\n## By market family, format rule and provenance\n")
+    lines.append("| family | final-set rule | provenance | n | matches | Brier | ECE |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for (fam, rule, prov), grp in full[full["family"] != "_crps"].groupby(
+            ["family", "final_set", "provenance"]):
         s = _score(grp)
-        lines.append(f"| {rule} | {prov} | {s['n']:,} | {s['brier']:.4f} | "
-                     f"{s['ece']:.4f} |")
+        lines.append(f"| {fam} | {rule} | {prov} | {s['n']:,} | "
+                     f"{s['n_matches']:,} | {s['brier']:.4f} | {s['ece']:.4f} |")
 
-    lines.append("\n## Ablations\n")
-    lines.append("| configuration | Brier | log-loss | ECE | games CRPS |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("\n## Ablations, by family\n")
+    lines.append("Brier / ECE per configuration. Compare down a column, never "
+                 "across families.\n")
+    fams = sorted(full[full["family"] != "_crps"]["family"].unique())
+    lines.append("| configuration | " + " | ".join(fams) + " | games CRPS |")
+    lines.append("|---" * (len(fams) + 2) + "|")
     for name, res in results.items():
-        s = res["overall"]
-        lines.append(f"| {name} | {s['brier']:.4f} | {s['logloss']:.4f} | "
-                     f"{s['ece']:.4f} | {s['crps']:.4f} |")
+        cells = []
+        rws = res["rows"]
+        for fam in fams:
+            s = _score(rws[rws["family"] == fam])
+            cells.append(f"{s['brier']:.4f} / {s['ece']:.4f}")
+        lines.append(f"| {name} | " + " | ".join(cells)
+                     + f" | {res['overall']['crps']:.4f} |")
 
     out = C.STAGE_VALIDATIONS_DIR / "backtest.md"
     out.write_text("\n".join(lines) + "\n")
