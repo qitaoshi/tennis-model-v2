@@ -24,6 +24,9 @@ def test_boundaries_ordered_and_cover_everything_to_the_cutoff() -> None:
     for start, end, _ in BOUNDARIES:
         assert start <= end
     assert C.FIT_END < C.TUNE_START <= C.TUNE_END < C.TEST_START <= C.TEST_END
+    # The spent window sits AFTER the replacement TEST, which is the whole
+    # reason it cannot be recycled into FIT the way a burned window is.
+    assert C.TEST_END < C.SPENT_START <= C.SPENT_END < C.HOLDOUT_CUTOFF
     assert C.TEST_END < C.HOLDOUT_CUTOFF
 
     # every day from DATA_START to the cutoff maps to exactly one split
@@ -32,7 +35,7 @@ def test_boundaries_ordered_and_cover_everything_to_the_cutoff() -> None:
     while d < C.HOLDOUT_CUTOFF:
         seen.add(C.split_of(d))
         d += timedelta(days=1)
-    assert seen <= {"fit", "tune", "burned_test", "test", "reserve"}
+    assert seen <= {"fit", "tune", "burned_test", "spent", "test", "reserve"}
     assert {"fit", "tune", "test"} <= seen
 
 

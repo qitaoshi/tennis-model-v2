@@ -270,7 +270,18 @@ def main() -> None:
     from model import rules as RU
 
     holdout_path = C.PROCESSED_DIR / DA.HOLDOUT_PARQUET
-    if not holdout_path.exists():
+    stale = False
+    if holdout_path.exists():
+        # Split labels are baked into this file. If a boundary has moved since
+        # it was written — as the TUNE/TEST boundary did on 2026-08-11 — the
+        # labels are wrong and the replay set would silently be the old one.
+        got = pd.read_parquet(holdout_path, columns=["date", "split"])
+        want = [C.split_of(d) for d in got["date"]]
+        stale = bool((got["split"].to_numpy() != want).any())
+        if stale:
+            print("holdout record predates the current split boundaries; "
+                  "rebuilding")
+    if not holdout_path.exists() or stale:
         print("building the holdout-inclusive canonical record ...")
         DA.build(include_holdout=True)
         RU.build(parquet=DA.HOLDOUT_PARQUET)

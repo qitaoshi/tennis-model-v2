@@ -68,7 +68,12 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
                         / (HOLDOUT_PARQUET if want_holdout else "matches.parquet"))
     # Ratings and rates must be replayed over ALL prior history, not just the
     # requested window, or a 2025 match would be priced with no 2024 form.
-    keep = set(splits) | ({"fit", "tune", "burned_test", "test"} if want_holdout else set())
+    # "spent" (2025-07-01..2025-12-31) joins the replay set for the holdout
+    # backtest and nowhere else. Those matches are simply the past by holdout
+    # time and a deployed model would know them; what they must never do is
+    # inform a fitted parameter, which is why no other caller asks for them.
+    keep = set(splits) | ({"fit", "tune", "burned_test", "test", "spent"}
+                          if want_holdout else set())
     m = m[m["in_scope"] & m["split"].isin(keep)]
     if not want_holdout:
         assert m["date"].max() < C.HOLDOUT_CUTOFF

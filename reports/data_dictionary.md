@@ -583,8 +583,9 @@ These are round-robin and Davis Cup rematches plus genuine double-entries; they 
 |:------------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
 | burned_test |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   3808 |   4535 |      0 |      0 |
 | fit         |   7370 |   7229 |   7240 |   7268 |   7287 |   7548 |   7899 |   7431 |   7610 |   6050 |   3650 |   7079 |   4501 |   4153 |      0 |      0 |
-| test        |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   4511 |
-| tune        |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   9015 |   4844 |
+| spent       |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   4511 |
+| test        |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   4668 |
+| tune        |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |   9015 |    176 |
 
 Split is assigned from `tourney_date` (tournament start), so an event straddling a boundary lands whole in one window. No row on or after the holdout cutoff (2026-01-01) is loaded; the 2026 season files are never opened.
 

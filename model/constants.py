@@ -27,15 +27,39 @@ recorded numbers stand as a description of the frozen original model on data
 that model had never seen — that much is still true — but they must not be
 quoted as validation of any later change.
 
-The four-way split (ground rule 1), as of 2026-08-08
+SECOND RE-SPLIT of 2026-08-11 — the TUNE/TEST boundary moved, not the cutoff
+---------------------------------------------------------------------------
+The 2026-08-08 TEST window (2025-07-01 .. 2025-12-31) was spent on that same
+day by the blended/8 calibration evaluation. A Stage 3 -> 4 -> 7 -> calibration
+cascade then needed a TEST read it could not have.
+
+MODEL_PROMPT.md's Stage 8 failure protocol says exactly what to do: carve a
+replacement TEST by moving the TUNE/TEST boundary, never the holdout cutoff.
+That is what happened, on an explicit human decision. **HOLDOUT_CUTOFF DID NOT
+MOVE and does not move.** It is the same 2026-01-01 set on 2026-08-08.
+
+What it cost: TUNE fell from 13,377 in-scope matches to 8,837, a 34% cut, and
+lost its 2025 half-year — so TUNE is now a single calendar year and carries one
+surface cycle rather than one and a half. The replacement TEST holds 4,540
+in-scope matches, close to the 4,511 of the window it replaces.
+
+What happened to the spent window: it is labelled "spent" and used for nothing.
+It is NOT recycled into FIT the way the 2022 burned window was, because it sits
+AFTER the replacement TEST — fitting on it would inform every parameter with
+data from after the window those parameters are tested on. See SPENT_START.
+
+The four-way split (ground rule 1), as of 2026-08-11
 ----------------------------------------------------
 The match data is TML-Database season files (``vendor/``), one per calendar
 year per tour (ATP main tour and Challenger), 2010 onward.
 
     FIT      2010-01-01 .. 2023-12-31   parameter fitting only
-    TUNE     2024-01-01 .. 2025-06-30   hyperparameter selection
-    TEST     2025-07-01 .. 2025-12-31   pre-cutoff test, touched once
-    HOLDOUT  2026-01-01 ..              final evaluation only
+    TUNE     2024-01-01 .. 2024-12-31   hyperparameter selection
+    TEST     2025-01-01 .. 2025-06-30   pre-cutoff test, NOT YET TOUCHED
+    spent    2025-07-01 .. 2025-12-31   the previous TEST, read once on
+                                        2026-08-08; used for nothing now
+    HOLDOUT  2026-01-01 ..              final evaluation only — READ TWICE
+                                        already (2026-08-09, 2026-08-11)
 
     burned   2022-07-01 .. 2023-06-30   spent by the original Stage 8's
                                         first run; now inside FIT
@@ -97,13 +121,13 @@ FITTED_PARAMS_PATH: Path = REPO_ROOT / "fitted_params.json"
 # Four-way split (ground rule 1)
 # --------------------------------------------------------------------------
 
-Split = Literal["pre_data", "fit", "tune", "burned_test", "test", "reserve",
-                "holdout"]
+Split = Literal["pre_data", "fit", "tune", "burned_test", "spent", "test",
+                "reserve", "holdout"]
 
 DATA_START: date = date(2010, 1, 1)
 FIT_END: date = date(2023, 12, 31)
 TUNE_START: date = date(2024, 1, 1)
-TUNE_END: date = date(2025, 6, 30)
+TUNE_END: date = date(2024, 12, 31)
 
 #: TEST windows already spent. The original Stage 8's first run consumed
 #: 2022-07-01 .. 2023-06-30. Both that window and the original TEST
@@ -126,10 +150,32 @@ PRIOR_EVALUATION_WINDOWS: tuple[tuple[date, date, str], ...] = (
     (date(2024, 1, 1), date(2026, 7, 20),
      "original HOLDOUT backtest, 2026-07-31, aggregate metrics only; "
      "now re-split into TUNE + TEST + HOLDOUT"),
+    (date(2025, 7, 1), date(2025, 12, 31),
+     "calibration refit TEST evaluation, 2026-08-08 — blended/8 maps "
+     "measured here; window spent, now labelled 'spent' and used for "
+     "nothing"),
+    (date(2026, 1, 1), date(2026, 7, 20),
+     "HOLDOUT backtest 2026-08-09, and again 2026-08-11 for the scoring "
+     "rescore — read twice, selects nothing"),
 )
 
-TEST_START: date = date(2025, 7, 1)
-TEST_END: date = date(2025, 12, 31)
+TEST_START: date = date(2025, 1, 1)
+TEST_END: date = date(2025, 6, 30)
+
+#: The TEST window spent on 2026-08-08 by the blended calibration evaluation.
+#: It is NOT recycled into FIT the way the 2022 burned window was, and the
+#: reason is chronology, not bookkeeping: it lies AFTER the replacement TEST
+#: above. Fitting on it would inform every parameter with data from after the
+#: window those parameters are tested on. It is therefore excluded from
+#: fitting, selection and testing alike — no code asks for the "spent" label,
+#: so a window carrying it is invisible to every loader by default.
+#:
+#: It is still legitimate REPLAY history for the final backtest: at holdout
+#: time these matches are simply the past, and a deployed model would know
+#: them. scripts/panel.py includes it in the holdout replay for that reason
+#: and for that reason only.
+SPENT_START: date = date(2025, 7, 1)
+SPENT_END: date = date(2025, 12, 31)
 #: No reserve remains: the window is empty by construction, so ``split_of``
 #: can never return "reserve". A gate failure cannot be answered with another
 #: replacement window inside the pre-holdout data — that is a finding to
@@ -193,6 +239,8 @@ def split_of(d: date) -> Split:
         return "holdout"
     if d >= RESERVE_START:
         return "reserve"
+    if SPENT_START <= d <= SPENT_END:
+        return "spent"
     if d >= TEST_START:
         return "test"
     for lo, hi in BURNED_TEST_WINDOWS:
