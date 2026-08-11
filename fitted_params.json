@@ -31,15 +31,15 @@
   }
  },
  "stage_4": {
-  "w": 0.8,
-  "w_both_well": 0.8,
-  "w_one_thin": 0.85,
+  "w": 0.9,
+  "w_both_well": 0.85,
+  "w_one_thin": 0.95,
   "w_both_thin": 0.9,
   "thin_n": 1000.0,
   "w_fitted_on_fit": 0.85,
   "selected_on": "tune",
-  "tune_logloss": 0.6346958806089784,
-  "disagreement_pp_mean_abs": 11.642862561020682
+  "tune_logloss": 0.6428784326512693,
+  "disagreement_pp_mean_abs": 11.670614315983666
  },
  "stage_5": {
   "k": 5,
