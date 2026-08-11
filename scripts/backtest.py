@@ -20,6 +20,7 @@ Run:  touch .backtest_approved && python -m scripts.backtest
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 from dataclasses import dataclass
 
@@ -150,6 +151,37 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
     return pd.DataFrame(rows)
 
 
+#: Scored rows, cached per ablation. Scoring the holdout panel five times takes
+#: about twenty minutes; a typo in the reporting code below should not cost
+#: that twice. The key covers everything upstream of scoring, so a changed
+#: parameter or map invalidates the cache rather than being papered over.
+CACHE_DIR = C.REPO_ROOT / ".backtest_cache"
+
+
+def _cache_key() -> str:
+    h = hashlib.sha256()
+    h.update(C.FITTED_PARAMS_PATH.read_bytes())
+    h.update(RC.MAPS_PATH.read_bytes() if RC.MAPS_PATH.exists() else b"absent")
+    # The scoring function's own source, not the whole module — otherwise
+    # editing a table header below would throw away twenty minutes of work.
+    h.update(inspect.getsource(_families).encode())
+    h.update((C.REPO_ROOT / "scripts" / "panel.py").read_bytes())
+    return h.hexdigest()[:16]
+
+
+def _cached_rows(name: str, compute) -> pd.DataFrame:
+    # The ablation loop rewrites fitted_params.json while it runs, so the key
+    # is taken from the restored file, not from whatever is on disk mid-build.
+    path = CACHE_DIR / f"{name}-{_cache_key()}.parquet"
+    if path.exists():
+        print(f"  {name:16s} reusing cached rows ({path.name})")
+        return pd.read_parquet(path)
+    rows = compute()
+    CACHE_DIR.mkdir(exist_ok=True)
+    rows.to_parquet(path, index=False)
+    return rows
+
+
 def _score(df: pd.DataFrame) -> dict:
     scored = df[df["family"] != "_crps"]
     crps = df[df["family"] == "_crps"]["p"]
@@ -250,7 +282,6 @@ def main() -> None:
           f"{full_record.loc[full_record['split'] == 'holdout', 'date'].min()} .. "
           f"{full_record.loc[full_record['split'] == 'holdout', 'date'].max()}")
 
-    lines = ["# Final backtest — HOLDOUT\n"]
     results = {}
     for ab in ABLATIONS:
         s6 = fitted["stage_6"]
@@ -272,14 +303,24 @@ def main() -> None:
             C.FITTED_PARAMS_PATH.write_text(json.dumps(fitted, indent=1))
 
         maps = RC.CalibrationMaps.load() if ab.calibration else None
-        scored = _families(pan, cp, maps)
+        scored = _cached_rows(ab.name, lambda: _families(pan, cp, maps))
         results[ab.name] = {"overall": _score(scored), "rows": scored, "panel": pan}
         print(f"  {ab.name:16s} {results[ab.name]['overall']}")
 
+    out = C.STAGE_VALIDATIONS_DIR / "backtest.md"
+    out.write_text(_report(results))
+    print(f"\nwrote {out}")
+
+
+def _report(results: dict) -> str:
+    """Render the markdown. Separate from main() so it can be exercised on
+    synthetic rows without scoring the holdout panel again."""
+    lines = ["# Final backtest — HOLDOUT\n"]
     full = results["full"]["rows"]
     maps_now = RC.CalibrationMaps.load()
     cal_hash = hashlib.sha256(RC.MAPS_PATH.read_bytes()).hexdigest()[:16]
-    method = sorted(set(maps_now.maps.values()))
+    # .maps holds the map objects; .method holds their names.
+    method = sorted(set(maps_now.method.values()))
     lines.append(
         f"\nCalibration map in force: `{'/'.join(method)}`, "
         f"{len(maps_now.maps)} families, pickle sha256 `{cal_hash}`. "
@@ -361,9 +402,7 @@ def main() -> None:
         lines.append(f"| {name} | " + " | ".join(cells)
                      + f" | {res['overall']['crps']:.4f} |")
 
-    out = C.STAGE_VALIDATIONS_DIR / "backtest.md"
-    out.write_text("\n".join(lines) + "\n")
-    print(f"\nwrote {out}")
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

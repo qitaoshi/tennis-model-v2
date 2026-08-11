@@ -22,3 +22,4 @@ scratch_*.log
 # Reconstructed local environment; requirements.txt is the record.
 .venv/
 .backtest_approved
+.backtest_cache/
