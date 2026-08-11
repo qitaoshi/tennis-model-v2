@@ -102,7 +102,9 @@ def _families(pan: pd.DataFrame, params: CR.CorrectionParams,
         # Orient on player id instead — smaller id is side A. That is fixed
         # before the match and cannot know who won, so y is a genuine 0/1 and
         # each match contributes exactly one match_winner prediction.
-        a_won = int(r.winner_id) < int(r.loser_id)
+        # Ids are opaque strings in this vendor's data ("R485", "BD59"), not
+        # integers — compare them as strings and do not try to parse them.
+        a_won = str(r.winner_id) < str(r.loser_id)
         rows.append({**common, "family": "match_winner",
                      "p": p if a_won else 1.0 - p,
                      "y": 1.0 if a_won else 0.0})
