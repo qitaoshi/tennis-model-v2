@@ -36,6 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Left at 3.12, which is what every run of this ledger has used. The
+      # model's fingerprint now records major.minor, so a bump to 3.13 stops
+      # the run rather than quietly changing what the rows measure.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -45,11 +48,15 @@ jobs:
       # headless-Chromium scrape of OddsPortal outright. See
       # reports/paper_trading_setup.md, and .github/workflows/cloudflare-probe.yml
       # for whether that block also applies to these runners.
+      # Pinned as of 2026-08-11. This job used to install eight packages
+      # unpinned, so each morning's run resolved whatever was newest and a
+      # forward test that depends on the model holding still was resting on
+      # PyPI's release schedule. requirements.txt documents which pins are
+      # evidenced by the shipped artifacts and which are a fresh resolve.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy pyarrow scipy scikit-learn beautifulsoup4 \
-                      lxml tabulate
+          pip install -r requirements.txt
 
       - name: Verify the odds parsing before trusting it with money
         run: python -m scripts.fetch_pointsbet --self-check

@@ -662,9 +662,28 @@ def model_fingerprint() -> dict:
                         ("calibration_maps", RC.MAPS_PATH)):
         out[label] = (hashlib.sha256(path.read_bytes()).hexdigest()[:16]
                       if path.exists() else "absent")
+    # The interpreter decides projections as surely as the maps do: unpickling,
+    # float formatting and dict ordering all live here. Major.minor only, and
+    # deliberately so — a runner bumping 3.12.4 to 3.12.5 mid-window is not a
+    # model change, and halting a fortnight's run over it would cost more than
+    # it protects. A 3.12 -> 3.13 move is a different interpreter and does stop
+    # the run. The exact patch is recorded below for the record, not compared.
+    out["python"] = f"{sys.version_info.major}.{sys.version_info.minor}"
     out["staking"] = (f"flat={FLAT_STAKE} scale={KELLY_SCALE} "
                       f"cap={KELLY_CAP} markets={','.join(sorted(MARKETS))}")
     return out
+
+
+def build_provenance() -> dict:
+    """Exact versions of everything that touched a number, for the record.
+
+    Distinct from ``model_fingerprint`` on purpose: nothing here is compared
+    across runs, so a patch bump lands in the ledger instead of stopping it.
+    ``requirements.txt`` pins these; this proves what actually got installed.
+    """
+    return {"python": sys.version.split()[0],
+            "numpy": np.__version__,
+            "pandas": pd.__version__}
 
 
 def check_unchanged(state: dict) -> None:
@@ -679,7 +698,11 @@ def check_unchanged(state: dict) -> None:
     if not was:
         return
     now = model_fingerprint()
-    moved = [k for k, v in now.items() if was.get(k) != v]
+    # A key the running ledger never recorded is unknown, not changed. Without
+    # this, adding a component to the fingerprint would halt every ledger
+    # already in flight — which is what adding `python` on 2026-08-11 would
+    # have done to the run started 2026-08-10.
+    moved = [k for k, v in now.items() if k in was and was[k] != v]
     if moved:
         raise SystemExit(
             "model or staking rule changed mid-run: "
@@ -1117,7 +1140,8 @@ def run(today: date, dry_run: bool) -> str:
                                      "kelly_scale": KELLY_SCALE,
                                      "kelly_cap": KELLY_CAP,
                                      "markets": list(MARKETS),
-                                     "fingerprint": model_fingerprint()},
+                                     "fingerprint": model_fingerprint(),
+                                     "build_provenance": build_provenance()},
                                     indent=2))
     return text
 
@@ -1358,6 +1382,23 @@ def demo() -> None:
         assert "changed mid-run" in str(exc), exc
     else:
         raise AssertionError("a changed calibration map must stop the run")
+
+    # The interpreter is part of the fingerprint, at major.minor.
+    assert fp["python"] == f"{sys.version_info.major}.{sys.version_info.minor}"
+    try:
+        check_unchanged({"start_date": "2026-08-10",
+                         "fingerprint": {**fp, "python": "3.0"}})
+    except SystemExit as exc:
+        assert "python" in str(exc), exc
+    else:
+        raise AssertionError("a changed interpreter must stop the run")
+
+    # But a ledger that predates a fingerprint key must not be halted by it:
+    # unrecorded is unknown, not moved. paper/run_state.json was written on
+    # 2026-08-10 without `python`, and its run is still open.
+    check_unchanged({"start_date": "2026-08-10",
+                     "fingerprint": {k: v for k, v in fp.items()
+                                     if k != "python"}})
     print("paper_trade self-check passed")
 
 

@@ -1,0 +1,49 @@
+# Python dependencies for the tennis projection model.
+#
+# PROVENANCE — read this before treating these pins as "the versions the model
+# was built with". They are a RECONSTRUCTION, not a capture. The original build
+# environment no longer exists on any machine this repo has access to, and no
+# lockfile was ever committed; .github/workflows/paper-trade.yml installed
+# `pandas numpy pyarrow scipy scikit-learn beautifulsoup4 lxml tabulate`
+# completely unpinned, so every CI run to date resolved whatever was latest that
+# morning.
+#
+# What is actually EVIDENCED, from the shipped artifacts themselves:
+#
+#   pandas==3.0.2      data/processed/matches.parquet footer, "pandas_version"
+#   pyarrow==24.0.0    same footer, "parquet-cpp-arrow version 24.0.0"
+#   numpy>=2.0         the blended calibration pickle at 088026f references
+#                      `numpy._core.numeric`; that module is `numpy.core.numeric`
+#                      on 1.x, so the writer was on 2.x
+#   Python>=3.8        both calibration pickles are protocol 5
+#
+# pandas and pyarrow below are pinned to those evidenced values. Everything else
+# is a fresh resolve on 2026-08-11 and is NOT evidence about the build
+# environment — scipy, scikit-learn and the exact numpy patch could have been
+# anything compatible. Do not cite them as such.
+#
+# What the reconstruction does establish: this set loads both the shipped
+# platt/8 pickle and the historical blended/8 pickle, and passes all 191 tests.
+#
+# Regenerate with:  python -m pip freeze | sort
+
+Pygments==2.20.0
+beautifulsoup4==4.15.0
+iniconfig==2.3.0
+joblib==1.5.3
+lxml==6.1.1
+narwhals==2.24.0
+numpy==2.4.6
+packaging==26.3
+pandas==3.0.2
+pluggy==1.6.0
+pyarrow==24.0.0
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+scikit-learn==1.9.0
+scipy==1.17.1
+six==1.17.0
+soupsieve==2.9.2
+tabulate==0.10.0
+threadpoolctl==3.6.0
+typing_extensions==4.16.0
