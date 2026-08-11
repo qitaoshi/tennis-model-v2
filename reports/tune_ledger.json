@@ -1026,5 +1026,71 @@
   },
   "frozen": true,
   "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
+ },
+ {
+  "stage": "stage_3",
+  "run_id": "20260811T143048Z-731404c",
+  "metric": "match_winner_logloss",
+  "baseline": "ranking_logistic",
+  "selected": {
+   "k": 32.0,
+   "k_chall_mult": 1.0,
+   "surface_weight": 0.3,
+   "inactivity_half_life": 1095.0,
+   "level_gap": 0.0,
+   "level_offset": -30.545840977254166,
+   "rank_seed_scale": 160.0
+  },
+  "tune_gain": 0.004184020993125981,
+  "tune_metric_value": 0.6473766582885764,
+  "fit_rolling_origin_gain_folds": [
+   0.01130949769090972,
+   0.013704371653210257,
+   0.009199489826017815,
+   0.013324535259380155,
+   -0.005526337468262588
+  ],
+  "fit_rolling_origin_gain_mean": 0.008402311392251071,
+  "fit_rolling_origin_gain_std": 0.007991160984469616,
+  "baselines": {
+   "ranking_logloss": 0.6515606792817024,
+   "ranking_brier": 0.2299058952534882
+  },
+  "frozen": false,
+  "notes": "grid of 2352 settings; fitted level_offset -30.5 rating points (gap -0.0425 was 3.8 SE); gap after -0.0257",
+  "tune_brier": 0.2282861231646757
+ },
+ {
+  "stage": "stage_3",
+  "run_id": "20260811T143048Z-731404c",
+  "metric": "match_winner_logloss",
+  "baseline": "ranking_logistic",
+  "selected": {
+   "k": 32.0,
+   "k_chall_mult": 1.0,
+   "surface_weight": 0.3,
+   "inactivity_half_life": 1095.0,
+   "level_gap": 0.0,
+   "level_offset": -30.545840977254166,
+   "rank_seed_scale": 160.0
+  },
+  "tune_gain": 0.004184020993125981,
+  "tune_metric_value": 0.6473766582885764,
+  "fit_rolling_origin_gain_folds": [
+   0.01130949769090972,
+   0.013704371653210257,
+   0.009199489826017815,
+   0.013324535259380155,
+   -0.005526337468262588
+  ],
+  "fit_rolling_origin_gain_mean": 0.008402311392251071,
+  "fit_rolling_origin_gain_std": 0.007991160984469616,
+  "baselines": {
+   "ranking_logloss": 0.6515606792817024,
+   "ranking_brier": 0.2299058952534882
+  },
+  "frozen": true,
+  "notes": "gate passed; frozen for downstream stages",
+  "tune_brier": 0.2282861231646757
  }
 ]

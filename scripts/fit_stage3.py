@@ -58,10 +58,18 @@ MEAN_DECILE_GAP = 0.025
 #: beside log-loss (CLAUDE.md). Log-loss alone cannot select this stage for
 #: what it is now being asked to fix: the defect is a subgroup one, confined to
 #: debutants and players returning from a layoff — roughly a tenth of matches —
-#: while log-loss is dominated by the well-known other nine tenths. A four-point
-#: screen on 2026-08-11 showed the log-loss argmax carrying WORSE subgroup
-#: calibration than the incumbent, i.e. selecting on it would have propagated a
-#: setting that makes the thing this cascade exists to fix worse.
+#: while log-loss is dominated by the well-known other nine tenths.
+#:
+#: CORRECTION, after the full grid ran. The original justification written here
+#: said a four-point screen had shown the log-loss argmax carrying WORSE
+#: subgroup calibration than the incumbent. That is NOT true over the full
+#: 2,352-setting grid: the argmax lands at grouped ECE 0.01232 against the
+#: incumbent's 0.01470, so log-loss alone would still have improved things. The
+#: four-point screen was too small to say otherwise and should not have been
+#: generalised from. What the full grid does support is narrower and is the
+#: real reason to keep this rule: the argmax's 0.01232 is a third worse than
+#: the 0.00903 available at essentially the same log-loss (0.64740 against
+#: 0.64506), so selecting on log-loss leaves a real subgroup gain on the table.
 #:
 #: The rule, fixed before the grid was run:
 #:

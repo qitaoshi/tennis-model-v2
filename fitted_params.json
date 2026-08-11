@@ -12,21 +12,22 @@
   "tune_match_logloss": 0.6710618190785423
  },
  "stage_3": {
-  "k": 48.0,
-  "k_chall_mult": 0.75,
+  "k": 32.0,
+  "k_chall_mult": 1.0,
   "surface_weight": 0.3,
   "inactivity_half_life": 1095.0,
-  "level_gap": 100.0,
-  "level_offset": 0.0,
+  "level_gap": 0.0,
+  "level_offset": -30.545840977254166,
+  "rank_seed_scale": 160.0,
   "selected_on": "tune",
-  "tune_logloss": 0.6397655752495135,
-  "tune_brier": 0.22482763863774108,
+  "tune_logloss": 0.6473766582885764,
+  "tune_brier": 0.2282861231646757,
   "cross_level": {
-   "n": 2883,
-   "predicted_chall_winrate": 0.4242939685708152,
-   "observed_chall_winrate": 0.413111342351717,
-   "gap": -0.011182626219098213,
-   "logloss": 0.6401216382032197
+   "n": 2015,
+   "predicted_chall_winrate": 0.4148003208720391,
+   "observed_chall_winrate": 0.3890818858560794,
+   "gap": -0.025718435015959717,
+   "logloss": 0.638310957417612
   }
  },
  "stage_4": {
