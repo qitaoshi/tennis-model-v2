@@ -159,16 +159,33 @@ def pit_values(cdf_at_actual: np.ndarray, cdf_before: np.ndarray) -> np.ndarray:
     return cdf_before + u * (cdf_at_actual - cdf_before)
 
 
-def pit_deviation(pit: np.ndarray, n_bins: int = 10) -> float:
-    """Mean absolute deviation of the PIT histogram from uniform."""
-    counts, _ = np.histogram(pit, bins=n_bins, range=(0, 1))
-    return float(np.mean(np.abs(counts / max(len(pit), 1) - 1 / n_bins)))
+def pit_deviation(pit: np.ndarray, n_bins: int = 10,
+                  weights: np.ndarray | None = None) -> float:
+    """Mean absolute deviation of the PIT histogram from uniform.
+
+    ``weights`` carries provenance weighting. It must be applied here rather
+    than upstream: a caller that instead drops rows with weight zero turns a
+    *downweighting* scheme into a pass-through, because a downweighted row
+    still has weight > 0. That is exactly the bug this signature exists to
+    prevent -- with weights folded in, ``downweight_inferred`` and ``pooled``
+    can differ on the variance correction, which the Stage 7 provenance
+    comparison in MODEL_PROMPT.md requires them to be able to do.
+    """
+    counts, _ = np.histogram(pit, bins=n_bins, range=(0, 1), weights=weights)
+    total = float(counts.sum())
+    return float(np.mean(np.abs(counts / max(total, 1e-12) - 1 / n_bins)))
 
 
-def coverage(pit: np.ndarray, level: float = 0.8) -> float:
-    """Empirical coverage of the central interval at ``level``."""
-    lo, hi = (1 - level) / 2, 1 - (1 - level) / 2
-    return float(np.mean((pit >= lo) & (pit <= hi)))
+def coverage(pit: np.ndarray, level: float = 0.8,
+             weights: np.ndarray | None = None) -> float:
+    """Empirical coverage of the central interval at ``level``.
+
+    Provenance-weighted for the same reason as :func:`pit_deviation`.
+    """
+    inside = ((pit >= (1 - level) / 2) & (pit <= 1 - (1 - level) / 2))
+    if weights is None:
+        return float(np.mean(inside))
+    return float(np.average(inside.astype(float), weights=weights))
 
 
 def provenance_weights(provenance: np.ndarray, params: CorrectionParams) -> np.ndarray:

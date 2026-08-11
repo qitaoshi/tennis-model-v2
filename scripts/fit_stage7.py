@@ -92,8 +92,9 @@ def measure(pan: pd.DataFrame, pred: dict, weights: np.ndarray) -> dict:
     gap = CR.measure_tiebreak_gap(obs_tb, pred["p_tb"], weights)
     pit = CR.pit_values(pred["cdf_at"], pred["cdf_before"])
     keep = weights > 0
-    return {"tb_gap": gap, "pit_dev": CR.pit_deviation(pit[keep]),
-            "coverage80": CR.coverage(pit[keep]),
+    return {"tb_gap": gap,
+            "pit_dev": CR.pit_deviation(pit[keep], weights=weights[keep]),
+            "coverage80": CR.coverage(pit[keep], weights=weights[keep]),
             "obs_tb": float(np.average(obs_tb, weights=weights)),
             "pred_tb": float(np.average(pred["p_tb"], weights=weights)),
             "n": int(keep.sum())}
