@@ -60,10 +60,7 @@ def build_base() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     asof = PR.build_asof(m, rp)
 
     s3 = fitted["stage_3"]
-    ep = E.EloParams(k=s3["k"], k_chall_mult=s3["k_chall_mult"],
-                     surface_weight=s3["surface_weight"],
-                     inactivity_half_life=s3["inactivity_half_life"],
-                     level_gap=s3["level_gap"], level_offset=s3["level_offset"])
+    ep = E.params_from_fitted(s3)
     elo = E.run_elo(m, ep)[["match_id", "p_winner"]]
     return m, asof, {"fitted": fitted, "rp": rp, "elo": elo}
 

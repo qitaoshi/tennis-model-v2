@@ -62,10 +62,7 @@ def main() -> None:
     m = pd.read_parquet(C.PROCESSED_DIR / "matches.parquet")
     assert m["date"].max() < C.HOLDOUT_CUTOFF, "holdout must not be loaded"
 
-    ep = E.EloParams(k=s3["k"], k_chall_mult=s3["k_chall_mult"],
-                     surface_weight=s3["surface_weight"],
-                     inactivity_half_life=s3["inactivity_half_life"],
-                     level_gap=s3["level_gap"], level_offset=s3["level_offset"])
+    ep = E.params_from_fitted(s3)
     elo = E.run_elo(m, ep)[["match_id", "p_winner"]]
     meta = m.set_index("match_id")
     for col in ("date", "split", "level_label", "surface"):

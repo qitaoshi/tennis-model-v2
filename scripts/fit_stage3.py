@@ -1,8 +1,8 @@
 """Stage 3 fitting and validation — surface Elo.
 
 Selects K, the Challenger K multiplier, the surface blend weight, the
-inactivity regression half-life and the new-player level gap on TUNE
-log-loss; records the FIT-internal rolling-origin gain and its spread to the
+inactivity regression half-life, the new-player level gap and the debut
+rank-seed scale on TUNE log-loss; records the FIT-internal rolling-origin gain and its spread to the
 ledger; runs the cross-level consistency check and fits a level offset only
 if that check demands one.
 
@@ -15,8 +15,11 @@ Run:  python -m scripts.fit_stage3
 
 from __future__ import annotations
 
-import json
+import dataclasses
+import hashlib
+import inspect
 import itertools
+import json
 
 import numpy as np
 import pandas as pd
@@ -28,13 +31,36 @@ from model import ledger
 
 KS = [16.0, 24.0, 32.0, 48.0]
 SURFACE_WEIGHTS = [0.3, 0.5, 0.7]
-INACTIVITY = [365.0, 1095.0, None]
+#: Widened 2026-08-11. The original three values could not express the setting
+#: reports/unknown_players.md found: at 1095 a 140-day absence ages a rating by
+#: 8.5%, which is close to not ageing it at all.
+INACTIVITY = [120.0, 180.0, 270.0, 365.0, 540.0, 1095.0, None]
 CHALL_MULTS = [0.75, 1.0]
 LEVEL_GAPS = [0.0, 100.0]
+#: Rating points per natural-log unit of ATP rank used to seed a debutant.
+#: 0.0 is the incumbent: a flat seed whether the player is ranked 40 or 900.
+#: Range taken from reports/unknown_players.md, which extended past 160
+#: precisely because a first pass selected the edge value.
+SEED_SCALES = [0.0, 40.0, 80.0, 120.0, 160.0, 200.0, 240.0]
 
 #: Calibration is judged against criteria fixed before the run, not eyeballed.
 MAX_DECILE_GAP = 0.05
 MEAN_DECILE_GAP = 0.025
+
+#: Settings within this much TUNE log-loss of the best are treated as tied,
+#: and the tie is broken on the size-weighted mean of subgroup ECEs.
+#:
+#: FIXED BEFORE THE RUN, and deliberately far tighter than the standard error
+#: of a log-loss difference on 13,859 matches — a wide band would let the
+#: tie-break quietly become the selection rule. Stage 3's metric is still TUNE
+#: log-loss, per MODEL_PROMPT.md; this only orders settings that metric cannot
+#: separate.
+#:
+#: The tie-break is the size-weighted mean of the per-group ECEs, never pooled
+#: ECE. Pooled rewards one group's overprediction cancelling another's:
+#: reports/unknown_players.md caught a setting whose pooled ECE beat every one
+#: of its own subgroups.
+LOGLOSS_TIE = 1e-4
 
 
 def _load() -> pd.DataFrame:
@@ -56,29 +82,127 @@ def _fold_gains(res: pd.DataFrame, base: np.ndarray) -> list[float]:
     return gains
 
 
-def main() -> None:
-    matches = _load()
+def _groups(matches: pd.DataFrame) -> dict[str, np.ndarray]:
+    """Debut / stale / known masks, in the row order run_elo returns.
+
+    These depend only on the fixture list, never on the Elo settings, so they
+    are computed once. A debutant is a player the ladder has not seen; stale is
+    a 70-day-plus layoff for a player it has.
+    """
+    order = E.run_elo(matches, E.EloParams())
+    t = np.array([d.toordinal() for d in order["date"]], dtype=float)
+    last: dict[str, float] = {}
+    layoff = np.zeros(len(order))
+    debut = np.zeros(len(order), dtype=bool)
+    wid, lid = order["winner_id"].to_numpy(), order["loser_id"].to_numpy()
+    for i in np.argsort(t, kind="mergesort"):
+        gaps = []
+        for pid in (wid[i], lid[i]):
+            prev = last.get(pid)
+            if prev is None:
+                debut[i] = True
+            else:
+                gaps.append(t[i] - prev)
+        layoff[i] = max(gaps) if gaps else 0.0
+        for pid in (wid[i], lid[i]):
+            last[pid] = t[i]
+    return {"debut": debut,
+            "stale": (~debut) & (layoff >= 70),
+            "known": (~debut) & (layoff < 70)}
+
+
+def _grouped_ece(p: np.ndarray, tune: np.ndarray,
+                 groups: dict[str, np.ndarray]) -> dict:
+    """Size-weighted mean of per-group ECEs, and each group's own value."""
+    out, ns, es = {}, [], []
+    for name, mask in groups.items():
+        sel = p[tune & mask]
+        e = E.group_ece(sel) if len(sel) >= 100 else float("nan")
+        out[f"ece_{name}"] = e
+        ns.append(int((tune & mask).sum()))
+        es.append(e)
+    tot = sum(n for n, e in zip(ns, es) if np.isfinite(e))
+    out["grouped_ece"] = (float(sum(n * e for n, e in zip(ns, es)
+                                    if np.isfinite(e)) / tot)
+                          if tot else float("nan"))
+    return out
+
+
+#: The grid costs ~80 minutes over 2,352 settings. It depends only on the axis
+#: definitions and the Elo code, so it is cached under that key: the selection
+#: RULE can then be reconsidered without paying for the search again.
+GRID_CACHE = C.REPO_ROOT / ".stage3_cache"
+
+
+def _grid_key() -> str:
+    h = hashlib.sha256()
+    for axis in (KS, SURFACE_WEIGHTS, INACTIVITY, CHALL_MULTS, LEVEL_GAPS,
+                 SEED_SCALES):
+        h.update(repr(axis).encode())
+    h.update((C.REPO_ROOT / "model" / "elo.py").read_bytes())
+    h.update(inspect.getsource(_grouped_ece).encode())
+    return h.hexdigest()[:16]
+
+
+def search(matches: pd.DataFrame, groups: dict[str, np.ndarray]) -> pd.DataFrame:
+    """Every grid point scored on TUNE. No selection happens here."""
+    cache = GRID_CACHE / f"grid-{_grid_key()}.parquet"
+    if cache.exists():
+        print(f"reusing cached grid ({cache.name})")
+        return pd.read_parquet(cache)
 
     grid = []
-    best = None
-    for k, w, inact, cm, gap in itertools.product(
-        KS, SURFACE_WEIGHTS, INACTIVITY, CHALL_MULTS, LEVEL_GAPS
+    for k, w, inact, cm, gap, seed in itertools.product(
+        KS, SURFACE_WEIGHTS, INACTIVITY, CHALL_MULTS, LEVEL_GAPS, SEED_SCALES
     ):
         params = E.EloParams(k=k, surface_weight=w, inactivity_half_life=inact,
-                             k_chall_mult=cm, level_gap=gap)
+                             k_chall_mult=cm, level_gap=gap,
+                             rank_seed_scale=seed)
         res = E.run_elo(matches, params)
-        tune = res[res["split"] == "tune"]
-        ll = E.log_loss(tune["p_winner"].to_numpy())
+        tune_mask = (res["split"] == "tune").to_numpy()
+        p = res["p_winner"].to_numpy()
+        ll = E.log_loss(p[tune_mask])
         grid.append({"k": k, "surface_weight": w,
                      "inactivity_half_life": inact, "k_chall_mult": cm,
-                     "level_gap": gap, "tune_logloss": ll,
-                     "tune_brier": E.brier(tune["p_winner"].to_numpy())})
-        if best is None or ll < best[0]:
-            best = (ll, params, res)
-        print(f"  k={k:>4} w={w} inact={inact} cm={cm} gap={gap} -> {ll:.5f}")
+                     "level_gap": gap, "rank_seed_scale": seed,
+                     "tune_logloss": ll,
+                     "tune_brier": E.brier(p[tune_mask]),
+                     **_grouped_ece(p, tune_mask, groups)})
+        print(f"  k={k:>4} w={w} inact={inact} cm={cm} gap={gap} seed={seed} "
+              f"-> {ll:.5f} (grouped ECE {grid[-1]['grouped_ece']:.5f})")
 
     grid = pd.DataFrame(grid).sort_values("tune_logloss").reset_index(drop=True)
-    _, sel, res = best
+    GRID_CACHE.mkdir(exist_ok=True)
+    grid.to_parquet(cache, index=False)
+    return grid
+
+
+def main() -> None:
+    matches = _load()
+    groups = _groups(matches)
+    grid = search(matches, groups)
+
+    # Selection: TUNE log-loss, per MODEL_PROMPT.md. Among settings it cannot
+    # separate (within LOGLOSS_TIE, fixed above before the run), prefer the one
+    # with the lowest size-weighted subgroup ECE.
+    tied = grid[grid["tune_logloss"] <= grid["tune_logloss"].iloc[0] + LOGLOSS_TIE]
+    row = tied.sort_values("grouped_ece").iloc[0]
+    tie_note = (f"{len(tied)} of {len(grid)} settings sit within {LOGLOSS_TIE} "
+                f"TUNE log-loss of the best; the tie was broken on grouped "
+                f"subgroup ECE")
+    if len(tied) > 1:
+        tie_note += (f" ({tied['grouped_ece'].min():.5f} chosen against "
+                     f"{grid['grouped_ece'].iloc[0]:.5f} for the log-loss "
+                     f"argmax)")
+    print(f"\n{tie_note}")
+
+    sel = E.EloParams(k=float(row["k"]), surface_weight=float(row["surface_weight"]),
+                      inactivity_half_life=(None if pd.isna(row["inactivity_half_life"])
+                                            else float(row["inactivity_half_life"])),
+                      k_chall_mult=float(row["k_chall_mult"]),
+                      level_gap=float(row["level_gap"]),
+                      rank_seed_scale=float(row["rank_seed_scale"]))
+    res = E.run_elo(matches, sel)
     print(f"\nselected: {sel}")
 
     # --- baseline ---------------------------------------------------------
@@ -104,10 +228,7 @@ def main() -> None:
                 (1 / max(cross["predicted_chall_winrate"] + cross["gap"], 1e-6) - 1)
                 / (1 / max(cross["predicted_chall_winrate"], 1e-6) - 1)
             )
-            sel = E.EloParams(k=sel.k, k_chall_mult=sel.k_chall_mult,
-                              surface_weight=sel.surface_weight,
-                              inactivity_half_life=sel.inactivity_half_life,
-                              level_gap=sel.level_gap, level_offset=float(offset))
+            sel = dataclasses.replace(sel, level_offset=float(offset))
             res = E.run_elo(matches, sel)
             tune_mask = (res["split"] == "tune").to_numpy()
             base = E.ranking_baseline(res, (res["split"] == "fit").to_numpy())
@@ -124,13 +245,16 @@ def main() -> None:
                            f"{abs(cross['gap']) / se:.1f} SE — within noise, "
                            "no offset fitted")
 
+    # Subgroup ECEs on the FINAL ratings: if a cross-level offset was fitted
+    # above, `res` was re-run and the grid row's values are one step stale.
+    sub = _grouped_ece(res["p_winner"].to_numpy(), tune_mask, groups)
+
     # --- ledger (before the gate, per ground rule 2) ----------------------
     folds = _fold_gains(res, base)
     tune_gain = base_ll - model_ll
-    selected = {"k": sel.k, "k_chall_mult": sel.k_chall_mult,
-                "surface_weight": sel.surface_weight,
-                "inactivity_half_life": sel.inactivity_half_life,
-                "level_gap": sel.level_gap, "level_offset": sel.level_offset}
+    # Every field Stage 3 selects, from one list, so a new lever cannot be
+    # written to the report and silently omitted from fitted_params.json.
+    selected = {f: getattr(sel, f) for f in E.SELECTED_FIELDS}
     ledger.append(
         stage="stage_3", metric="match_winner_logloss", selected=selected,
         tune_gain=tune_gain, fit_rolling_origin_gains=folds,
@@ -153,7 +277,10 @@ def main() -> None:
         f"Challenger K x**{sel.k_chall_mult}**, surface blend weight "
         f"**{sel.surface_weight}**, inactivity half-life "
         f"**{sel.inactivity_half_life}**, new-player level gap "
-        f"**{sel.level_gap:.0f}**, cross-level offset **{sel.level_offset:+.1f}**.\n",
+        f"**{sel.level_gap:.0f}**, debut rank-seed scale "
+        f"**{sel.rank_seed_scale:.0f}**, cross-level offset "
+        f"**{sel.level_offset:+.1f}**.\n",
+        f"\n{tie_note}.\n",
         "\n## TUNE performance\n",
         "| model | log-loss | Brier |",
         "|---|---|---|",
@@ -181,6 +308,15 @@ def main() -> None:
         f"\n\nmean {np.mean(folds):+.5f}, std {np.std(folds, ddof=1):.5f}; "
         f"TUNE gain {tune_gain:+.5f}, envelope "
         f"{C.OVERFIT_SIGNAL_MULTIPLE * np.std(folds, ddof=1):.5f}.\n",
+        "\n## Subgroup calibration at the selected setting\n",
+        "The defect this grid was widened to address is a subgroup one: "
+        "matches with a debutant, and matches after a long layoff. Pooled ECE "
+        "is not shown as a selection number because it rewards one group's "
+        "bias cancelling another's.\n",
+        f"\n- debut ECE {sub['ece_debut']:.4f}",
+        f"\n- stale (70d+ layoff) ECE {sub['ece_stale']:.4f}",
+        f"\n- known ECE {sub['ece_known']:.4f}",
+        f"\n- size-weighted mean {sub['grouped_ece']:.4f}\n",
         "\n## Grid (top 10 by TUNE log-loss)\n",
         grid.head(10).to_markdown(index=False),
         f"\n\n## Gate\n\nCalibration tracks observed win rates: **{calib_ok}**. "

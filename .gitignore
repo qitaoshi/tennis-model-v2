@@ -27,3 +27,4 @@ scratch_*.log
 # Lock and temp files for the fitted_params writer (model/fitted.py)
 fitted_params.json.lock
 fitted_params.json.*.tmp
+.stage3_cache/
