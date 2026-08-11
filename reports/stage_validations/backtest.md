@@ -1,5 +1,13 @@
 # Final backtest — HOLDOUT
 
+> **STALE as of 2026-08-11 — describes a calibration map that no longer ships.**
+> This run used the `blended`/8 maps (five families, no `games_handicap`). The
+> shipped map since commit `4564a71` (2026-08-10) is `platt`/8 over six families,
+> and it has **never been evaluated on TEST**
+> (`fitted_params.json` → `calibration_refit.test_evaluated: false`).
+> The numbers below are unaltered and remain valid for the map they were produced
+> with; they do not describe current behaviour. See `PROGRESS.json` →
+> `calibration_platt_2026_08_10_ships_unevaluated`.
 
 Holdout window: 2026-01-01 onward. 5,735 scoreable matches (completed, in scope, clean score, usable serve stats).
 

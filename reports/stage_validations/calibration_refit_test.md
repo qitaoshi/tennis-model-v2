@@ -1,5 +1,12 @@
 # Calibration refit — TEST evaluation
 
+> **STALE as of 2026-08-11 — this evaluates a map that no longer ships.**
+> The map measured below is `blended`/8. It was replaced on 2026-08-10 by
+> `platt`/8 (commit `4564a71`), which was **not** evaluated on TEST and cannot be:
+> this window was spent by the run recorded here, and it is read once.
+> Do not quote the table below as evidence about the shipped map.
+> See `PROGRESS.json` → `calibration_platt_2026_08_10_ships_unevaluated`.
+
 Map: `blended`, fitting window `8`, selected on TUNE and refit on FIT+TUNE. **This is the one and only use of the post-re-split TEST window.** Nothing is fitted on it.
 
 

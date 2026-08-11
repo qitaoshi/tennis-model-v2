@@ -1,5 +1,11 @@
 # Calibration refit — method and fitting window
 
+> **The selected map ships without a TEST evaluation** (`fitted_params.json` →
+> `calibration_refit.test_evaluated: false`). TEST was spent by the earlier
+> `blended`/8 evaluation and is read once, so no out-of-sample calibration figure
+> exists for `platt`/8. The TUNE ECE below is a *selection* number, not evidence.
+> See `PROGRESS.json` → `calibration_platt_2026_08_10_ships_unevaluated`.
+
 Selected on TUNE (2024-01-01 .. 2025-06-30) after the 2026-08-08 re-split. **TEST and HOLDOUT were not consulted.** Maps are fitted on FIT and judged on TUNE; the shipped map is then refit on FIT+TUNE using the selected setting.
 
 
