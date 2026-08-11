@@ -2,8 +2,11 @@
 
 Selects K, the Challenger K multiplier, the surface blend weight, the
 inactivity regression half-life, the new-player level gap and the debut
-rank-seed scale on TUNE log-loss; records the FIT-internal rolling-origin gain and its spread to the
-ledger; runs the cross-level consistency check and fits a level offset only
+rank-seed scale. NOTE THE SELECTION RULE: as of 2026-08-11 this stage is
+selected on grouped subgroup ECE subject to a log-loss constraint, not on TUNE
+log-loss as MODEL_PROMPT.md:373 specifies — see LOGLOSS_SLACK below for the
+reasoning and the human decision behind it. Records the FIT-internal
+rolling-origin gain and its spread to the ledger; runs the cross-level consistency check and fits a level offset only
 if that check demands one.
 
 Gate (MODEL_PROMPT.md): decile calibration tracks observed win rates, the
@@ -47,20 +50,57 @@ SEED_SCALES = [0.0, 40.0, 80.0, 120.0, 160.0, 200.0, 240.0]
 MAX_DECILE_GAP = 0.05
 MEAN_DECILE_GAP = 0.025
 
-#: Settings within this much TUNE log-loss of the best are treated as tied,
-#: and the tie is broken on the size-weighted mean of subgroup ECEs.
+#: SELECTION RULE, and a DELIBERATE DEVIATION FROM MODEL_PROMPT.md — human
+#: decision, 2026-08-11.
 #:
-#: FIXED BEFORE THE RUN, and deliberately far tighter than the standard error
-#: of a log-loss difference on 13,859 matches — a wide band would let the
-#: tie-break quietly become the selection rule. Stage 3's metric is still TUNE
-#: log-loss, per MODEL_PROMPT.md; this only orders settings that metric cannot
-#: separate.
+#: MODEL_PROMPT.md:373 says Stage 3 is selected by TUNE log-loss. That text
+#: predates the 2026-08-08 goal change, which made ECE a first-class objective
+#: beside log-loss (CLAUDE.md). Log-loss alone cannot select this stage for
+#: what it is now being asked to fix: the defect is a subgroup one, confined to
+#: debutants and players returning from a layoff — roughly a tenth of matches —
+#: while log-loss is dominated by the well-known other nine tenths. A four-point
+#: screen on 2026-08-11 showed the log-loss argmax carrying WORSE subgroup
+#: calibration than the incumbent, i.e. selecting on it would have propagated a
+#: setting that makes the thing this cascade exists to fix worse.
 #:
-#: The tie-break is the size-weighted mean of the per-group ECEs, never pooled
-#: ECE. Pooled rewards one group's overprediction cancelling another's:
-#: reports/unknown_players.md caught a setting whose pooled ECE beat every one
-#: of its own subgroups.
-LOGLOSS_TIE = 1e-4
+#: The rule, fixed before the grid was run:
+#:
+#:   minimise the size-weighted mean of the per-group ECEs (debut / stale /
+#:   known), subject to TUNE log-loss not exceeding the incumbent's by more
+#:   than LOGLOSS_SLACK.
+#:
+#: This is the rule scripts/fit_unknown_players.py already adopted and logged,
+#: for the same defect. Two properties matter:
+#:
+#: * The constraint is on the SEARCH, not a veto applied to the winner. Applied
+#:   the second way it rejects the whole grid whenever the unconstrained
+#:   optimum happens to be sharpness-destroying, and throws away the settings
+#:   that satisfy both.
+#: * The objective is the size-weighted mean of subgroup ECEs, never pooled
+#:   ECE. Pooled rewards one group's overprediction cancelling another's:
+#:   reports/unknown_players.md caught a setting whose pooled ECE beat every
+#:   one of its own subgroups.
+#:
+#: The deviation is recorded in the Stage 3 report, the ledger notes and
+#: PROGRESS.json, so the lineage shows Stage 3 was selected under a different
+#: rule from Stages 2 and 4-7.
+LOGLOSS_SLACK = 1e-4
+
+#: The shipped setting this is measured against — the incumbent, whose grid row
+#: supplies the log-loss ceiling. Read from fitted_params.json rather than
+#: hardcoded.
+def _incumbent_row(grid: pd.DataFrame, s3: dict) -> pd.Series:
+    m = np.ones(len(grid), dtype=bool)
+    for field, col in (("k", "k"), ("k_chall_mult", "k_chall_mult"),
+                       ("surface_weight", "surface_weight"),
+                       ("level_gap", "level_gap"),
+                       ("rank_seed_scale", "rank_seed_scale")):
+        m &= grid[col].to_numpy() == s3.get(field, 0.0)
+    hl = s3.get("inactivity_half_life")
+    m &= (grid["inactivity_half_life"].isna().to_numpy() if hl is None
+          else (grid["inactivity_half_life"].to_numpy() == hl))
+    assert m.any(), "the incumbent setting is not in the grid"
+    return grid[m].iloc[0]
 
 
 def _load() -> pd.DataFrame:
@@ -140,6 +180,9 @@ def _grid_key() -> str:
                  SEED_SCALES):
         h.update(repr(axis).encode())
     h.update((C.REPO_ROOT / "model" / "elo.py").read_bytes())
+    # The split boundaries decide which matches are scored. Leave them out and
+    # a boundary move would silently reuse a grid measured on the old window.
+    h.update(repr((C.TUNE_START, C.TUNE_END, C.TEST_START)).encode())
     h.update(inspect.getsource(_grouped_ece).encode())
     return h.hexdigest()[:16]
 
@@ -182,18 +225,28 @@ def main() -> None:
     groups = _groups(matches)
     grid = search(matches, groups)
 
-    # Selection: TUNE log-loss, per MODEL_PROMPT.md. Among settings it cannot
-    # separate (within LOGLOSS_TIE, fixed above before the run), prefer the one
-    # with the lowest size-weighted subgroup ECE.
-    tied = grid[grid["tune_logloss"] <= grid["tune_logloss"].iloc[0] + LOGLOSS_TIE]
-    row = tied.sort_values("grouped_ece").iloc[0]
-    tie_note = (f"{len(tied)} of {len(grid)} settings sit within {LOGLOSS_TIE} "
-                f"TUNE log-loss of the best; the tie was broken on grouped "
-                f"subgroup ECE")
-    if len(tied) > 1:
-        tie_note += (f" ({tied['grouped_ece'].min():.5f} chosen against "
-                     f"{grid['grouped_ece'].iloc[0]:.5f} for the log-loss "
-                     f"argmax)")
+    # Selection: see LOGLOSS_SLACK above. Minimise grouped subgroup ECE subject
+    # to log-loss not worsening against the incumbent.
+    inc = _incumbent_row(grid, FP.load()["stage_3"])
+    feasible = grid[grid["tune_logloss"] <= inc["tune_logloss"] + LOGLOSS_SLACK]
+    constraint_bound = len(feasible) == 0
+    row = (grid if constraint_bound else feasible).sort_values(
+        "grouped_ece").iloc[0]
+    tie_note = (
+        f"Selected under the 2026-08-11 rule (grouped subgroup ECE, subject to "
+        f"TUNE log-loss <= incumbent + {LOGLOSS_SLACK}), NOT the TUNE log-loss "
+        f"of MODEL_PROMPT.md:373 — see LOGLOSS_SLACK in scripts/fit_stage3.py. "
+        f"{len(feasible)} of {len(grid)} settings satisfy the constraint. "
+        f"Incumbent: grouped ECE {inc['grouped_ece']:.5f}, log-loss "
+        f"{inc['tune_logloss']:.5f}. Selected: grouped ECE "
+        f"{row['grouped_ece']:.5f}, log-loss {row['tune_logloss']:.5f}. "
+        f"The log-loss argmax would have been grouped ECE "
+        f"{grid['grouped_ece'].iloc[0]:.5f} at log-loss "
+        f"{grid['tune_logloss'].iloc[0]:.5f}")
+    if constraint_bound:
+        tie_note += (". NO SETTING SATISFIED THE LOG-LOSS CONSTRAINT, so the "
+                     "objective was minimised over the whole grid and this "
+                     "selection buys calibration with sharpness")
     print(f"\n{tie_note}")
 
     sel = E.EloParams(k=float(row["k"]), surface_weight=float(row["surface_weight"]),
