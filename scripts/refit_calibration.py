@@ -264,11 +264,49 @@ def select() -> None:
     full_sl = _window_slice(full, sel_window)
     full_sl = full_sl.sample(min(len(full_sl), 26_000), random_state=C.MC_SEED)
     final_samples = collect(full_sl, cp)
-    final = RC.fit_maps({k: v for k, v in final_samples.items() if k in FAMILIES},
+
+    # A map is applied to a family only where it beats identity on TUNE.
+    #
+    # Selection ranks candidates on tune_ece, the mean over all six families.
+    # A candidate can therefore win while making an individual family worse,
+    # and on 2026-08-11 every one of the twelve did exactly that to
+    # match_winner: uncalibrated sits at ECE 0.02034 and log-loss 0.65446, and
+    # the best candidate (blended/5) reached only 0.0217/0.6550. The selected
+    # platt/5 was 0.0255, 25% worse than applying nothing at all. The family
+    # mean still improved, 0.0175 -> 0.0148, because totals and set_score gain
+    # more than match_winner loses -- which is precisely how a mean hides this.
+    #
+    # So the choice is made per family rather than once for all six. This is a
+    # rule, not a constant: nothing here names match_winner, and a family whose
+    # map starts helping will be picked up automatically on the next refit. It
+    # is decided on TUNE like any other hyperparameter and logged to the
+    # ledger. CalibrationMaps.apply passes unknown families through unchanged,
+    # so omitting a family IS identity for it -- no separate code path.
+    sel_scores = _score(fitted_maps[(sel_method, sel_window)], tune_samples)
+    helps = {r.family: bool(r.ece_after < r.ece_before)
+             for r in sel_scores.itertuples()}
+    applied = [f for f in FAMILIES if helps.get(f, False)]
+    skipped = [f for f in FAMILIES if f in helps and not helps[f]]
+    for r in sel_scores.itertuples():
+        verdict = "apply" if helps.get(r.family) else "IDENTITY (map is worse)"
+        print(f"  {r.family:20s} ECE {r.ece_before:.4f} -> {r.ece_after:.4f}"
+              f"   {verdict}")
+    if not applied:
+        raise SystemExit(
+            "the selected candidate beats identity on no family at all; "
+            "shipping no maps would be the same as shipping nothing. Revisit "
+            "the candidate set before trusting this refit.")
+
+    final = RC.fit_maps({k: v for k, v in final_samples.items() if k in applied},
                         method=sel_method)
     final.save()
     print(f"refit on {len(full_sl):,} FIT+TUNE matches "
           f"({full_sl['t'].min()}..{full_sl['t'].max()}), saved to {RC.MAPS_PATH}")
+    print(f"maps applied to {len(applied)}/{len(FAMILIES)} families: "
+          f"{', '.join(applied)}")
+    if skipped:
+        print(f"left uncalibrated (identity beats every candidate): "
+              f"{', '.join(skipped)}")
 
     incumbent = all_candidates[(all_candidates["method"] == "isotonic")
                                & (all_candidates["window_years"] == "all")]
@@ -281,8 +319,12 @@ def select() -> None:
         baseline="isotonic on all history (the shipped incumbent)",
         tune_metric_value=float(best["tune_ece"]),
         baselines=baseline, frozen=True,
-        notes="selected on the post-re-split TUNE (2024-01-01..2025-06-30); "
-              "TEST and HOLDOUT not consulted. "
+        notes=(f"selected on the post-re-split TUNE ({C.TUNE_START}.."
+               f"{C.TUNE_END}); TEST and HOLDOUT not consulted. "
+               f"maps applied only where they beat identity on TUNE: "
+               f"{', '.join(applied)}"
+               + (f"; left uncalibrated: {', '.join(skipped)}" if skipped
+                  else "") + ". ")
               + (f"{int(all_candidates['degenerate'].sum())} of "
                  f"{len(all_candidates)} candidates were rejected as "
                  "degenerate (saturated or flat) before ranking"
