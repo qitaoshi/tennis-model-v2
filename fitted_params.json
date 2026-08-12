@@ -116,7 +116,10 @@
    "totals_under_low",
    "totals_under_mid"
   ],
-  "test_evaluated": false
+  "test_evaluated": true,
+  "test_ece_before": 0.016353122285424637,
+  "test_ece_after": 0.012976965742700818,
+  "test_all_improved": false
  },
  "fatigue": {
   "rest_days": -0.01164709979964922,
