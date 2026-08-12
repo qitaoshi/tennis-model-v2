@@ -88,3 +88,41 @@ jobs:
           git add paper/
           git commit -m "paper trading: $(date -u +%Y-%m-%d)"
           git push
+
+      # A broken day that nobody notices is worse than a bad day. The run is
+      # fourteen days long and every step above can end it — a blocked odds
+      # source, a failed self-check, a rejected push — and until now all of
+      # them ended it silently, because Slack was only reached on the success
+      # path. A gap found on day 14 cannot be filled.
+      #
+      # Inline curl rather than scripts.paper_trade's post_slack: the failure
+      # being reported may be that the module does not import or that its
+      # dependencies never installed, and the alarm must not share a failure
+      # mode with the thing it is alarming about.
+      - name: Alert Slack if the run failed
+        if: failure()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_CHANNEL" ]; then
+            echo "run failed and no Slack credentials are set; cannot alert" >&2
+            exit 0
+          fi
+          text=":rotating_light: *Tennis paper trading FAILED* · $(date -u +%Y-%m-%d)"$'\n'
+          text="${text}No picks were written and no settlement ran for this date,"
+          text="${text} so the ledger has a gap unless the next run fills it."$'\n'
+          text="${text}Failed job: ${RUN_URL}"
+          # jq builds the payload so a quote or newline in the text cannot
+          # produce malformed JSON and turn the alert into a second silence.
+          reply=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "$(jq -nc --arg c "$SLACK_CHANNEL" --arg t "$text" \
+                        '{channel: $c, text: $t}')")
+          echo "$reply"
+          case "$reply" in
+            *'"ok":true'*) ;;
+            *) echo "Slack rejected the failure alert" >&2 ;;
+          esac

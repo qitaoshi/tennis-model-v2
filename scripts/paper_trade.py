@@ -1608,7 +1608,9 @@ def rehearse() -> None:
         "league_slug", "match_date", "tournament", "player_a", "player_b",
         "model_id_a", "model_id_b", "best_of", "kelly_full", "stake_flat",
         "stake_kelly", "bankroll_kelly", "result", "pnl_flat", "pnl_kelly",
-        "note", "outcome_value"} if bets else set()
+        "note", "outcome_value",
+        # Written at settlement / at the closing look, never on a pick.
+        "open_decimal_odds", "hours_to_start"} if bets else set()
     assert not missing, missing
     print("rehearsal complete — nothing written, nothing posted")
 
