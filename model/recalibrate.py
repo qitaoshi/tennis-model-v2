@@ -1,21 +1,43 @@
-"""Stage 8 — isotonic recalibration of the priced probability families.
+"""Stage 8 — recalibration of the priced probability families.
 
-Isotonic regression maps, fitted on FIT+TUNE predictions against outcomes,
-frozen to disk, and applied as the final step in price.py. Isotonic is chosen
-because it can only reorder probabilities monotonically: it fixes calibration
-without inventing discrimination the model does not have.
+Maps are fitted on FIT+TUNE predictions against outcomes, frozen to disk, and
+applied as the final step in price.py.
 
-One map per family that is actually priced, because their miscalibration is
-not the same shape:
+WHAT IS ACTUALLY SHIPPING, as of the 2026-08-12 refit. Read this before
+assuming, because an earlier version of this docstring described maps that
+were not the ones on disk, and that gap is what forced the whole audit.
 
-* ``match_winner``
-* ``totals_under_<region>`` — the over/under ladder, split by line region
-  relative to the distribution's own median, since lines deep in a tail
-  calibrate differently from lines near the middle
-* ``set_score`` — exact set-score selections
+Six families are priced: ``match_winner``, ``totals_under_low`` / ``_mid`` /
+``_high`` (the over/under ladder split by line region relative to the
+distribution's own median, since lines deep in a tail calibrate differently
+from lines near the middle), ``set_score``, and ``games_handicap``.
 
-The maps are frozen artifacts. The gate that judges them is the ONE AND ONLY
-use of the pre-cutoff TEST set, and nothing is fitted on it.
+Only THREE of them carry a map. ``scripts/refit_calibration.py`` applies a
+map to a family only where it beats identity on TUNE, and on the 2026-08-12
+refit it beat identity on the three totals families alone:
+
+* mapped:   totals_under_low, totals_under_mid, totals_under_high
+* identity: match_winner, set_score, games_handicap
+
+``CalibrationMaps.apply`` passes unknown families through unchanged, so an
+absent family IS identity for it — there is no second code path.
+
+The method is Platt in logit space over a 5-year window, NOT isotonic.
+Isotonic was the original choice, for the good reason that it can only
+reorder probabilities monotonically. In practice it saturates: a top bin
+holding few same-resolving samples returns exactly 1.0, making a fair price
+1.00. Every isotonic and blended candidate was rejected on that shape test
+in the 2026-08-12 refit, so Platt won by being the only non-degenerate
+family of candidates, not by scoring best.
+
+KNOWN DEFECT, shipped deliberately and not yet fixed: totals_under_low
+regressed on the TEST read (ECE 0.0065 -> 0.0121) after improving on TUNE.
+Do not "fix" this by dropping its map — that would be a selection made on a
+TEST result. See fitted_params.json["calibration_refit"] for the full
+constraint, which also covers why any rule devised now is contaminated.
+
+The pre-cutoff TEST set was the ONE AND ONLY gate for these maps and was
+spent on 2026-08-12. Nothing was fitted on it.
 """
 
 from __future__ import annotations
