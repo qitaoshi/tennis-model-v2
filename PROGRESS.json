@@ -97,7 +97,7 @@
     "artifacts": "scripts/backtest.py, tests/test_backtest_scoring.py, reports/stage_validations/backtest.md (regenerated), reports/stage_validations/backtest_blended_map_2026_08_09.md (preserved)"
   },
   "cascade_2026_08_11_stage3": {
-    "status": "CASCADE COMPLETE. Stages 3, 4, 5, 7 and the calibration refit all passed. The pre-cutoff TEST window is SPENT (read once, 2026-08-12) and the Stage 8 gate was ruled a PASS by human decision. HOLDOUT (2026-01-01 onward) remains entirely unspent.",
+    "status": "CASCADE COMPLETE. Stages 3, 4, 5, 7 and the calibration refit all passed. The pre-cutoff TEST window is SPENT (2026-08-12) and the Stage 8 gate was ruled a PASS by human decision. CORRECTION: HOLDOUT is NOT unspent -- see correction_2026_08_12_holdout_claim.",
     "selected": "K 32 (was 48), Challenger K x1.0 (was 0.75), surface blend 0.3 (unchanged), inactivity half-life 1095 (unchanged), new-player level gap 0 (was 100), debut rank-seed scale 160 (was 0, i.e. the lever was off), cross-level offset -30.5 rating points (was 0 \u2014 the check demanded one this time, gap -0.0257 on n=2,015).",
     "result_against_the_incumbent": "Improves BOTH objectives on the new TUNE: grouped subgroup ECE 0.01470 -> 0.00903, a 39% cut, and log-loss 0.64848 -> 0.64740. It is not a calibration gain bought with sharpness. Subgroups at the selection: debut 0.0763, stale 0.0304, known 0.0096.",
     "selection_rule_deviation": "Selected on grouped subgroup ECE subject to log-loss <= incumbent + 1e-4, NOT on TUNE log-loss as MODEL_PROMPT.md:373 specifies. Human decision, 2026-08-11. 100 of 2,352 settings satisfied the constraint.",
@@ -304,5 +304,11 @@
     "known_regression_shipped": "totals_under_low. Improved on TUNE, reversed on TEST, and was the best-calibrated family before any map touched it. Shipped as a known defect. Do NOT fix by dropping the map -- that would be selection on TEST, and the TEST answer is now known so any rule excluding this family is contaminated regardless of how it is justified.",
     "test_suite": "200 passed.",
     "next_and_still_gated": "The HOLDOUT backtest is the only evaluation left. CLAUDE.md makes it a mandatory human checkpoint and it has NOT been authorised. 'Run the test' on 2026-08-12 was ambiguous between the pytest suite and the HOLDOUT run; the suite was run, HOLDOUT was not."
+  },
+  "correction_2026_08_12_holdout_claim": {
+    "what_I_said_repeatedly": "That HOLDOUT (2026-01-01 onward) was entirely unspent and untouched, and that this bounded the risk of accepting the TEST pass. It is written into PROGRESS.json, fitted_params.json and commit db1d7df.",
+    "what_is_true": "constants.PRIOR_EVALUATION_WINDOWS records HOLDOUT 2026-01-01..2026-07-20 as read TWICE: by the holdout backtest on 2026-08-09, and again on 2026-08-11 for the scoring rescore. No parameter was fitted against it and it selects nothing, so it is not burned in the sense TEST is -- but it is not pristine, and I described it as untouched without checking the record that exists precisely to answer that.",
+    "how_it_surfaced": "The paper_trade module docstring says vendor data ends 2026-07-20 and 'the holdout backtest already read through it'. I noticed the tension, flagged it as worth checking, and the human asked for the history. The record contradicted me.",
+    "what_changes": "No pristine window remains anywhere. TUNE is selection data, TEST is spent, the 2025-07..12 window is spent, HOLDOUT is read twice, and vendor data ends 2026-07-20 so nothing unread can be carved. A further HOLDOUT read is a third read of an aggregate-level-known window, not a clean final verdict. The forward paper run is the only genuinely uncontaminated evaluation left, which strengthens the case for it -- but for a different reason than I originally gave."
   }
 }
