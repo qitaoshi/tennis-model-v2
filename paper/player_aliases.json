@@ -1,2 +1,14 @@
 {
+  "Wolf J.": {
+    "player_id": "W09G",
+    "model_name": "J.J. Wolf",
+    "added": "2026-08-12",
+    "reason": "Sole 'Wolf' surname in match history; given-name initial J matches J.J. Wolf; active with 2026-07-20 match"
+  },
+  "Yunchaokete B.": {
+    "player_id": "Y09V",
+    "model_name": "Yunchaokete Bu",
+    "added": "2026-08-12",
+    "reason": "Sole plausible match; odds source appears to invert name-part order for this Chinese name (model stores given=Yunchaokete, surname=Bu), no other candidate exists in history; active with 2026-07-13 match"
+  }
 }
