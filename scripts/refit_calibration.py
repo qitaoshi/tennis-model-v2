@@ -109,24 +109,43 @@ MAX_SATURATED_FRAC = 0.10
 MAX_FLAT_FRAC = 0.25
 
 
-def _is_degenerate(maps: RC.CalibrationMaps) -> bool:
-    """True if any family's map saturates or flatlines across the grid."""
+def _degeneracy_reasons(maps: RC.CalibrationMaps) -> list[str]:
+    """Every family-level reason this candidate is unusable, most severe first.
+
+    Returns all of them rather than short-circuiting on the first. The check
+    rejects a candidate if ANY family degenerates, so knowing WHICH family --
+    and whether it is the one a given decision actually rests on -- is the
+    difference between "this method is unusable" and "this method is fine for
+    match_winner but its totals map collapsed".
+    """
+    reasons: list[str] = []
     for fam in FAMILIES:
         if fam not in maps.maps:
             continue
         out = np.asarray(maps.apply(fam, DEGENERATE_GRID), dtype=float)
         sat = ((out <= 1e-6) | (out >= 1 - 1e-6)).mean()
         if sat > MAX_SATURATED_FRAC:
-            return True
-        # Longest constant run, which catches a map collapsed to one value
-        # even when that value is nowhere near 0 or 1.
+            reasons.append(f"{fam}: saturated over {sat:.0%} of the grid "
+                           f"(limit {MAX_SATURATED_FRAC:.0%})")
         longest = best_run = 1
+        flat_at = out[0]
         for a, b in zip(out, out[1:]):
-            best_run = best_run + 1 if abs(a - b) < 1e-9 else 1
-            longest = max(longest, best_run)
+            if abs(a - b) < 1e-9:
+                best_run += 1
+                if best_run > longest:
+                    longest, flat_at = best_run, a
+            else:
+                best_run = 1
         if longest / len(out) > MAX_FLAT_FRAC:
-            return True
-    return False
+            reasons.append(f"{fam}: flat at {flat_at:.4f} for "
+                           f"{longest / len(out):.0%} of the grid "
+                           f"(limit {MAX_FLAT_FRAC:.0%})")
+    return reasons
+
+
+def _is_degenerate(maps: RC.CalibrationMaps) -> bool:
+    """True if any family's map saturates or flatlines across the grid."""
+    return bool(_degeneracy_reasons(maps))
 
 
 def _tail_table(maps: RC.CalibrationMaps, fam: str) -> pd.DataFrame:
@@ -198,6 +217,9 @@ def select() -> None:
     # This is a constraint on what counts as a usable map, not a new metric
     # chosen to favour a candidate: it rejects on shape alone and is applied
     # before any ECE is compared. Ranking among the survivors is unchanged.
+    for (_m, _w), _maps in fitted_maps.items():
+        for _r in _degeneracy_reasons(_maps):
+            print(f"  DEGENERATE {_m}/{_w if _w else 'all'} -> {_r}")
     grid["degenerate"] = [
         _is_degenerate(fitted_maps[(m, None if w == "all" else int(w))])
         for m, w in zip(grid["method"], grid["window_years"])]
