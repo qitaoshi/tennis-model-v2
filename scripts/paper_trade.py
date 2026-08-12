@@ -814,40 +814,55 @@ def _market_label(market: object) -> str:
         str(market), str(market))
 
 
+def _selection(row: dict) -> str:
+    """The bet itself, in one short phrase: 'games under 21.5', 'hcap away -3.5'.
+
+    Deliberately the same words as the ledger's own columns. A shorter
+    encoding would save a few characters and cost the reader the ability to
+    tie a Slack line back to a ledger row by eye. Staked rows name the side
+    `book_side` and board rows name it `side`; both are accepted so one
+    formatter serves both lists.
+    """
+    side = row["book_side"] if "book_side" in row else row["side"]
+    return f"{_market_label(row['market'])} {side} {row['line']}"
+
+
 def summary(day: date, bets: list[dict], settlements: list[dict],
             skips: dict[str, list[str]], totals: dict, run_day: int,
             board: list[dict] | None = None,
             scores: dict | None = None) -> str:
-    # Read top to bottom, each block is skippable once the one above it is
-    # read: today's result, then today's actions, then the running totals,
-    # then the standing caveats. The caveats are not decoration — they are
-    # what stops a +2u day being read as an edge — but they are identical
-    # every day, so they sit at the bottom where they can be skimmed past
-    # rather than in front of the numbers.
+    # Written to be skimmed in about ten seconds: standings, then what
+    # resolved, then what was staked, then the exceptions. One line per bet,
+    # biggest edge first, and nothing repeated between sections.
+    #
+    # Two things are never compressed away. The caveats at the foot are not
+    # decoration — they are what stops a +2u day being read as an edge — and
+    # the priced-match count is the calibration denominator. Both survive in
+    # shorter form; the per-line detail they used to carry lives in the
+    # ledger, which is the durable record.
     settled_today = [s for s in settlements
                      if str(s.get("result")) in ("win", "loss", "push")]
     won = sum(1 for s in settled_today if s["result"] == "win")
     day_flat = sum(float(s["pnl_flat"] or 0) for s in settlements)
     day_kelly = sum(float(s["pnl_kelly"] or 0) for s in settlements)
 
-    lines = [f"*Tennis paper trading — day {run_day}/{RUN_DAYS}* "
-             f"· {day.isoformat()} · _paper only_"]
+    lines = [f"*Paper trading · day {run_day}/{RUN_DAYS} · {day.isoformat()}* "
+             f"_paper only_",
+             f"*Running* {totals['flat_pnl']:+.2f}u flat "
+             f"({totals['flat_roi']:+.1%}) · "
+             f"{totals['kelly_pnl']:+.2f}u kelly "
+             f"({totals['kelly_roi']:+.1%}) · "
+             f"{totals['n_settled']} settled · {totals['n_open']} open"]
 
-    # The one line to read if you read nothing else.
     if settlements:
         # Voids are excluded from the won/played count on purpose — the stake
         # came back, so there was no wager to win. Naming them keeps that
         # count from looking like it lost track of a row in the list below.
         voided = len(settlements) - len(settled_today)
         note = f" · {voided} void" if voided else ""
-        lines.append(f"*Yesterday:* {day_flat:+.2f}u flat · "
+        lines.append(f"*Yesterday* {day_flat:+.2f}u flat · "
                      f"{day_kelly:+.2f}u kelly · "
                      f"{won}/{len(settled_today)} won{note}")
-    lines.append(f"*Running:* {totals['flat_pnl']:+.2f}u flat "
-                 f"({totals['flat_roi']:+.1%}) · "
-                 f"{totals['kelly_pnl']:+.2f}u kelly "
-                 f"({totals['kelly_roi']:+.1%}) · "
-                 f"{totals['n_settled']} settled, {totals['n_open']} open")
     lines.append("")
 
     if settlements:
@@ -855,56 +870,55 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         for s in settlements:
             mark = {"win": "✅", "loss": "❌", "push": "➖",
                     "void": "⬜"}.get(str(s["result"]), "•")
-            lines.append(
-                f"{mark} {s['player_a']} v {s['player_b']} · "
-                f"{_market_label(s['market'])} {s['book_side']} {s['line']} · "
-                f"{float(s['pnl_flat']):+.2f}u")
+            lines.append(f"{mark} {s['player_a']} v {s['player_b']} · "
+                         f"{_selection(s)} · {float(s['pnl_flat']):+.2f}u")
         lines.append("")
 
+    # Sorted by edge, largest first. Purely a display order — the same bets at
+    # the same stakes in any order — but it puts the numbers most worth
+    # questioning at the top of the list instead of buried in the middle.
     if bets:
-        lines.append(f"*New bets ({len(bets)})*")
-        for b in bets:
-            capped = " _(capped)_" if b["stake_kelly"] >= KELLY_CAP else ""
+        priced = f" _from {len(board)} priced_" if board else ""
+        lines.append(f"*Bets ({len(bets)})*{priced}")
+        for b in sorted(bets, key=lambda x: -float(x["edge_raw"])):
+            capped = " _cap_" if b["stake_kelly"] >= KELLY_CAP else ""
             lines.append(
-                f"• {b['player_a']} v {b['player_b']} · "
-                f"{_market_label(b['market'])} {b['book_side']} {b['line']} "
-                f"@ {b['decimal_odds']:.2f}")
-            lines.append(
-                f"    edge *{b['edge_raw']:+.1%}* "
-                f"(model {b['model_p']:.0%} vs {1 / b['decimal_odds']:.0%}) · "
-                f"{b['stake_flat']:.0f}u flat / "
-                f"{b['stake_kelly']:.2f}u kelly{capped}")
+                f"• {b['player_a']} v {b['player_b']} · {_selection(b)} "
+                f"@{b['decimal_odds']:.2f} · *{b['edge_raw']:+.1%}* · "
+                f"{b['stake_flat']:.0f}u/{b['stake_kelly']:.2f}u{capped}")
+        lines.append("")
     else:
         lines.append("*No bets today.*")
-    lines.append("")
-
-    # Every match priced, bet or not. This is the calibration denominator, so
-    # it is reported as a count with the detail folded to one line per match —
-    # the per-line breakdown lives in the ledger, which is the durable record.
-    if board:
-        word = "match" if len(board) == 1 else "matches"
-        lines.append(f"*Board — {len(board)} {word} priced*")
-        for m in board:
-            best = max(m["lines"], key=lambda x: x["edge"], default=None)
-            if best is None:
-                continue
-            lines.append(f"• {m['label']} · best {_market_label(best['market'])}"
-                         f" {best['side']} {best['line']} "
-                         f"{best['edge']:+.1%}")
         lines.append("")
+
+    # Only the priced matches no bet came out of. The ones that were bet are
+    # already listed above, and repeating all of them was most of the old
+    # post's length. The count still appears, on the Bets header.
+    if board:
+        staked = {f"{b['player_a']} v {b['player_b']}" for b in bets}
+        idle = [m for m in board if m["label"] not in staked]
+        if idle:
+            lines.append(f"*Priced, no bet ({len(idle)})*")
+            for m in idle:
+                best = max(m["lines"], key=lambda x: x["edge"], default=None)
+                if best is None:
+                    continue
+                lines.append(f"• {m['label']} · best {_selection(best)} "
+                             f"{best['edge']:+.1%}")
+            lines.append("")
 
     if scores and scores.get("n"):
         def verdict(model: float, book: float) -> str:
-            return "✅ model" if model < book else "❌ book"
-        lines.append(f"*Projection accuracy* _({scores['n']} scored)_")
-        lines.append(f"• Brier {scores['brier']:.3f} vs "
-                     f"{scores['brier_book']:.3f} "
-                     f"{verdict(scores['brier'], scores['brier_book'])}")
-        lines.append(f"• Log-loss {scores['log_loss']:.3f} vs "
-                     f"{scores['log_loss_book']:.3f} "
-                     f"{verdict(scores['log_loss'], scores['log_loss_book'])}")
-        lines.append(f"• ECE {scores['ece']:.3f} vs {scores['ece_book']:.3f} "
-                     f"{verdict(scores['ece'], scores['ece_book'])}")
+            return "✅" if model < book else "❌"
+        lines.append(f"*Accuracy* _({scores['n']} scored · model/book · "
+                     f"lower is better)_")
+        lines.append(
+            f"Brier {scores['brier']:.3f}/{scores['brier_book']:.3f} "
+            f"{verdict(scores['brier'], scores['brier_book'])} · "
+            f"log-loss {scores['log_loss']:.3f}/{scores['log_loss_book']:.3f} "
+            f"{verdict(scores['log_loss'], scores['log_loss_book'])} · "
+            f"ECE {scores['ece']:.3f}/{scores['ece_book']:.3f} "
+            f"{verdict(scores['ece'], scores['ece_book'])}")
         lines.append("")
 
     n_skip = sum(len(v) for v in skips.values())
@@ -921,14 +935,13 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     # claim scored against what happened, which is the point of the exercise.
     lines.append("───")
     if totals["n_settled"]:
-        lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV on the "
-                     f"settled bets; realised {totals['flat_roi']:+.1%}._")
+        lines.append(f"_Claimed {totals['ev_roi']:+.1%} EV on settled bets; "
+                     f"realised {totals['flat_roi']:+.1%}._")
     lines.append(
-        "_14 days on 2 markets is dominated by variance — this cannot show "
-        "an edge either way, and flat-to-negative is the expected outcome. "
-        "Odds: PointsBet AU only, one book, not comparable to the "
-        "Bet365-based 2024 reports. Results: ESPN. Lower is better on Brier, "
-        "log-loss and ECE; the book's is flattered slightly by its vig._")
+        "_Variance dominates: 14 days on 2 markets cannot show an edge either "
+        "way, and flat-to-negative is the expected outcome. PointsBet AU "
+        "only — not comparable to the Bet365-based 2024 reports. The book's "
+        "accuracy is flattered slightly by its vig._")
     return "\n".join(lines)
 
 
