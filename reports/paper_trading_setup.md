@@ -40,7 +40,9 @@ That property is the deliverable and it is fragile. Two rules protect it:
 
 1. **The ledger is append-only.** A pick row is written with a UTC timestamp
    before the match starts. Settlement appends a second row. No past row is
-   ever edited or deleted.
+   ever edited or deleted. Adding a *column* is the sole exception, and only
+   through `_widen_ledger()`, which appends empty cells and verifies every
+   existing value survives unchanged — see "The schema widened" below.
 2. **Nothing is tuned on the results.** No mid-run parameter change, no
    dropping bad days, no changing the staking rule. Changing the staking rule
    starts a new run with a new ledger.
@@ -57,7 +59,7 @@ That property is the deliverable and it is fragile. Two rules protect it:
 | Probabilities | This repo's model: `model/price.py` over `model/engine.py`, `model/corrections.py` and `data/processed/calibration_maps.pkl` |
 | Delivery | Slack |
 | Duration | 14 days |
-| CLV | **Not computed.** The scrape carries no Pinnacle, so there is no sharp reference and any CLV number would be noise |
+| CLV | **Not computed.** The scrape carries no Pinnacle, so there is no sharp reference and any CLV number would be noise. Same-book line movement *is* recorded from 2026-08-12 (`close` rows) and is not CLV |
 
 The blocker named in the brief did not materialise: OddsHarvester's
 `CommandEnum` does carry `UPCOMING_MATCHES = "scrape_upcoming"`, so fixtures
@@ -124,6 +126,79 @@ score that would settle a totals under as a win for the wrong reason, so the
 stake is returned. Whether a match finished is decided using the `best_of` the
 match was *priced* under, carried on the pick row: a 2-1 score alone cannot
 say whether a best-of-five was abandoned or a best-of-three completed.
+
+## What changed on 2026-08-12 (measurement only)
+
+A review of the harness found five problems. All five are about what the run
+**measures** — the scoring basis and the operational safety net — and none of
+them touches the model, the pricing, or the staking rule. Under rule 2 above,
+that means the run continues on the same ledger: no parameter moved, nothing
+was tuned on the results so far, and `model_fingerprint()` is unchanged. The
+ledger's first rows (2026-08-10) remain valid and untouched.
+
+**1. The board row is no longer edge-selected.** `board_lines()` used to pick,
+per market, the quote with the largest model-minus-implied gap, and
+`calibration_scores()` then scored that row as if it represented "every match
+priced". It did not: it was the line where model and book disagree most, which
+`reports/model_vs_market.md` already identifies as where the market beats this
+model. Scoring a sample chosen by the model's own disagreement measures the
+selection rule. The board row is now the quoted line nearest the model's own
+median — the `total_games_pmf` median for totals, the game-margin median for
+handicaps — on a side fixed per market, so neither the line nor the side can
+depend on price. The old rule survives as `max_gap_line()` for anyone who
+wants that view; it just no longer decides what gets scored.
+
+**Every Brier, log-loss and ECE number from before this date is on the old,
+edge-selected basis and is not comparable to the ones after it.** Two days of
+board rows exist under the old rule.
+
+**2. The book is scored on its de-vigged price.** Board rows carried no
+`market_p_devig`, so the scoring fell back to `1 / decimal_odds` — a price with
+the bookmaker's margin still in it, which is not a forecast and handed the
+model a free advantage of unknown size. The two-sided de-vig `quotes()` already
+computes is now written on every board row. Rows written before this change
+still score off the raw price; that fallback flatters the model, never the
+book, so it cannot manufacture an edge for us.
+
+**3. The whole distribution is logged, not one binary probability.** The
+pricer computes a full pmf and only a single `model_p` per market used to reach
+the ledger, which collapses every settled row to one win/loss Brier point —
+unable to distinguish a projection that was confidently wrong from one that
+was vaguely right. Four additive columns now carry it: `model_pmf_start` and
+`model_pmf` (mass on consecutive integers: total games for `total_games`, game
+margin for `games_handicap`), `model_median`, and `outcome_value`, written at
+settlement. Both board and pick rows carry them. `distribution_scores()`
+reports discrete CRPS and a continuous log-score **per market, never pooled**
+(games and margins are different units) and **with no book column** — a
+bookmaker quotes lines, not a distribution, so it has nothing to be compared
+against here.
+
+**4. Closing prices are captured.** A new `close` row re-prices each open pick
+at the last look before its match, carrying `open_decimal_odds` alongside the
+closing `decimal_odds`, plus `hours_to_start`. This is **not CLV** and must
+never be reported as CLV: it is PointsBet against itself, and there is still no
+sharp reference in this run. The capture reads the board fetch the daily job
+already makes — `includeLive=false` means a fixture still listed has not
+started, so the last run before a match is the closest look at its close this
+cadence can reach, and `hours_to_start` records exactly how close. A pick
+priced on the current run is skipped, since its "close" would be its open.
+
+**5. A failed run now alarms.** `.github/workflows/paper-trade.yml` reached
+Slack only on the success path, so a blocked source or a failed self-check
+ended the day in silence. An `if: failure()` step posts the date and a link to
+the failed job. It uses inline `curl` rather than `post_slack`, because the
+failure may be that the module does not import.
+
+### The schema widened
+
+`LEDGER_COLUMNS` gained six columns (four for the distribution, two for the
+close row). Appending a column without widening the file writes rows with more
+fields than the header, which does not parse, so `_widen_ledger()` rewrites
+`paper/ledger.csv` once with the new header. This is the one rewrite the
+append-only rule permits: it only adds empty cells, it refuses to drop or
+rename a column, and it asserts the round trip reproduces every existing value
+before replacing the file. Verified against a copy of the pre-change ledger —
+14 rows, all values identical. No row's content was edited.
 
 ## Verifying it before it runs
 
