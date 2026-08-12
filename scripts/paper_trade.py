@@ -814,17 +814,28 @@ def _market_label(market: object) -> str:
         str(market), str(market))
 
 
-def _selection(row: dict) -> str:
-    """The bet itself, in one short phrase: 'games under 21.5', 'hcap away -3.5'.
+def _selection(row: dict, player_a: str, player_b: str) -> str:
+    """The bet in plain words: 'Over 21.5 games', 'Sakellaridis S. -3.5 games'.
 
-    Deliberately the same words as the ledger's own columns. A shorter
-    encoding would save a few characters and cost the reader the ability to
-    tie a Slack line back to a ledger row by eye. Staked rows name the side
-    `book_side` and board rows name it `side`; both are accepted so one
-    formatter serves both lists.
+    A handicap is named by the player it belongs to rather than by home/away
+    plus a raw line, because 'hcap away -3.5' asks the reader to remember who
+    away was and which way the sign ran.
+
+    The sign convention is `model_selection`'s and that function is the
+    authority: the book quotes the HOME player's handicap, so a home bet is
+    the negated line and an away bet is the line as written. Naming the wrong
+    player here would misreport the position, so the self-check pins the two
+    together rather than trusting this comment.
+
+    Staked rows name the side `book_side`, board rows name it `side`; both
+    are accepted so one formatter serves every list in the post.
     """
     side = row["book_side"] if "book_side" in row else row["side"]
-    return f"{_market_label(row['market'])} {side} {row['line']}"
+    line = float(row["line"])
+    if str(row["market"]) == "total_games":
+        return f"{str(side).capitalize()} {line:g} games"
+    who = player_a if side == "home" else player_b
+    return f"{who} {(-line if side == 'home' else line):+g} games"
 
 
 def summary(day: date, bets: list[dict], settlements: list[dict],
@@ -846,8 +857,8 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     day_flat = sum(float(s["pnl_flat"] or 0) for s in settlements)
     day_kelly = sum(float(s["pnl_kelly"] or 0) for s in settlements)
 
-    lines = [f"*Paper trading · day {run_day}/{RUN_DAYS} · {day.isoformat()}* "
-             f"_paper only_",
+    lines = [f"*Paper trading · day {run_day}/{RUN_DAYS} · {day.isoformat()} "
+             f"· paper only*",
              f"*Running* {totals['flat_pnl']:+.2f}u flat "
              f"({totals['flat_roi']:+.1%}) · "
              f"{totals['kelly_pnl']:+.2f}u kelly "
@@ -871,21 +882,24 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
             mark = {"win": "✅", "loss": "❌", "push": "➖",
                     "void": "⬜"}.get(str(s["result"]), "•")
             lines.append(f"{mark} {s['player_a']} v {s['player_b']} · "
-                         f"{_selection(s)} · {float(s['pnl_flat']):+.2f}u")
+                         f"{_selection(s, s['player_a'], s['player_b'])} · "
+                         f"{float(s['pnl_flat']):+.2f}u")
         lines.append("")
 
     # Sorted by edge, largest first. Purely a display order — the same bets at
     # the same stakes in any order — but it puts the numbers most worth
     # questioning at the top of the list instead of buried in the middle.
     if bets:
-        priced = f" _from {len(board)} priced_" if board else ""
+        priced = f" — {len(board)} matches priced" if board else ""
         lines.append(f"*Bets ({len(bets)})*{priced}")
         for b in sorted(bets, key=lambda x: -float(x["edge_raw"])):
-            capped = " _cap_" if b["stake_kelly"] >= KELLY_CAP else ""
+            capped = " (capped)" if b["stake_kelly"] >= KELLY_CAP else ""
             lines.append(
-                f"• {b['player_a']} v {b['player_b']} · {_selection(b)} "
-                f"@{b['decimal_odds']:.2f} · *{b['edge_raw']:+.1%}* · "
-                f"{b['stake_flat']:.0f}u/{b['stake_kelly']:.2f}u{capped}")
+                f"• {b['player_a']} v {b['player_b']} · "
+                f"{_selection(b, b['player_a'], b['player_b'])} "
+                f"@{b['decimal_odds']:.2f} · *{b['edge_raw']:+.1%}* edge · "
+                f"{b['stake_flat']:.0f}u flat, "
+                f"{b['stake_kelly']:.2f}u kelly{capped}")
         lines.append("")
     else:
         lines.append("*No bets today.*")
@@ -903,15 +917,17 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 best = max(m["lines"], key=lambda x: x["edge"], default=None)
                 if best is None:
                     continue
-                lines.append(f"• {m['label']} · best {_selection(best)} "
-                             f"{best['edge']:+.1%}")
+                lines.append(
+                    f"• {m['label']} · best was "
+                    f"{_selection(best, m['player_a'], m['player_b'])} "
+                    f"{best['edge']:+.1%} edge")
             lines.append("")
 
     if scores and scores.get("n"):
         def verdict(model: float, book: float) -> str:
             return "✅" if model < book else "❌"
-        lines.append(f"*Accuracy* _({scores['n']} scored · model/book · "
-                     f"lower is better)_")
+        lines.append(f"*Accuracy* — {scores['n']} scored, model vs book, "
+                     f"lower is better")
         lines.append(
             f"Brier {scores['brier']:.3f}/{scores['brier_book']:.3f} "
             f"{verdict(scores['brier'], scores['brier_book'])} · "
@@ -935,13 +951,13 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     # claim scored against what happened, which is the point of the exercise.
     lines.append("───")
     if totals["n_settled"]:
-        lines.append(f"_Claimed {totals['ev_roi']:+.1%} EV on settled bets; "
-                     f"realised {totals['flat_roi']:+.1%}._")
+        lines.append(f"Claimed {totals['ev_roi']:+.1%} EV on settled bets; "
+                     f"realised {totals['flat_roi']:+.1%}.")
     lines.append(
-        "_Variance dominates: 14 days on 2 markets cannot show an edge either "
+        "Variance dominates: 14 days on 2 markets cannot show an edge either "
         "way, and flat-to-negative is the expected outcome. PointsBet AU "
         "only — not comparable to the Bet365-based 2024 reports. The book's "
-        "accuracy is flattered slightly by its vig._")
+        "accuracy is flattered slightly by its vig.")
     return "\n".join(lines)
 
 
@@ -1048,6 +1064,10 @@ def run(today: date, dry_run: bool) -> str:
         board.append({
             "label": label, "book": book, "best_of":
                 priced.metadata["format"]["best_of"],
+            # Carried separately from `label` so the summary can name a
+            # handicap's player without splitting the label back apart.
+            "player_a": rec.get("home_team", ""),
+            "player_b": rec.get("away_team", ""),
             "quotes": len(q), "lines": shown})
 
         # The same projections as ledger rows, so they can be settled and
@@ -1326,6 +1346,27 @@ def demo() -> None:
     assert ref.player("Alcaraz Garfia C.") == "A0E2"
     assert ref.player("Someone Unknown X.") is None
     assert ref.candidates("Alcaraz Garfia C.")[0]["player_id"] == "A0E2"
+
+    # The Slack post names a handicap by its player; the ledger names it A or
+    # B via `model_selection`. If the two ever disagree the post reports the
+    # opposite side of the bet from the row it came from — silently, and only
+    # on handicaps. So derive the expected name from `model_selection`'s own
+    # letter rather than restating the convention here.
+    for side, line in (("home", 4.5), ("home", -0.5), ("home", -2.5),
+                       ("away", -3.5), ("away", 4.5), ("away", -0.5)):
+        want = model_selection("games_handicap", side, line)
+        letter, signed = want.split(" ", 1)
+        who = "Alpha A." if letter == "A" else "Bravo B."
+        got = _selection({"market": "games_handicap", "book_side": side,
+                          "line": line}, "Alpha A.", "Bravo B.")
+        assert got == f"{who} {signed} games", (got, want)
+    # Board rows spell the side `side`, not `book_side`; same formatter.
+    assert _selection({"market": "games_handicap", "side": "away",
+                       "line": -3.5}, "Alpha A.", "Bravo B.") \
+        == "Bravo B. -3.5 games"
+    assert _selection({"market": "total_games", "book_side": "over",
+                       "line": 21.5}, "Alpha A.", "Bravo B.") \
+        == "Over 21.5 games"
 
     totals = pnl(book)
     assert totals["n_settled"] == 2 and totals["n_open"] == 0, totals
