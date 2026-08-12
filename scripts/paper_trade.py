@@ -93,6 +93,11 @@ LEDGER_COLUMNS = [
     # total games for total_games, game margin for games_handicap — and
     # `outcome_value` is what actually happened, written at settlement.
     "model_pmf_start", "model_pmf", "model_median", "outcome_value",
+    # Added 2026-08-12 for the `close` row type: the same bet re-priced at the
+    # last look before the match. `decimal_odds` on a close row is the closing
+    # price and `open_decimal_odds` is what the pick row was written at, so
+    # same-book line movement is available even with no sharp reference.
+    "open_decimal_odds", "hours_to_start",
 ]
 
 # Matches whose model probability sits at the ladder's extremes are priced off
@@ -677,6 +682,88 @@ def pick_bets(priced, quote_frame: pd.DataFrame) -> list[dict]:
     return out
 
 
+def closing_rows(ledger: pd.DataFrame, found: dict[str, dict],
+                 today: date) -> list[dict]:
+    """Re-price every open pick that is still on the board: the closing look.
+
+    There is no sharp reference in this run (`oddsportal-no-pinnacle`), so no
+    CLV is computable and none is claimed. What IS measurable is same-book
+    movement: PointsBet's own price on the exact bet that was taken, at the
+    last moment it was quoted. If the book moves toward a pick after it was
+    committed, that is worth having recorded; if it moves away, that is worth
+    having recorded too.
+
+    "The last moment it was quoted" is what the run can actually reach. The
+    job fires once a day and `fetch_pointsbet` sets ``includeLive=false``, so
+    a fixture still on the board has not started — the final run before a
+    match is the closest look at its close that exists here, and PointsBet
+    drops the event outright once it is under way. `hours_to_start` records
+    how close that was, so nobody has to assume.
+
+    A pick priced on THIS run is skipped: re-reading the same fetch would
+    write an open price into the close column and manufacture a zero move.
+
+    Purely additive. A close row stakes nothing, settles nothing and is not a
+    pick, so `pnl`, `settle` and `calibration_scores` all pass over it, and
+    `check_unchanged`'s fingerprint is untouched — no existing row changes
+    meaning, so no new ledger is required.
+    """
+    picks = ledger[ledger["row_type"] == "pick"]
+    if picks.empty:
+        return []
+    done = ledger[ledger["row_type"] == "close"]
+    have = set(done["match_key"] + "|" + done["market"] + "|" + done["line"])
+    cache: dict[str, pd.DataFrame] = {}
+    out = []
+    for _, r in picks.iterrows():
+        link = str(r["match_link"])
+        if link not in found or str(r["run_date"]) >= today.isoformat():
+            continue
+        if f"{r['match_key']}|{r['market']}|{r['line']}" in have:
+            continue
+        if link not in cache:
+            cache[link] = quotes(found[link])
+        q = cache[link]
+        if q.empty:
+            continue
+        line = float(r["line"])
+        hit = q[(q["market"] == r["market"]) & (q["side"] == r["book_side"])
+                & (q["bookmaker"] == r["bookmaker"])
+                & (pd.to_numeric(q["line"], errors="coerce") == line)]
+        if hit.empty:
+            # The book pulled or moved the rung. A different line is a
+            # different bet, so nothing is recorded rather than something
+            # nearby being passed off as the close.
+            continue
+        quote = hit.iloc[0]
+        starts = pd.to_datetime(found[link].get("match_date"),
+                                errors="coerce", utc=True)
+        hours = ("" if pd.isna(starts) else
+                 round((starts - pd.Timestamp.now(tz="UTC")).total_seconds()
+                       / 3600.0, 2))
+        open_odds = float(r["decimal_odds"])
+        close_odds = float(quote["decimal_odds"])
+        model_p = float(r["model_p"]) if r["model_p"] != "" else float("nan")
+        out.append({
+            **r.to_dict(), "row_type": "close", "ts_utc": _now(),
+            "run_date": today.isoformat(),
+            "decimal_odds": close_odds, "open_decimal_odds": open_odds,
+            "hours_to_start": hours,
+            "market_p_devig": float(quote["market_p_devig"]),
+            # The projection did not change, so the edge at the close is the
+            # same opinion against a new price.
+            "edge_raw": model_p - 1.0 / close_odds,
+            "edge_devig": model_p - float(quote["market_p_devig"]),
+            # A close row is a price observation, never a position.
+            "stake_flat": 0.0, "stake_kelly": 0.0, "kelly_full": "",
+            "bankroll_kelly": "", "result": "", "pnl_flat": "",
+            "pnl_kelly": "", "outcome_value": "",
+            "note": f"close, as_of {today.isoformat()}, "
+                    f"{open_odds:.2f} -> {close_odds:.2f}",
+        })
+    return out
+
+
 # ---------------------------------------------------------------------------
 # settlement
 # ---------------------------------------------------------------------------
@@ -1101,7 +1188,8 @@ def _market_label(market: object) -> str:
 def summary(day: date, bets: list[dict], settlements: list[dict],
             skips: dict[str, list[str]], totals: dict, run_day: int,
             board: list[dict] | None = None,
-            scores: dict | None = None) -> str:
+            scores: dict | None = None,
+            closes: list[dict] | None = None) -> str:
     # Read top to bottom, each block is skippable once the one above it is
     # read: today's result, then today's actions, then the running totals,
     # then the standing caveats. The caveats are not decoration — they are
@@ -1178,6 +1266,18 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 f"{_market_label(x['market'])} {x['side']} {x['line']} "
                 f"{x['edge']:+.1%}" for x in m["lines"])
             lines.append(f"• {m['label']} · {shown}")
+        lines.append("")
+
+    if closes:
+        # Same book, not a sharp one, so this is line movement and explicitly
+        # not CLV — there is no Pinnacle in this run to compute CLV against.
+        moves = [float(c["decimal_odds"]) / float(c["open_decimal_odds"]) - 1.0
+                 for c in closes]
+        toward = sum(1 for m in moves if m < 0)
+        lines.append(f"*Closing prices ({len(closes)})* — "
+                     f"{toward} shortened, {len(moves) - toward} drifted · "
+                     f"mean {sum(moves) / len(moves):+.1%} _(PointsBet vs "
+                     f"itself, not CLV)_")
         lines.append("")
 
     if scores and scores.get("dist"):
@@ -1262,6 +1362,11 @@ def run(today: date, dry_run: bool) -> str:
     tomorrow = today + timedelta(days=1)
     found = fixtures([today, tomorrow])
     print(f"{len(found)} unstarted ATP fixture(s) for {today}..{tomorrow}")
+
+    # 2a. the closing look at yesterday's picks, off the same board fetch.
+    closes = closing_rows(ledger, found, today)
+    if closes:
+        print(f"captured {len(closes)} closing price(s)")
 
     ref = Reference.build(today)
     pricer = PZ.Pricer(today, allow_holdout=True,
@@ -1398,7 +1503,7 @@ def run(today: date, dry_run: bool) -> str:
                 "note": f"as_of {today.isoformat()}, book {book}",
             })
 
-    _append(bets + board_rows, dry_run)
+    _append(bets + board_rows + closes, dry_run)
     if dry_run:
         print(f"[dry-run] would write {len(unresolved)} unresolved name(s) "
               f"to {UNRESOLVED}")
@@ -1409,7 +1514,7 @@ def run(today: date, dry_run: bool) -> str:
              "names": sorted(unresolved.values(), key=lambda r: r["odds_name"])},
             indent=2, ensure_ascii=False) + "\n")
     text = summary(today, bets, settlements, skips, totals, run_day, board,
-                   scores)
+                   scores, closes)
     post_slack(text, dry_run)
 
     if not dry_run and not STATE.exists():
@@ -1734,6 +1839,40 @@ def demo() -> None:
     assert calibration_scores(legacy)["n"] == 1
     assert abs(calibration_scores(legacy)["brier_book"]
                - (1 / 1.9 - 1.0) ** 2) < 1e-9
+
+    # Closing capture: a pick still on the board on a LATER run gets a second
+    # price; the same run must not, or the "close" is just the open again.
+    board_rec = {"match_link": "pointsbet:1", "match_date": "2026-08-12T16:00:00Z",
+                 "home_team": "A", "away_team": "B",
+                 "total_games_market": [
+                     {"bookmaker_name": "pointsbet", "submarket_name": "22.5",
+                      "odds_over": 1.75, "odds_under": 2.05}]}
+    open_pick = {**pick.to_dict(), "row_type": "pick", "run_date": "2026-08-11",
+                 "line": "22.5", "book_side": "over", "bookmaker": "pointsbet",
+                 "decimal_odds": "1.90", "model_p": "0.60", "market": "total_games"}
+    made = closing_rows(pd.DataFrame([open_pick]), {"pointsbet:1": board_rec},
+                        date(2026, 8, 12))
+    assert len(made) == 1, made
+    got = made[0]
+    assert got["row_type"] == "close", got
+    assert got["open_decimal_odds"] == 1.90 and got["decimal_odds"] == 1.75, got
+    # It is a price observation, not a position: it can never reach PnL.
+    assert got["stake_flat"] == 0.0 and got["stake_kelly"] == 0.0, got
+    assert pnl(pd.DataFrame([got]).reindex(
+        columns=LEDGER_COLUMNS))["n_settled"] == 0
+    # Same run as the pick: nothing captured.
+    assert closing_rows(pd.DataFrame([{**open_pick, "run_date": "2026-08-12"}]),
+                        {"pointsbet:1": board_rec}, date(2026, 8, 12)) == []
+    # Already captured: never a second close row for the same bet.
+    assert closing_rows(
+        pd.DataFrame([open_pick, {**got, "row_type": "close"}]),
+        {"pointsbet:1": board_rec}, date(2026, 8, 12)) == []
+    # The rung is gone: no close rather than the nearest thing to it.
+    moved = {**board_rec, "total_games_market": [
+        {"bookmaker_name": "pointsbet", "submarket_name": "23.5",
+         "odds_over": 1.75, "odds_under": 2.05}]}
+    assert closing_rows(pd.DataFrame([open_pick]), {"pointsbet:1": moved},
+                        date(2026, 8, 12)) == []
 
     # The mid-run guard: an unchanged model passes, a moved one stops the run
     # rather than quietly appending rows that measure something else. The
