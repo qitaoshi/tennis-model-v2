@@ -32,6 +32,7 @@ Run:  python -m scripts.paper_trade --dry-run
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -85,6 +86,13 @@ LEDGER_COLUMNS = [
     "bookmaker", "decimal_odds", "market_p_devig", "model_p", "edge_raw",
     "edge_devig", "kelly_full", "stake_flat", "stake_kelly", "bankroll_kelly",
     "result", "pnl_flat", "pnl_kelly", "note",
+    # Added 2026-08-12. The model prices a whole distribution and only one
+    # binary probability per market used to survive to the ledger, which
+    # throws away everything CRPS and a continuous log-score need. `model_pmf`
+    # is the mass on consecutive integers starting at `model_pmf_start` —
+    # total games for total_games, game margin for games_handicap — and
+    # `outcome_value` is what actually happened, written at settlement.
+    "model_pmf_start", "model_pmf", "model_median", "outcome_value",
 ]
 
 # Matches whose model probability sits at the ladder's extremes are priced off
@@ -110,9 +118,47 @@ PMF_TRIM = 1e-7
 # ---------------------------------------------------------------------------
 
 
+def _widen_ledger() -> None:
+    """Give the on-disk ledger any column `LEDGER_COLUMNS` has gained.
+
+    Appending a column to the schema without doing this writes rows with more
+    fields than the header, which does not parse at all. Widening is the one
+    rewrite the append-only rule permits, because it only adds empty cells:
+    every value already written stays in its own column, byte for byte, and
+    that is asserted before the new file replaces the old one. Dropping or
+    renaming a column is refused outright — a ledger that loses a column has
+    lost evidence, and no schema change is worth that.
+    """
+    if not LEDGER.exists():
+        return
+    with LEDGER.open(newline="") as fh:
+        have = next(csv.reader(fh), [])
+    if have == LEDGER_COLUMNS:
+        return
+    lost = [c for c in have if c not in LEDGER_COLUMNS]
+    if lost:
+        raise SystemExit(
+            f"{LEDGER} has column(s) the schema no longer names: {lost}. "
+            "Widening only ever adds columns; removing one would discard "
+            "rows already written. Restore them to LEDGER_COLUMNS.")
+    old = pd.read_csv(LEDGER, dtype=str, keep_default_na=False)
+    wide = old.reindex(columns=LEDGER_COLUMNS).fillna("")
+    tmp = LEDGER.with_suffix(".csv.widening")
+    wide.to_csv(tmp, index=False)
+    check = pd.read_csv(tmp, dtype=str, keep_default_na=False)
+    if len(check) != len(old) or not check[have].equals(old[have]):
+        tmp.unlink(missing_ok=True)
+        raise SystemExit(f"refusing to widen {LEDGER}: round trip did not "
+                         "reproduce the existing rows exactly")
+    tmp.replace(LEDGER)
+    print(f"widened {LEDGER} with {len(LEDGER_COLUMNS) - len(have)} new "
+          "column(s); no existing value changed")
+
+
 def _load_ledger() -> pd.DataFrame:
     if not LEDGER.exists():
         return pd.DataFrame(columns=LEDGER_COLUMNS)
+    _widen_ledger()
     return pd.read_csv(LEDGER, dtype=str, keep_default_na=False)
 
 
@@ -437,6 +483,35 @@ def model_median(priced, market: str) -> float | None:
     return float(start + len(pmf) - 1)
 
 
+def pmf_fields(priced, market: str) -> dict:
+    """The ledger columns that carry the model's whole distribution.
+
+    A single binary probability per market settles into one Brier point and
+    nothing else. The distribution behind it settles into a CRPS and a
+    continuous log-score, which is a far sharper read on the projection —
+    which is the thing this project is judged on (CLAUDE.md). It costs one
+    string per row to keep, and it cannot be reconstructed after the fact
+    because the pricer's state moves on.
+    """
+    start, pmf = model_distribution(priced, market)
+    if not pmf:
+        return {"model_pmf_start": "", "model_pmf": "", "model_median": ""}
+    return {"model_pmf_start": int(start),
+            "model_pmf": ",".join(f"{p:.6g}" for p in pmf),
+            "model_median": model_median(priced, market)}
+
+
+def parse_pmf(start: object, blob: object) -> tuple[int, np.ndarray] | None:
+    """Read `pmf_fields` back off a ledger row, or None if it carries none."""
+    try:
+        first = int(float(str(start)))
+        probs = np.array([float(x) for x in str(blob).split(",") if x != ""],
+                         dtype=float)
+    except (TypeError, ValueError):
+        return None
+    return (first, probs) if probs.size else None
+
+
 def book_threshold(market: str, line: float) -> float:
     """The outcome threshold a bookmaker line sits at, in model units.
 
@@ -479,7 +554,7 @@ def max_gap_line(priced, quote_frame: pd.DataFrame) -> list[dict]:
             if pick is None or cand["edge"] > pick["edge"]:
                 pick = cand
         if pick is not None:
-            out.append(pick)
+            out.append({**pick, **pmf_fields(priced, market)})
     return out
 
 
@@ -542,7 +617,7 @@ def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
                     "market_p_devig": float(row.market_p_devig),
                     "model_p": sel.probability,
                     "edge": sel.probability - implied,
-                    "model_median": median})
+                    **pmf_fields(priced, market)})
     return out
 
 
@@ -596,7 +671,9 @@ def pick_bets(priced, quote_frame: pd.DataFrame) -> list[dict]:
             if best is None or cand["edge_raw"] > best["edge_raw"]:
                 best = cand
         if best:
-            out.append(best)
+            # The bet row carries the same distribution the board row does. A
+            # bet is still a projection, and scoring it as one costs nothing.
+            out.append({**best, **pmf_fields(priced, market)})
     return out
 
 
@@ -773,9 +850,13 @@ def settle(ledger: pd.DataFrame, today: date, dry_run: bool) -> list[dict]:
                 continue
             total, diff, _ = parsed
             result, per_unit = settle_one(r, total, diff)
+            # The realised value on the row's OWN scale: what the stored pmf
+            # is a forecast of, so CRPS and the continuous log-score can be
+            # computed later without re-deriving which market means what.
+            outcome = total if r["market"] == "total_games" else diff
             rows.append({**r.to_dict(), "row_type": kind,
                          "ts_utc": _now(), "run_date": today.isoformat(),
-                         "result": result,
+                         "result": result, "outcome_value": int(outcome),
                          "pnl_flat": per_unit * float(r["stake_flat"] or 0.0),
                          "pnl_kelly": per_unit * float(r["stake_kelly"] or 0.0),
                          "note": f"final {total} games, margin {diff:+d}"})
@@ -830,6 +911,57 @@ def check_unchanged(state: dict) -> None:
               "than continuing this one.")
 
 
+def crps(start: int, pmf: np.ndarray, outcome: float) -> float:
+    """Discrete CRPS: sum over integer thresholds of (F(v) - 1{v >= y})^2.
+
+    Zero for a distribution that put all its mass exactly on what happened,
+    and it punishes being confidently wrong by MORE than being vaguely wrong
+    — which a single over/under Brier point cannot distinguish at all. The
+    grid is widened to reach the outcome, so a result outside the priced
+    support is scored rather than dropped.
+    """
+    cdf = np.cumsum(pmf)
+    end = start + len(pmf) - 1
+    lo, hi = min(start, int(np.floor(outcome))), max(end, int(np.ceil(outcome)))
+    grid = np.arange(lo, hi + 1)
+    idx = np.clip(grid - start, 0, len(cdf) - 1)
+    F = np.where(grid < start, 0.0, np.where(grid > end, 1.0, cdf[idx]))
+    return float(np.sum((F - (grid >= outcome)) ** 2))
+
+
+def distribution_scores(settled: pd.DataFrame) -> dict:
+    """CRPS and continuous log-score per market, on rows carrying a pmf.
+
+    Reported per market and never pooled: a CRPS in games and a CRPS in
+    margin are different units, and averaging them would produce a number
+    with no meaning. There is no book column here — the bookmaker quotes one
+    line, not a distribution, so it has nothing to be scored against.
+    """
+    out: dict[str, dict] = {}
+    needed = {"market", "model_pmf_start", "model_pmf", "outcome_value"}
+    if settled.empty or not needed <= set(settled.columns):
+        return out
+    for market, rows in settled.groupby("market"):
+        vals, logs = [], []
+        for _, r in rows.iterrows():
+            parsed = parse_pmf(r.get("model_pmf_start"), r.get("model_pmf"))
+            try:
+                y = float(r.get("outcome_value"))
+            except (TypeError, ValueError):
+                continue
+            if parsed is None or not np.isfinite(y):
+                continue
+            start, pmf = parsed
+            vals.append(crps(start, pmf, y))
+            i = int(round(y)) - start
+            mass = float(pmf[i]) if 0 <= i < len(pmf) else 0.0
+            logs.append(-float(np.log(max(mass, 1e-9))))
+        if vals:
+            out[str(market)] = {"n": len(vals), "crps": float(np.mean(vals)),
+                                "log_score": float(np.mean(logs))}
+    return out
+
+
 def calibration_scores(ledger: pd.DataFrame) -> dict:
     """Brier, log-loss and ECE on settled board rows, model against book.
 
@@ -844,9 +976,14 @@ def calibration_scores(ledger: pd.DataFrame) -> dict:
     comparison worth reporting.
     """
     s = ledger[ledger["row_type"] == "board_settle"]
+    s = s[s["result"].isin(("win", "loss", "push"))]
+    # The distribution scores take pushes too: a push is a dead heat on one
+    # LINE, but the match still produced a total and a margin, which is what
+    # the pmf forecast. Only the binary scores below have to drop it.
+    dist = distribution_scores(s)
     s = s[s["result"].isin(("win", "loss"))]
     if s.empty:
-        return {"n": 0}
+        return {"n": 0, "dist": dist}
     p = pd.to_numeric(s["model_p"], errors="coerce").to_numpy(float)
     odds = pd.to_numeric(s["decimal_odds"], errors="coerce").to_numpy(float)
     y = (s["result"] == "win").to_numpy(float)
@@ -863,10 +1000,10 @@ def calibration_scores(ledger: pd.DataFrame) -> dict:
     implied = np.where(np.isfinite(devig) & (devig > 0) & (devig < 1), devig, raw)
     ok = np.isfinite(p) & np.isfinite(implied) & np.isfinite(y)
     if not ok.any():
-        return {"n": 0}
+        return {"n": 0, "dist": dist}
     p, implied, y = p[ok], implied[ok], y[ok]
     return {
-        "n": int(ok.sum()),
+        "n": int(ok.sum()), "dist": dist,
         "brier": RC.brier(p, y), "brier_book": RC.brier(implied, y),
         "log_loss": RC.log_loss(p, y), "log_loss_book": RC.log_loss(implied, y),
         "ece": RC.calibration_error(p, y),
@@ -1041,6 +1178,17 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 f"{_market_label(x['market'])} {x['side']} {x['line']} "
                 f"{x['edge']:+.1%}" for x in m["lines"])
             lines.append(f"• {m['label']} · {shown}")
+        lines.append("")
+
+    if scores and scores.get("dist"):
+        # No book column: a bookmaker quotes lines, not a distribution, so
+        # there is nothing to compare these against. They are the model
+        # against itself over time, and lower is better.
+        lines.append("*Distribution accuracy* _(model only, no book "
+                     "counterpart)_")
+        for market, d in sorted(scores["dist"].items()):
+            lines.append(f"• {_market_label(market)} CRPS {d['crps']:.2f} · "
+                         f"log-score {d['log_score']:.2f} _({d['n']})_")
         lines.append("")
 
     if scores and scores.get("n"):
@@ -1218,6 +1366,9 @@ def run(today: date, dry_run: bool) -> str:
                 "market_p_devig": ln["market_p_devig"],
                 "model_p": ln["model_p"], "edge_raw": ln["edge"],
                 "edge_devig": ln["model_p"] - ln["market_p_devig"],
+                "model_pmf_start": ln["model_pmf_start"],
+                "model_pmf": ln["model_pmf"],
+                "model_median": ln["model_median"],
                 "stake_flat": 0.0, "stake_kelly": 0.0,
                 "result": "", "pnl_flat": "", "pnl_kelly": "",
                 "note": f"board, as_of {today.isoformat()}, book {book}",
@@ -1352,7 +1503,7 @@ def rehearse() -> None:
         "league_slug", "match_date", "tournament", "player_a", "player_b",
         "model_id_a", "model_id_b", "best_of", "kelly_full", "stake_flat",
         "stake_kelly", "bankroll_kelly", "result", "pnl_flat", "pnl_kelly",
-        "note"} if bets else set()
+        "note", "outcome_value"} if bets else set()
     assert not missing, missing
     print("rehearsal complete — nothing written, nothing posted")
 
@@ -1426,6 +1577,35 @@ def demo() -> None:
     assert anchored[0]["side"] == "over", anchored
     # ...whereas the old, edge-selected rule lands exactly on 20.5.
     assert max_gap_line(fake, qf)[0]["line"] == "20.5", max_gap_line(fake, qf)
+
+    # The whole distribution reaches the row, and comes back off it intact.
+    fields = pmf_fields(fake, "total_games")
+    assert fields["model_median"] == 22.0, fields
+    rt = parse_pmf(fields["model_pmf_start"], fields["model_pmf"])
+    assert rt and rt[0] == 20 and np.allclose(rt[1], [0.1, 0.3, 0.4, 0.2]), rt
+    assert parse_pmf("", "") is None
+    assert anchored[0]["model_pmf"] == fields["model_pmf"]
+
+    # CRPS: zero for a point mass on the truth, and strictly worse for being
+    # confidently wrong than for being spread out around the same answer. A
+    # single Brier point cannot tell those two apart, which is why this exists.
+    assert crps(20, np.array([1.0]), 20) == 0.0
+    sure_wrong = crps(20, np.array([1.0]), 23)
+    vague = crps(20, np.array([0.25, 0.25, 0.25, 0.25]), 23)
+    assert sure_wrong > vague > 0, (sure_wrong, vague)
+    # An outcome outside the priced support is scored, not silently dropped.
+    assert crps(20, np.array([0.5, 0.5]), 40) > crps(20, np.array([0.5, 0.5]), 21)
+
+    dist_rows = pd.DataFrame([
+        {"market": "total_games", "model_pmf_start": "20",
+         "model_pmf": "0.1,0.3,0.4,0.2", "outcome_value": "22"},
+        # No pmf: an old row, skipped rather than scored as if it had one.
+        {"market": "total_games", "model_pmf_start": "",
+         "model_pmf": "", "outcome_value": "22"},
+    ])
+    ds = distribution_scores(dist_rows)["total_games"]
+    assert ds["n"] == 1, ds
+    assert abs(ds["log_score"] + np.log(0.4)) < 1e-9, ds
 
     # A retirement must not settle; a completed match must.
     assert parse_score({"partial_results": "(6:4, 2:1)"}, 3) is None
