@@ -189,6 +189,36 @@ ended the day in silence. An `if: failure()` step posts the date and a link to
 the failed job. It uses inline `curl` rather than `post_slack`, because the
 failure may be that the module does not import.
 
+That fix alone was in the wrong place, because **the live path is the Claude
+cloud routine (`deploy/routine_prompt.md`), not this repo's Actions.** The
+routine's prompt does tell it to post verification failures to Slack, but no
+instruction inside a prompt can report the prompt never being read — which is
+the failure that actually occurred:
+
+> **2026-08-11 never ran.** The ledger jumps from `run_date` 2026-08-10 to
+> 2026-08-12. Day 2 of 14 is missing and nothing said so. It cannot be
+> backfilled: a pick row has to be timestamped before its match, and those
+> matches are played. The day is a permanent gap in the record and the run is
+> 13 days, not 14.
+
+So the check now lives outside the thing it checks:
+
+- **`.github/workflows/paper-trade-watchdog.yml`** — read-only. It parses
+  `paper/ledger.csv` (as CSV, not grep: a bare date also appears in
+  `match_date` and `ts_utc`) and alerts Slack if a day inside the run window
+  produced no rows. It never prices, scrapes, commits or touches `paper/`, so
+  it does not violate the "one or the other, never both" rule, which is about
+  two things *writing* the ledger. It also alerts if the check itself fails —
+  a watchdog that can die quietly is not a watchdog.
+- It checks **yesterday**, at 12:00 UTC. The routine's slot is not fixed
+  (2026-08-10 saw runs at 13:11 and 23:11 UTC), so a same-day check would
+  false-alarm on a routine that simply had not run yet, and a daily false alarm
+  gets muted. Up to ~36h of detection lag buys zero false positives.
+- **`paper-trade.yml`'s cron is now off**, `workflow_dispatch` only. An armed
+  schedule next to a live routine is the double-write rule waiting to be broken
+  by whoever re-enables Actions on the repo. To make the workflow the live path
+  again: restore the cron *and* stop the routine, in that order.
+
 ### The schema widened
 
 `LEDGER_COLUMNS` gained six columns (four for the distribution, two for the

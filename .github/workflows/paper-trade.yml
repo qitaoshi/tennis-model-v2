@@ -7,12 +7,22 @@
 # guard still reach Slack.
 name: paper trade
 
+# The schedule is OFF. The live path is the Claude cloud routine
+# (deploy/routine_prompt.md), and that file's rule is "run one or the other,
+# never both, or the ledger gets two rows for the same pick". A cron sitting
+# here armed is that rule waiting to be broken by whoever re-enables Actions on
+# the repo — silently, into an append-only ledger.
+#
+# Manual dispatch stays: this workflow is the fallback if the routine has to be
+# abandoned mid-run. To make it the live path again, restore the cron below AND
+# stop the routine, in that order.
+#
+#  schedule:
+#    # 09:00 UTC. Deliberately not a local wall clock: a time skipped by a
+#    # spring-forward never fires and one repeated by a fall-back fires twice,
+#    # and a fourteen-day run cannot absorb either.
+#    - cron: "0 9 * * *"
 on:
-  schedule:
-    # 09:00 UTC. Deliberately not a local wall clock: a time skipped by a
-    # spring-forward never fires and one repeated by a fall-back fires twice,
-    # and a fourteen-day run cannot absorb either.
-    - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       dry_run:

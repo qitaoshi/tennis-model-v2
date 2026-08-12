@@ -1,0 +1,111 @@
+# Watchdog for the daily paper-trading run. Reads the ledger; writes nothing.
+#
+# The run itself is a Claude cloud routine (deploy/routine_prompt.md), not this
+# repo's Actions. A routine can post its own failures — its prompt says to —
+# but it cannot report the one failure that actually happened: on 2026-08-11 it
+# did not fire at all, and day 2 of 14 went missing with nothing said. No
+# instruction inside a prompt can cover the prompt never being read.
+#
+# So the check lives outside the thing it is checking. It never prices, never
+# scrapes, never commits, and never touches paper/ — it reads one CSV and posts
+# if a day is absent. That is what keeps it safe to run alongside the routine
+# despite the "run one or the other, never both" rule in
+# deploy/routine_prompt.md: that rule is about two things WRITING the ledger.
+name: paper trade watchdog
+
+on:
+  schedule:
+    # 12:00 UTC, and it checks YESTERDAY rather than today. The routine's slot
+    # is not fixed — 2026-08-10 saw runs at 13:11 and 23:11 UTC — so any
+    # same-day check would false-alarm on a routine that simply had not run
+    # yet. A daily false alarm gets muted, and a muted alarm is worse than no
+    # alarm. Checking a completed day costs up to ~36h of detection lag and
+    # buys zero false positives.
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check yesterday produced ledger rows
+        id: check
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import csv, datetime, json, pathlib
+
+          led = pathlib.Path("paper/ledger.csv")
+          state = pathlib.Path("paper/run_state.json")
+          day = (datetime.datetime.now(datetime.timezone.utc).date()
+                 - datetime.timedelta(days=1))
+
+          def out(missing, why):
+              print(f"missing={'true' if missing else 'false'}")
+              print(f"day={day}")
+              print(f"why={why}")
+              raise SystemExit(0)
+
+          if not state.exists():
+              out(False, "no run_state.json; the run has not started")
+          s = json.loads(state.read_text())
+          start = datetime.date.fromisoformat(s["start_date"])
+          end = start + datetime.timedelta(days=int(s.get("run_days", 14)) - 1)
+          # Silence outside the window: the run being over is not a failure,
+          # and an alarm that keeps firing after the finish gets muted.
+          if not start <= day <= end:
+              out(False, f"{day} is outside the run window {start}..{end}")
+          if not led.exists():
+              out(True, "paper/ledger.csv does not exist")
+
+          # Parsed as CSV, not grepped: a bare date string also appears in
+          # match_date and ts_utc, and matching those would report a healthy
+          # day for one that wrote nothing.
+          with led.open(newline="") as fh:
+              rows = [r for r in csv.DictReader(fh)
+                      if r.get("run_date") == day.isoformat()]
+          if rows:
+              out(False, f"{len(rows)} row(s) written for {day}")
+          out(True, f"no ledger row has run_date {day}")
+          PY
+
+      - name: Report
+        run: 'echo "${{ steps.check.outputs.day }}: ${{ steps.check.outputs.why }}"'
+
+      # Fires both when a day is missing AND when the check itself broke —
+      # a watchdog that can fail silently is not a watchdog.
+      - name: Alert Slack
+        if: steps.check.outputs.missing == 'true' || failure()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          DAY: ${{ steps.check.outputs.day }}
+          WHY: ${{ steps.check.outputs.why }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_CHANNEL" ]; then
+            echo "watchdog fired but no Slack credentials are set" >&2
+            exit 1
+          fi
+          text=":rotating_light: *Tennis paper trading — a day is missing*"$'\n'
+          text="${text}${DAY:-unknown}: ${WHY:-the watchdog itself failed}"$'\n'
+          text="${text}The routine did not write to the ledger for that date."
+          text="${text} A missing day is a permanent gap — a pick has to be"
+          text="${text} timestamped before its match, so it cannot be"
+          text="${text} backfilled. Check the routine ran."$'\n'
+          text="${text}Watchdog: ${RUN_URL}"
+          reply=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "$(jq -nc --arg c "$SLACK_CHANNEL" --arg t "$text" \
+                        '{channel: $c, text: $t}')")
+          echo "$reply"
+          case "$reply" in
+            *'"ok":true'*) ;;
+            *) echo "Slack rejected the watchdog alert" >&2; exit 1 ;;
+          esac
