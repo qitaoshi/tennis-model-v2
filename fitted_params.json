@@ -107,17 +107,11 @@
   "tune_ece": 0.014790408808702757,
   "tune_logloss": 0.5361044633477817,
   "n_fitted": {
-   "match_winner": 52000,
    "totals_under_low": 52000,
    "totals_under_mid": 78000,
-   "totals_under_high": 52000,
-   "set_score": 107522,
-   "games_handicap": 364000
+   "totals_under_high": 52000
   },
   "families": [
-   "games_handicap",
-   "match_winner",
-   "set_score",
    "totals_under_high",
    "totals_under_low",
    "totals_under_mid"

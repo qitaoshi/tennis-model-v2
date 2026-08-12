@@ -32,14 +32,14 @@ The column that motivated the work. Model probability in, calibrated probability
 
 |   model_p |   calibrated |
 |----------:|-------------:|
-|      0.02 |       0.019  |
-|      0.05 |       0.0482 |
-|      0.08 |       0.0777 |
-|      0.12 |       0.1173 |
-|      0.16 |       0.1571 |
-|      0.2  |       0.1971 |
-|      0.3  |       0.2977 |
-|      0.5  |       0.5    |
+|      0.02 |         0.02 |
+|      0.05 |         0.05 |
+|      0.08 |         0.08 |
+|      0.12 |         0.12 |
+|      0.16 |         0.16 |
+|      0.2  |         0.2  |
+|      0.3  |         0.3  |
+|      0.5  |         0.5  |
 
 
 ## How much of this grid is signal
