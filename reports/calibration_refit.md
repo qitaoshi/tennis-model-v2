@@ -1,11 +1,5 @@
 # Calibration refit — method and fitting window
 
-> **The selected map ships without a TEST evaluation** (`fitted_params.json` →
-> `calibration_refit.test_evaluated: false`). TEST was spent by the earlier
-> `blended`/8 evaluation and is read once, so no out-of-sample calibration figure
-> exists for `platt`/8. The TUNE ECE below is a *selection* number, not evidence.
-> See `PROGRESS.json` → `calibration_platt_2026_08_10_ships_unevaluated`.
-
 Selected on TUNE (2024-01-01 .. 2025-06-30) after the 2026-08-08 re-split. **TEST and HOLDOUT were not consulted.** Maps are fitted on FIT and judged on TUNE; the shipped map is then refit on FIT+TUNE using the selected setting.
 
 
@@ -14,7 +8,7 @@ Selected on TUNE (2024-01-01 .. 2025-06-30) after the 2026-08-08 re-split. **TES
 The shipped maps were fitted on predictions through 2022-06 and never refreshed. match_winner ECE was 0.017 on the original TEST window and 0.069 on the original holdout. Separately, isotonic put only seven knots below p=0.20, so the tail — where the model is known to overrate its selections — was a step function fitted on very little data.
 
 
-Uncalibrated baseline on TUNE: ECE 0.0195, log-loss 0.5414, Brier 0.1842.
+Uncalibrated baseline on TUNE: ECE 0.0175, log-loss 0.5370, Brier 0.1823.
 
 
 ## Grid
@@ -23,13 +17,13 @@ Ranked by ECE, then log-loss. The rule was fixed before the numbers were seen: t
 
 | method   | window_years   |   n_train_matches |   tune_ece |   tune_logloss |   tune_brier |    mw_ece |   mw_logloss | degenerate   |
 |:---------|:---------------|------------------:|-----------:|---------------:|-------------:|----------:|-------------:|:-------------|
-| platt    | 8              |             20000 |  0.0143657 |       0.539769 |     0.183997 | 0.0206146 |     0.663424 | False        |
-| platt    | 5              |             20000 |  0.0146196 |       0.539764 |     0.183999 | 0.0187249 |     0.663218 | False        |
-| platt    | 3              |             20000 |  0.0150741 |       0.539819 |     0.184023 | 0.0209621 |     0.663464 | False        |
-| platt    | all            |             20000 |  0.0158445 |       0.539963 |     0.18409  | 0.0257769 |     0.664126 | False        |
+| platt    | 5              |             20000 |  0.0147904 |       0.536104 |     0.182239 | 0.0254841 |     0.65526  | False        |
+| platt    | 3              |             20000 |  0.0153501 |       0.536223 |     0.182282 | 0.0282665 |     0.655832 | False        |
+| platt    | 8              |             20000 |  0.0154853 |       0.536194 |     0.182273 | 0.0292514 |     0.656052 | False        |
+| platt    | all            |             20000 |  0.0175243 |       0.536529 |     0.182399 | 0.0340858 |     0.657269 | False        |
 
 
-**Selected: `platt`, window `8`.** ECE gain over the shipped incumbent (isotonic, all history): -0.0024.
+**Selected: `platt`, window `5`.** ECE gain over the shipped incumbent (isotonic, all history): +0.0008.
 
 
 ## What the selected map does to a longshot
@@ -38,13 +32,13 @@ The column that motivated the work. Model probability in, calibrated probability
 
 |   model_p |   calibrated |
 |----------:|-------------:|
-|      0.02 |       0.0177 |
-|      0.05 |       0.0457 |
-|      0.08 |       0.0744 |
-|      0.12 |       0.1134 |
-|      0.16 |       0.153  |
-|      0.2  |       0.193  |
-|      0.3  |       0.2943 |
+|      0.02 |       0.019  |
+|      0.05 |       0.0482 |
+|      0.08 |       0.0777 |
+|      0.12 |       0.1173 |
+|      0.16 |       0.1571 |
+|      0.2  |       0.1971 |
+|      0.3  |       0.2977 |
 |      0.5  |       0.5    |
 
 

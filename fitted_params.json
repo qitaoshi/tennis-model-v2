@@ -102,16 +102,16 @@
  },
  "calibration_refit": {
   "method": "platt",
-  "window_years": 8,
+  "window_years": 5,
   "selected_on": "TUNE 2024-01-01..2025-06-30",
-  "tune_ece": 0.014365688995991723,
-  "tune_logloss": 0.539769242740622,
+  "tune_ece": 0.014790408808702757,
+  "tune_logloss": 0.5361044633477817,
   "n_fitted": {
    "match_winner": 52000,
    "totals_under_low": 52000,
    "totals_under_mid": 78000,
    "totals_under_high": 52000,
-   "set_score": 107322,
+   "set_score": 107522,
    "games_handicap": 364000
   },
   "families": [
