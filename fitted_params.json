@@ -119,7 +119,12 @@
   "test_evaluated": true,
   "test_ece_before": 0.016353122285424637,
   "test_ece_after": 0.012976965742700818,
-  "test_all_improved": false
+  "test_all_improved": false,
+  "test_gate_verdict": "passed",
+  "test_gate_verdict_basis": "Human decision, 2026-08-12. MODEL_PROMPT.md's Stage 8 gate asks for reliability diagrams before/after on the pre-cutoff TEST set and sets no numeric threshold; that is met. The script's stricter self-imposed boolean 'all families improved on ECE' is False and was NOT treated as the gate. The failure protocol was run and implicates no stage: ledger.overfit_flags() returned empty, so no frozen stage's TUNE gain exceeds its FIT-internal rolling-origin spread by more than the configured multiple.",
+  "test_known_regression": "totals_under_low regressed on TEST: ECE 0.006463 -> 0.012135, roughly double, on n=8,632. It IMPROVED on TUNE (0.0102 -> 0.0072) and reversed out of sample. It was the best-calibrated family on TEST before any map was applied, so the map degraded something that needed no correction -- the same shape of error as the match_winner problem. This is shipped as a known defect, not a resolved one.",
+  "do_not_fix_this_with_test": "Dropping the totals_under_low map now would be a selection made on a TEST result, which the split rules forbid. There is a further contamination point that must not be lost: the TEST answer has now been seen, so ANY rule devised from here that happens to exclude this family is influenced by that knowledge even when justified on TUNE. The structural improvement worth making later -- require a map to beat identity by more than its fold-to-fold spread, not merely to beat it -- must be selected on a window that has not been read, and must not be back-applied to what shipped today.",
+  "first_thing_holdout_should_check": "Whether totals_under_low is genuinely broken or whether the TEST window was unlucky. HOLDOUT (2026-01-01 onward) is entirely unspent, which is what bounds the risk of accepting this pass."
  },
  "fatigue": {
   "rest_days": -0.01164709979964922,
