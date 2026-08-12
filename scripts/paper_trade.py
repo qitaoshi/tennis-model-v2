@@ -95,6 +95,15 @@ MAX_MODEL_P = 0.95
 # is a data error, not an opportunity.
 ABSURD_EDGE = 0.25
 
+# The side each board row is anchored on. Fixed per market, never chosen by
+# price or edge — see `board_lines`. Which side it is does not matter for a
+# calibration score (the two are complements); that it is not chosen by the
+# model's own opinion does.
+ANCHOR_SIDE = {"total_games": "over", "games_handicap": "home"}
+# The priced ladder pads its support with rungs carrying essentially no mass.
+# Below this they are dropped from the stored pmf.
+PMF_TRIM = 1e-7
+
 
 # ---------------------------------------------------------------------------
 # ledger
@@ -368,17 +377,85 @@ def kelly(p: float, decimal_odds: float) -> float:
     return max((b * p - (1.0 - p)) / b, 0.0)
 
 
-def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
-    """One representative quote per market, with the model's number beside it.
+def model_distribution(priced, market: str) -> tuple[int, list[float]]:
+    """Reconstruct the model's discrete distribution for ``market``.
 
-    This is the reporting counterpart to `pick_bets`: same pairing of a
-    priced selection to a real quote, but with none of the edge, staking or
-    sanity filters, so a market shows up here whether or not it produced a
-    bet. Per market it shows the side the model likes best — the largest
-    model-minus-implied gap, negative if that is all there is. Picking by
-    price instead would always land on the same side of a two-sided total,
-    since both sides sit near even money, and would say nothing about what
-    the model actually thinks.
+    ``PricedMatch`` exposes per-line probabilities, not the pmf behind them —
+    but the ladder steps in halves across the whole support, so its
+    half-integer rungs ARE the CDF: ``under 21.5`` is P(total <= 21), and
+    ``A +4.5`` is P(margin > 4.5), so 1 minus it is P(margin <= 4). Taking
+    first differences recovers the pmf exactly, without reaching into
+    `model/` for it.
+
+    Returns ``(first_value, probabilities)``, where ``probabilities[i]`` is
+    the mass on ``first_value + i``. Whole-number rungs are skipped: they
+    carry a push, so their over/under pair does not partition the support.
+    """
+    cdf: dict[int, float] = {}
+    for s in priced.selections:
+        if s.market != market:
+            continue
+        who, _, value = s.selection.partition(" ")
+        try:
+            line = float(value)
+        except ValueError:
+            continue
+        if float(line).is_integer():
+            continue
+        k = int(np.floor(line))
+        if market == "total_games" and who == "under":
+            cdf[k] = float(s.probability)
+        elif market == "games_handicap" and who == "A":
+            cdf[k] = 1.0 - float(s.probability)
+    if not cdf:
+        return 0, []
+    keys = sorted(cdf)
+    pmf, prev = [], 0.0
+    for k in keys:
+        pmf.append(max(cdf[k] - prev, 0.0))
+        prev = cdf[k]
+    # Trim the near-zero tails the ladder pads the support with, so the stored
+    # row is a distribution rather than a column of zeros.
+    lo, hi = 0, len(pmf) - 1
+    while lo < hi and pmf[lo] < PMF_TRIM:
+        lo += 1
+    while hi > lo and pmf[hi] < PMF_TRIM:
+        hi -= 1
+    return keys[0] + lo, pmf[lo:hi + 1]
+
+
+def model_median(priced, market: str) -> float | None:
+    """The model's own median total games / game margin, or None."""
+    start, pmf = model_distribution(priced, market)
+    if not pmf:
+        return None
+    cum = 0.0
+    for i, p in enumerate(pmf):
+        cum += p
+        if cum >= 0.5:
+            return float(start + i)
+    return float(start + len(pmf) - 1)
+
+
+def book_threshold(market: str, line: float) -> float:
+    """The outcome threshold a bookmaker line sits at, in model units.
+
+    A total is quoted at the threshold itself. A handicap is quoted as the
+    HOME player's handicap, so a quoted 4.5 is the margin threshold -4.5 —
+    the same sign flip `model_selection` applies.
+    """
+    return line if market == "total_games" else -line
+
+
+def max_gap_line(priced, quote_frame: pd.DataFrame) -> list[dict]:
+    """Per market, the quote with the largest model-minus-implied gap.
+
+    What `board_lines` used to do. Kept because it answers a real question —
+    where does the model disagree with the book most — but it must not choose
+    the row the calibration score runs over: that is the line where the two
+    disagree most, and `reports/model_vs_market.md` already found the market
+    wins there. Selecting on the disagreement and then scoring the
+    disagreement measures the selection, not the model.
     """
     probs = {(s.market, s.selection): s for s in priced.selections}
     out = []
@@ -402,6 +479,65 @@ def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
                 pick = cand
         if pick is not None:
             out.append(pick)
+    return out
+
+
+def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
+    """One representative quote per market, chosen WITHOUT looking at the edge.
+
+    This is the reporting counterpart to `pick_bets`: same pairing of a
+    priced selection to a real quote, but with none of the edge, staking or
+    sanity filters, so a market shows up here whether or not it produced a
+    bet.
+
+    The line is the quoted one nearest the model's OWN median (nearest total
+    for a total, nearest margin threshold for a handicap), on a fixed side per
+    market. Both halves of that choice matter: the anchor cannot depend on the
+    price, or the calibration denominator becomes the subsample where model
+    and book disagree most — which is where the market is already known to
+    beat this model — and the side cannot depend on the edge either, or the
+    same bias comes back through the back door. `max_gap_line` still computes
+    the old, edge-selected choice for anyone who wants it.
+
+    Falls back to the max-gap line only if the ladder yielded no distribution
+    to take a median from, which would mean the pricer returned no usable
+    half-integer rungs for the market at all.
+    """
+    probs = {(s.market, s.selection): s for s in priced.selections}
+    fallback = {row["market"]: row for row in max_gap_line(priced, quote_frame)}
+    out = []
+    for market in MARKETS:
+        median = model_median(priced, market)
+        if median is None:
+            if market in fallback:
+                out.append(fallback[market])
+            continue
+        rows = quote_frame[(quote_frame["market"] == market)
+                           & (quote_frame["side"] == ANCHOR_SIDE[market])]
+        cands = []
+        for row in rows.itertuples(index=False):
+            try:
+                line = float(row.line)
+            except (TypeError, ValueError):
+                continue
+            sel = probs.get((market, model_selection(market, row.side, line)))
+            if sel is None:
+                continue
+            # Ties break toward the smaller absolute line, then the smaller
+            # line: an anchor has to be reproducible, not just unbiased.
+            rank = (abs(book_threshold(market, line) - median), abs(line), line)
+            cands.append((rank, line, row, sel))
+        if not cands:
+            if market in fallback:
+                out.append(fallback[market])
+            continue
+        _, line, row, sel = min(cands, key=lambda c: c[0])
+        implied = 1.0 / row.decimal_odds
+        out.append({"market": market, "line": f"{line:g}", "side": row.side,
+                    "decimal_odds": row.decimal_odds, "implied": implied,
+                    "model_p": sel.probability,
+                    "edge": sel.probability - implied,
+                    "model_median": median})
     return out
 
 
@@ -885,12 +1021,15 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         word = "match" if len(board) == 1 else "matches"
         lines.append(f"*Board — {len(board)} {word} priced*")
         for m in board:
-            best = max(m["lines"], key=lambda x: x["edge"], default=None)
-            if best is None:
+            if not m["lines"]:
                 continue
-            lines.append(f"• {m['label']} · best {_market_label(best['market'])}"
-                         f" {best['side']} {best['line']} "
-                         f"{best['edge']:+.1%}")
+            # The lines shown are the ones nearest the model's own median, not
+            # the ones it likes best — saying "best" here would advertise the
+            # edge-selected view the scoring deliberately stopped using.
+            shown = " · ".join(
+                f"{_market_label(x['market'])} {x['side']} {x['line']} "
+                f"{x['edge']:+.1%}" for x in m["lines"])
+            lines.append(f"• {m['label']} · {shown}")
         lines.append("")
 
     if scores and scores.get("n"):
@@ -1204,6 +1343,30 @@ def rehearse() -> None:
     print("rehearsal complete — nothing written, nothing posted")
 
 
+@dataclass
+class _FakePriced:
+    """Just enough of `PricedMatch` for the self-check: a list of selections."""
+
+    selections: list
+
+
+def _ladder(pmf: dict[int, float]) -> list:
+    """A totals ladder in the pricer's own shape, from a known pmf.
+
+    The self-check reads the pmf back out of this, so building it here from a
+    distribution nobody has to trust is the point: if `model_distribution`
+    ever mis-reads the ladder, the round trip fails.
+    """
+    lo, hi = min(pmf), max(pmf)
+    out, cum = [], 0.0
+    for g in range(lo - 1, hi + 1):
+        cum += pmf.get(g, 0.0)
+        line = g + 0.5
+        out.append(PZ.Selection("total_games", f"under {line}", cum, 1.0))
+        out.append(PZ.Selection("total_games", f"over {line}", 1.0 - cum, 1.0))
+    return out
+
+
 def demo() -> None:
     """Self-check on the arithmetic that decides money (ground rule 10)."""
     assert abs(kelly(0.6, 2.0) - 0.2) < 1e-9, kelly(0.6, 2.0)
@@ -1228,6 +1391,27 @@ def demo() -> None:
                      "model_selection": "A +4.5", "decimal_odds": "1.90"})
     assert settle_one(row, 24, 6)[0] == "win"
     assert settle_one(row, 24, 4)[0] == "loss"
+
+    # The board row must be anchored on the model's own median, not on where
+    # the model and the book disagree most. This is the whole reason the
+    # calibration denominator is trustworthy, so it is checked directly: the
+    # 20.5 line below is quoted at a price that makes it far and away the
+    # biggest edge, and it must still not be the row that gets scored.
+    fake = _FakePriced(_ladder({20: 0.1, 21: 0.3, 22: 0.4, 23: 0.2}))
+    start, back = model_distribution(fake, "total_games")
+    assert start == 20 and np.allclose(back, [0.1, 0.3, 0.4, 0.2]), (start, back)
+    assert model_median(fake, "total_games") == 22.0
+    qf = pd.DataFrame([
+        {"market": "total_games", "side": s, "line": ln, "decimal_odds": od,
+         "market_p_devig": dv, "bookmaker": "x"}
+        for ln, s, od, dv in ((20.5, "over", 4.00, 0.24), (20.5, "under", 1.25, 0.76),
+                              (21.5, "over", 1.80, 0.53), (21.5, "under", 2.00, 0.47),
+                              (22.5, "over", 3.00, 0.32), (22.5, "under", 1.40, 0.68))])
+    anchored = board_lines(fake, qf)
+    assert [r["line"] for r in anchored] == ["21.5"], anchored
+    assert anchored[0]["side"] == "over", anchored
+    # ...whereas the old, edge-selected rule lands exactly on 20.5.
+    assert max_gap_line(fake, qf)[0]["line"] == "20.5", max_gap_line(fake, qf)
 
     # A retirement must not settle; a completed match must.
     assert parse_score({"partial_results": "(6:4, 2:1)"}, 3) is None
