@@ -473,6 +473,7 @@ def max_gap_line(priced, quote_frame: pd.DataFrame) -> list[dict]:
             implied = 1.0 / row.decimal_odds
             cand = {"market": market, "line": f"{line:g}", "side": row.side,
                     "decimal_odds": row.decimal_odds, "implied": implied,
+                    "market_p_devig": float(row.market_p_devig),
                     "model_p": sel.probability,
                     "edge": sel.probability - implied}
             if pick is None or cand["edge"] > pick["edge"]:
@@ -535,6 +536,10 @@ def board_lines(priced, quote_frame: pd.DataFrame) -> list[dict]:
         implied = 1.0 / row.decimal_odds
         out.append({"market": market, "line": f"{line:g}", "side": row.side,
                     "decimal_odds": row.decimal_odds, "implied": implied,
+                    # Two-sided, from `quotes`: the raw price still carries the
+                    # vig, and scoring the book on it flatters the model by the
+                    # book's whole margin.
+                    "market_p_devig": float(row.market_p_devig),
                     "model_p": sel.probability,
                     "edge": sel.probability - implied,
                     "model_median": median})
@@ -845,11 +850,17 @@ def calibration_scores(ledger: pd.DataFrame) -> dict:
     p = pd.to_numeric(s["model_p"], errors="coerce").to_numpy(float)
     odds = pd.to_numeric(s["decimal_odds"], errors="coerce").to_numpy(float)
     y = (s["result"] == "win").to_numpy(float)
-    # Implied price carries the vig, so the book's raw number is not a
-    # probability and is mildly flattered by this comparison. Normalising it
-    # needs both sides of each line, which a single row does not carry.
+    # The book is scored on its DE-VIGGED probability, computed two-sided at
+    # quote time and carried on the row. The raw 1/odds still contains the
+    # book's margin, so scoring it hands the model a free win of unknown size —
+    # it is a price, not a forecast. Rows written before the de-vig was stored
+    # fall back to the raw number; they are flattering the model, not the book,
+    # so the fallback cannot manufacture an edge for us.
     with np.errstate(divide="ignore", invalid="ignore"):
-        implied = 1.0 / odds
+        raw = 1.0 / odds
+    devig = pd.to_numeric(s["market_p_devig"], errors="coerce").to_numpy(float) \
+        if "market_p_devig" in s.columns else np.full(len(s), np.nan)
+    implied = np.where(np.isfinite(devig) & (devig > 0) & (devig < 1), devig, raw)
     ok = np.isfinite(p) & np.isfinite(implied) & np.isfinite(y)
     if not ok.any():
         return {"n": 0}
@@ -1067,7 +1078,8 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         "an edge either way, and flat-to-negative is the expected outcome. "
         "Odds: PointsBet AU only, one book, not comparable to the "
         "Bet365-based 2024 reports. Results: ESPN. Lower is better on Brier, "
-        "log-loss and ECE; the book's is flattered slightly by its vig._")
+        "log-loss and ECE; the book is scored on its de-vigged price, so the "
+        "comparison no longer hands us its margin._")
     return "\n".join(lines)
 
 
@@ -1203,7 +1215,9 @@ def run(today: date, dry_run: bool) -> str:
                 "model_selection": model_selection(
                     ln["market"], ln["side"], float(ln["line"])),
                 "bookmaker": book, "decimal_odds": ln["decimal_odds"],
+                "market_p_devig": ln["market_p_devig"],
                 "model_p": ln["model_p"], "edge_raw": ln["edge"],
+                "edge_devig": ln["model_p"] - ln["market_p_devig"],
                 "stake_flat": 0.0, "stake_kelly": 0.0,
                 "result": "", "pnl_flat": "", "pnl_kelly": "",
                 "note": f"board, as_of {today.isoformat()}, book {book}",
@@ -1519,7 +1533,8 @@ def demo() -> None:
          "decimal_odds": "1.9"},
         {"row_type": "board_settle", "stake_flat": 0.0, "stake_kelly": 0.0,
          "pnl_flat": 0.0, "pnl_kelly": 0.0, "result": "win",
-         "edge_raw": "0.5", "model_p": "0.7", "decimal_odds": "1.9"},
+         "edge_raw": "0.5", "model_p": "0.7", "decimal_odds": "1.9",
+         "market_p_devig": "0.52"},
     ])], ignore_index=True)
     assert pnl(with_board) == totals, pnl(with_board)
 
@@ -1527,7 +1542,18 @@ def demo() -> None:
     sc = calibration_scores(with_board)
     assert sc["n"] == 1, sc
     assert abs(sc["brier"] - (0.7 - 1.0) ** 2) < 1e-9, sc
+    # The book is scored on 0.52, its de-vigged number — NOT on 1/1.9 = 0.526,
+    # which is the price with its margin still in it.
+    assert abs(sc["brier_book"] - (0.52 - 1.0) ** 2) < 1e-9, sc
     assert calibration_scores(book)["n"] == 0, "picks must not be scored"
+
+    # A row written before the de-vig was stored still scores, off the raw
+    # price. Old rows must keep parsing, not drop out of the denominator.
+    legacy = with_board.copy()
+    legacy.loc[legacy["row_type"] == "board_settle", "market_p_devig"] = ""
+    assert calibration_scores(legacy)["n"] == 1
+    assert abs(calibration_scores(legacy)["brier_book"]
+               - (1 / 1.9 - 1.0) ** 2) < 1e-9
 
     # The mid-run guard: an unchanged model passes, a moved one stops the run
     # rather than quietly appending rows that measure something else. The
