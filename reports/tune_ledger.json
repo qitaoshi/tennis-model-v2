@@ -1445,5 +1445,55 @@
   },
   "frozen": true,
   "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
+ },
+ {
+  "stage": "calibration_refit",
+  "run_id": "20260812T013604Z-2383a98",
+  "metric": "tune_expected_calibration_error",
+  "baseline": "isotonic on all history (the shipped incumbent)",
+  "selected": {
+   "method": "platt",
+   "window_years": 5
+  },
+  "tune_gain": 0.0008406382542103259,
+  "tune_metric_value": 0.014790408808702757,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.017498066945622958,
+   "tune_logloss": 0.5369564192658515,
+   "tune_brier": 0.1822853962223185
+  },
+  "frozen": true,
+  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
+ },
+ {
+  "stage": "calibration_refit",
+  "run_id": "20260812T020047Z-2383a98",
+  "metric": "tune_expected_calibration_error",
+  "baseline": "isotonic on all history (the shipped incumbent)",
+  "selected": {
+   "method": "platt",
+   "window_years": 5
+  },
+  "tune_gain": 0.0008406382542103259,
+  "tune_metric_value": 0.014790408808702757,
+  "fit_rolling_origin_gain_folds": [
+   0.0
+  ],
+  "fit_rolling_origin_gain_mean": 0.0,
+  "fit_rolling_origin_gain_std": null,
+  "baselines": {
+   "tune_ece": 0.017498066945622958,
+   "tune_logloss": 0.5369564192658515,
+   "tune_brier": 0.1822853962223185,
+   "mw_ece": 0.02033645721114794,
+   "mw_logloss": 0.654463860741425
+  },
+  "frozen": true,
+  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
  }
 ]
