@@ -190,15 +190,27 @@ def select() -> None:
                 "mw_ece": float(sc.loc[sc.family == "match_winner", "ece_after"].iloc[0]),
                 "mw_logloss": float(sc.loc[sc.family == "match_winner", "logloss_after"].iloc[0]),
             })
+            # match_winner is reported alongside the family mean because the
+            # two disagree sharply and answer different questions. tune_ece
+            # averages all six families, INCLUDING any whose map is degenerate,
+            # so it can favour a candidate on the strength of maps that will
+            # never be used. mw_ece is the number to read when the decision is
+            # about the match-winner map specifically.
             print(f"  {how:9s} window={str(years):4s} "
                   f"tune ECE {rows[-1]['tune_ece']:.4f} "
-                  f"log-loss {rows[-1]['tune_logloss']:.4f}")
+                  f"log-loss {rows[-1]['tune_logloss']:.4f} | "
+                  f"match_winner ECE {rows[-1]['mw_ece']:.4f} "
+                  f"log-loss {rows[-1]['mw_logloss']:.4f}")
 
     grid = pd.DataFrame(rows)
     base = _score(RC.CalibrationMaps({}, {}), tune_samples)
     baseline = {"tune_ece": float(base["ece_before"].mean()),
                 "tune_logloss": float(base["logloss_before"].mean()),
-                "tune_brier": float(base["brier_before"].mean())}
+                "tune_brier": float(base["brier_before"].mean()),
+                "mw_ece": float(base.loc[base.family == "match_winner",
+                                         "ece_before"].iloc[0]),
+                "mw_logloss": float(base.loc[base.family == "match_winner",
+                                             "logloss_before"].iloc[0])}
     print(f"\nuncalibrated baseline on TUNE: {baseline}")
 
     # SELECTION RULE, fixed before the numbers were seen: calibration is what
