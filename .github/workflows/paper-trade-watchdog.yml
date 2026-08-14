@@ -23,6 +23,16 @@ on:
     # buys zero false positives.
     - cron: "0 12 * * *"
   workflow_dispatch:
+    inputs:
+      force_alert:
+        # The alert step only runs on a day that is actually missing, so the
+        # Slack credentials are otherwise first exercised at the exact moment
+        # they are needed. This fires the post on a healthy day instead, to
+        # prove the token and channel work. The message says TEST so a drill
+        # is never mistaken for a real gap.
+        description: "Post a test alert to Slack even if no day is missing"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -80,8 +90,10 @@ jobs:
       # Fires both when a day is missing AND when the check itself broke —
       # a watchdog that can fail silently is not a watchdog.
       - name: Alert Slack
-        if: steps.check.outputs.missing == 'true' || failure()
+        if: steps.check.outputs.missing == 'true' || inputs.force_alert || failure()
         env:
+          FORCED: ${{ inputs.force_alert }}
+          MISSING: ${{ steps.check.outputs.missing }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
           DAY: ${{ steps.check.outputs.day }}
@@ -92,13 +104,19 @@ jobs:
             echo "watchdog fired but no Slack credentials are set" >&2
             exit 1
           fi
-          text=":rotating_light: *Tennis paper trading — a day is missing*"$'\n'
-          text="${text}${DAY:-unknown}: ${WHY:-the watchdog itself failed}"$'\n'
-          text="${text}The routine did not write to the ledger for that date."
-          text="${text} A missing day is a permanent gap — a pick has to be"
-          text="${text} timestamped before its match, so it cannot be"
-          text="${text} backfilled. Check the routine ran."$'\n'
-          text="${text}Watchdog: ${RUN_URL}"
+          if [ "$FORCED" = "true" ] && [ "$MISSING" != "true" ]; then
+            text=":test_tube: *Watchdog test — no day is missing, this is a drill*"$'\n'
+            text="${text}${DAY}: ${WHY}"$'\n'
+            text="${text}Slack credentials work. Watchdog: ${RUN_URL}"
+          else
+            text=":rotating_light: *Tennis paper trading — a day is missing*"$'\n'
+            text="${text}${DAY:-unknown}: ${WHY:-the watchdog itself failed}"$'\n'
+            text="${text}The routine did not write to the ledger for that date."
+            text="${text} A missing day is a permanent gap — a pick has to be"
+            text="${text} timestamped before its match, so it cannot be"
+            text="${text} backfilled. Check the routine ran."$'\n'
+            text="${text}Watchdog: ${RUN_URL}"
+          fi
           reply=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
             -H "Content-Type: application/json; charset=utf-8" \
