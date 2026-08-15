@@ -1272,10 +1272,14 @@ def _last_name(name: object) -> str:
 def _selection_label(row: dict) -> str:
     """The bet as a human would say it.
 
-    Handicaps read as `Sinner -4.5`: the sign comes straight off
-    `model_selection`, which is the one place the book's home-quoted line has
-    already been flipped to the bettor's side. Deriving it again here would be
-    a second convention to keep in step with that one.
+    Handicaps read as `Sinner -4.5`, meaning Sinner to win by 5 games or more.
+
+    The sign is the NEGATION of the one in `model_selection`. That field holds
+    a margin threshold, not a handicap: `settle_one` reads "A -4.5" as "home
+    margin > -4.5", which pays out when the home player loses by four games —
+    that bet is home +4.5 to anyone placing it. Taking the stored sign at face
+    value prints every handicap backwards, favourite for underdog, which is
+    how this first shipped.
 
     Totals read as `o24.5` / `u24.5`. The market name is dropped with the word
     — an o/u prefix on a games line is not mistakable for anything else.
@@ -1287,9 +1291,9 @@ def _selection_label(row: dict) -> str:
         return f"{short}{line}" if short else f"{_market_label('total_games')} {sel}"
     if str(row["market"]) != "games_handicap":
         return f"{_market_label(row['market'])} {sel}"
-    who, _, hcap = sel.partition(" ")
+    who, _, threshold = sel.partition(" ")
     player = row["player_a"] if who == "A" else row["player_b"]
-    return f"{_last_name(player)} {hcap}"
+    return f"{_last_name(player)} {-float(threshold):+g}"
 
 
 def _by_tournament(rows: list[dict]) -> dict[str, list[dict]]:
@@ -1783,9 +1787,26 @@ def demo() -> None:
     # naming the wrong player is the failure that would read as a real bet.
     hcap = {"market": "games_handicap", "model_selection": "A -4.5",
             "player_a": "Darderi L.", "player_b": "Nakashima B."}
-    assert _selection_label(hcap) == "Darderi -4.5", _selection_label(hcap)
+    assert _selection_label(hcap) == "Darderi +4.5", _selection_label(hcap)
     assert _selection_label({**hcap, "model_selection": "B +4.5"}) \
-        == "Nakashima +4.5"
+        == "Nakashima -4.5"
+
+    # The label is checked against `settle_one`, not against itself. The sign
+    # here is the negation of the stored margin threshold, and the first
+    # version of this printed the threshold raw — every handicap backwards,
+    # favourite shown as underdog, on a message people act on. Anchoring the
+    # test to what actually pays out is what stops that recurring.
+    def _pays(sel: str, diff: int) -> bool:
+        row = pd.Series({"market": "games_handicap", "line": "4.5",
+                         "model_selection": sel, "decimal_odds": "2.00"})
+        return settle_one(row, 20, diff)[0] == "win"
+    # "Darderi +4.5": survives losing by four, dies losing by five.
+    assert _selection_label(hcap).endswith("+4.5")
+    assert _pays("A -4.5", -4) and not _pays("A -4.5", -5)
+    # "Nakashima -4.5": needs the away player to win by five, not four.
+    assert _selection_label({**hcap, "model_selection": "B +4.5"}) \
+        .endswith("-4.5")
+    assert _pays("B +4.5", -5) and not _pays("B +4.5", -4)
     assert _selection_label(
         {"market": "total_games", "model_selection": "over 21.5"}) == "o21.5"
     assert _selection_label(
