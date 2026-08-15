@@ -2,3 +2,12 @@ ATP match data (c) TennisMyLife, https://stats.tennismylife.org
 License: MIT. Live source; GitHub mirror (Tennismylife/TML-Database) lags
 and is not used. Vendored via the site's /api/download-all endpoint,
 retrieved 2026-07-13. See data/PROVENANCE.md.
+
+The 2026 season files were refreshed on 2026-08-15 from
+https://stats.tennismylife.org/data/{2026,2026_challenger}.csv — the same
+source, per-season rather than the whole archive. ATP now runs to 2026-08-14
+and Challenger to 2026-08-03, up from 07-12 and 07-20. Overlapping rows were
+compared before the swap: upstream corrected 31 `loser_seed` values and one
+`score`, and changed nothing else. The rest of that diff is formatting — the
+previous copy had been round-tripped through pandas, so integers carried a
+`.0`.
