@@ -58,9 +58,19 @@ from scripts.odds_portal_table import _rows
 
 # --- decided, not tunable ---------------------------------------------------
 BANKROLL_START = 100.0
-FLAT_STAKE = 2.0
+# Kelly only, from run 2 (2026-08-15). Flat staking is off rather than removed:
+# the ledger columns stay so run 1's rows still parse, but every new row carries
+# 0.0 flat and a 0.0 flat PnL. Reading `flat_roi` across the two runs would be
+# comparing a staking rule against its own absence.
+FLAT_STAKE = 0.0
 KELLY_SCALE = 0.5          # half-Kelly
-KELLY_CAP = 5.0            # hard cap, units, per bet
+KELLY_CAP = 1.0            # hard cap, units, per bet
+#: Minimum raw-price edge for a bet. Measured against the RAW price, the same
+#: quantity `pick_bets` ranks on — see the note there on why not the de-vigged
+#: one. Run 1 staked every positive edge and filled the ledger with sub-1%
+#: opinions the harness cannot resolve in a fortnight; this is the floor asked
+#: for on 2026-08-15.
+MIN_EDGE = 0.02
 MARKETS = ("total_games", "games_handicap")
 RUN_DAYS = 14
 
@@ -717,7 +727,7 @@ def pick_bets(priced, quote_frame: pd.DataFrame) -> list[dict]:
             if not MIN_MODEL_P <= sel.probability <= MAX_MODEL_P:
                 continue
             edge_raw = sel.probability - 1.0 / row.decimal_odds
-            if edge_raw <= 0:
+            if edge_raw < MIN_EDGE:
                 continue
             if edge_raw > ABSURD_EDGE:
                 print(f"  FLAG absurd edge {edge_raw:+.1%} on {market} "
@@ -1032,8 +1042,13 @@ def model_fingerprint() -> dict:
                         ("calibration_maps", MODEL_MAPS)):
         out[label] = (hashlib.sha256(path.read_bytes()).hexdigest()[:16]
                       if path.exists() else "absent")
+    # MIN_EDGE is part of the staking rule, not a detail: it decides which
+    # bets exist at all, so a ledger written under a different floor is not
+    # the same experiment. Omitting it here would let that change slip past
+    # `check_unchanged` silently, which is the one thing this hash is for.
     out["staking"] = (f"flat={FLAT_STAKE} scale={KELLY_SCALE} "
-                      f"cap={KELLY_CAP} markets={','.join(sorted(MARKETS))}")
+                      f"cap={KELLY_CAP} min_edge={MIN_EDGE} "
+                      f"markets={','.join(sorted(MARKETS))}")
     return out
 
 
@@ -1299,7 +1314,6 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     settled_today = [s for s in settlements
                      if str(s.get("result")) in ("win", "loss", "push")]
     won = sum(1 for s in settled_today if s["result"] == "win")
-    day_flat = sum(float(s["pnl_flat"] or 0) for s in settlements)
     day_kelly = sum(float(s["pnl_kelly"] or 0) for s in settlements)
 
     lines = [f"*Tennis paper trading — day {run_day}/{RUN_DAYS}* "
@@ -1312,12 +1326,9 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         # count from looking like it lost track of a row in the list below.
         voided = len(settlements) - len(settled_today)
         note = f" · {voided} void" if voided else ""
-        lines.append(f"*Yesterday:* {day_flat:+.2f}u flat · "
-                     f"{day_kelly:+.2f}u kelly · "
+        lines.append(f"*Yesterday:* {day_kelly:+.2f}u · "
                      f"{won}/{len(settled_today)} won{note}")
-    lines.append(f"*Running:* {totals['flat_pnl']:+.2f}u flat "
-                 f"({totals['flat_roi']:+.1%}) · "
-                 f"{totals['kelly_pnl']:+.2f}u kelly "
+    lines.append(f"*Running:* {totals['kelly_pnl']:+.2f}u "
                  f"({totals['kelly_roi']:+.1%}) · "
                  f"{totals['n_settled']} settled, {totals['n_open']} open")
     lines.append("")
@@ -1332,7 +1343,7 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 lines.append(
                     f"{mark} {s['player_a']} v {s['player_b']} · "
                     f"{_selection_label(s)} · "
-                    f"{float(s['pnl_flat']):+.2f}u")
+                    f"{float(s['pnl_kelly'] or 0):+.2f}u")
         lines.append("")
 
     if bets:
@@ -1349,8 +1360,7 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                     f"    edge *{b['edge_raw']:+.1%}* "
                     f"(model {b['model_p']:.0%} vs "
                     f"{1 / b['decimal_odds']:.0%}) · "
-                    f"{b['stake_flat']:.0f}u flat / "
-                    f"{b['stake_kelly']:.2f}u kelly{capped}")
+                    f"{b['stake_kelly']:.2f}u{capped}")
     else:
         lines.append("*No bets today.*")
     lines.append("")
@@ -1419,9 +1429,10 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     lines.append("───")
     if totals["n_settled"]:
         lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV on the "
-                     f"settled bets; realised {totals['flat_roi']:+.1%}._")
+                     f"settled bets; realised {totals['kelly_roi']:+.1%}._")
     lines.append(
-        "_14 days on 2 markets is dominated by variance — this cannot show "
+        "_Staking: half-Kelly, 1u cap, bets only above a 2% raw edge. "
+        "14 days on 2 markets is dominated by variance — this cannot show "
         "an edge either way, and flat-to-negative is the expected outcome. "
         "Odds: PointsBet AU only, one book, not comparable to the "
         "Bet365-based 2024 reports. Results: ESPN. Lower is better on Brier, "
@@ -1626,6 +1637,7 @@ def run(today: date, dry_run: bool) -> str:
                                      "flat_stake": FLAT_STAKE,
                                      "kelly_scale": KELLY_SCALE,
                                      "kelly_cap": KELLY_CAP,
+                                     "min_edge": MIN_EDGE,
                                      "markets": list(MARKETS),
                                      "variant": VARIANT,
                                      "fingerprint": model_fingerprint()},
@@ -1748,6 +1760,19 @@ def demo() -> None:
     assert abs(kelly(0.6, 2.0) - 0.2) < 1e-9, kelly(0.6, 2.0)
     assert kelly(0.4, 2.0) == 0.0
     assert min(KELLY_SCALE * kelly(0.99, 10.0) * 100.0, KELLY_CAP) == KELLY_CAP
+
+    # The edge floor. A quote the model likes by less than MIN_EDGE must
+    # produce no bet at all — the failure mode is silent, since a staked
+    # sub-threshold row looks exactly like a legitimate one in the ledger.
+    class _P:
+        def __init__(self, p):
+            self.selections = [PZ.Selection("total_games", "over 21.5", p, 1.0)]
+    qf = pd.DataFrame([{"market": "total_games", "side": "over", "line": "21.5",
+                        "decimal_odds": 2.0, "bookmaker": "x",
+                        "market_p_devig": 0.5}])
+    assert pick_bets(_P(0.5 + MIN_EDGE / 2), qf) == []
+    over = pick_bets(_P(0.5 + MIN_EDGE * 2), qf)
+    assert len(over) == 1 and over[0]["edge_raw"] >= MIN_EDGE, over
 
     assert model_selection("total_games", "over", 21.5) == "over 21.5"
     assert model_selection("games_handicap", "home", -4.5) == "A +4.5"
