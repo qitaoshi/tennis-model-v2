@@ -63,6 +63,29 @@ class EloParams:
     rank_seed_pivot: float = 250.0
 
 
+#: Every field of EloParams that Stage 3 selects and writes to
+#: fitted_params.json. Anything added here is picked up by every consumer at
+#: once — see params_from_fitted.
+SELECTED_FIELDS = ("k", "k_chall_mult", "surface_weight",
+                   "inactivity_half_life", "level_gap", "level_offset",
+                   "rank_seed_scale")
+
+
+def params_from_fitted(s3: dict) -> "EloParams":
+    """Build EloParams from a fitted_params.json ``stage_3`` block.
+
+    Six call sites used to spell this construction out by hand, each listing
+    the fields it knew about. A field added to Stage 3 was therefore silently
+    dropped by all of them — a selected parameter that changes nothing
+    downstream, with nothing raising. ``rank_seed_scale`` was exactly that
+    shape of change, so the construction lives in one place now.
+
+    Missing keys fall back to the EloParams default, which is the pre-Stage-3
+    behaviour, so a params file written before a field existed still loads.
+    """
+    return EloParams(**{f: s3[f] for f in SELECTED_FIELDS if f in s3})
+
+
 def expected_score(ra: float, rb: float) -> float:
     """Standard Elo expectation."""
     return 1.0 / (1.0 + 10.0 ** ((rb - ra) / 400.0))

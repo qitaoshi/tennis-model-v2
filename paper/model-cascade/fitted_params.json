@@ -1,0 +1,141 @@
+{
+ "stage_2": {
+  "half_life_days": 730.0,
+  "surface_pool": 300.0,
+  "shrink_n0": 500.0,
+  "recency": true,
+  "surface_split": true,
+  "opponent_adjust": true,
+  "selected_on": "tune",
+  "tune_logloss": 0.662607869243928,
+  "tune_mae": 0.06595348606572711,
+  "tune_match_logloss": 0.6710618190785423
+ },
+ "stage_3": {
+  "k": 32.0,
+  "k_chall_mult": 1.0,
+  "surface_weight": 0.3,
+  "inactivity_half_life": 1095.0,
+  "level_gap": 0.0,
+  "level_offset": -30.545840977254166,
+  "rank_seed_scale": 160.0,
+  "selected_on": "tune",
+  "tune_logloss": 0.6473766582885764,
+  "tune_brier": 0.2282861231646757,
+  "cross_level": {
+   "n": 2015,
+   "predicted_chall_winrate": 0.4148003208720391,
+   "observed_chall_winrate": 0.3890818858560794,
+   "gap": -0.025718435015959717,
+   "logloss": 0.638310957417612
+  }
+ },
+ "stage_4": {
+  "w": 0.9,
+  "w_both_well": 0.85,
+  "w_one_thin": 0.95,
+  "w_both_thin": 0.9,
+  "thin_n": 1000.0,
+  "w_fitted_on_fit": 0.85,
+  "selected_on": "tune",
+  "tune_logloss": 0.6428784326512693,
+  "disagreement_pp_mean_abs": 11.670614315983666
+ },
+ "stage_5": {
+  "k": 10,
+  "opponent_vs_cohort_n0": 0.0,
+  "thin_n": 1000.0,
+  "well_sampled_n": 3000.0,
+  "snapshot_days": 91,
+  "enabled": true,
+  "selected_on": "tune",
+  "tune_logloss": 0.6387395890281171,
+  "tune_crps": 3.6203380205987044,
+  "baseline_logloss": 0.6390844700837828,
+  "baseline_crps": 3.6272659696171115
+ },
+ "stage_6": {
+  "shrink_n0": 20000.0,
+  "use_indoor": false,
+  "enabled": true,
+  "selected_on": "tune",
+  "median_venue_history": 144.0,
+  "tune_crps_well_measured": 3.8403705694011387,
+  "baseline_crps_well_measured": 3.8418109554213684
+ },
+ "stage_7": {
+  "tiebreak_inflation": -0.02,
+  "split_sigma": 0.08,
+  "level_sigma": 0.0,
+  "recenter": true,
+  "n_mix": 5,
+  "provenance_scheme": "pooled",
+  "inferred_weight": 1.0,
+  "selected_on": "tune",
+  "tune_tb_gap_before": -0.08084168720819784,
+  "tune_tb_gap_after": 7.369300862297701e-05,
+  "tune_pit_dev_before": 0.02836666666666667,
+  "tune_pit_dev_after": 0.008733333333333336,
+  "tune_coverage80_after": 0.8053333333333333
+ },
+ "stage_8": {
+  "families": [
+   "match_winner",
+   "totals_under_high"
+  ],
+  "n_fitted": {
+   "match_winner": 40000,
+   "totals_under_high": 40000
+  },
+  "maps_path": "data/processed/calibration_maps.pkl",
+  "test_ece_before": 0.022135636239339104,
+  "test_ece_after": 0.01709514596123842,
+  "test_window": [
+   "2023-07-03",
+   "2023-11-27"
+  ],
+  "test_touched_once": true,
+  "gate_strictly_passed": false,
+  "shipped_by_human_acceptance": true,
+  "superseded_by": "calibration_refit (2026-08-08)",
+  "superseded_note": "The maps this entry describes (isotonic, families [match_winner, totals_under_high], fitted through 2022-06) are NO LONGER the maps at maps_path. calibration_refit overwrote that pickle with a blended map covering five families, fitted on an 8-year window through 2025-06. The metrics recorded here still describe the original run on the original TEST window and are kept as history, not as a description of what ships."
+ },
+ "calibration_refit": {
+  "method": "platt",
+  "window_years": 5,
+  "selected_on": "TUNE 2024-01-01..2025-06-30",
+  "tune_ece": 0.014790408808702757,
+  "tune_logloss": 0.5361044633477817,
+  "n_fitted": {
+   "totals_under_low": 52000,
+   "totals_under_mid": 78000,
+   "totals_under_high": 52000
+  },
+  "families": [
+   "totals_under_high",
+   "totals_under_low",
+   "totals_under_mid"
+  ],
+  "test_evaluated": true,
+  "test_ece_before": 0.016353122285424637,
+  "test_ece_after": 0.012976965742700818,
+  "test_all_improved": false,
+  "test_gate_verdict": "passed",
+  "test_gate_verdict_basis": "Human decision, 2026-08-12. MODEL_PROMPT.md's Stage 8 gate asks for reliability diagrams before/after on the pre-cutoff TEST set and sets no numeric threshold; that is met. The script's stricter self-imposed boolean 'all families improved on ECE' is False and was NOT treated as the gate. The failure protocol was run and implicates no stage: ledger.overfit_flags() returned empty, so no frozen stage's TUNE gain exceeds its FIT-internal rolling-origin spread by more than the configured multiple.",
+  "test_known_regression": "totals_under_low regressed on TEST: ECE 0.006463 -> 0.012135, roughly double, on n=8,632. It IMPROVED on TUNE (0.0102 -> 0.0072) and reversed out of sample. It was the best-calibrated family on TEST before any map was applied, so the map degraded something that needed no correction -- the same shape of error as the match_winner problem. This is shipped as a known defect, not a resolved one.",
+  "do_not_fix_this_with_test": "Dropping the totals_under_low map now would be a selection made on a TEST result, which the split rules forbid. There is a further contamination point that must not be lost: the TEST answer has now been seen, so ANY rule devised from here that happens to exclude this family is influenced by that knowledge even when justified on TUNE. The structural improvement worth making later -- require a map to beat identity by more than its fold-to-fold spread, not merely to beat it -- must be selected on a window that has not been read, and must not be back-applied to what shipped today.",
+  "first_thing_holdout_should_check": "CORRECTION 2026-08-12: an earlier version of this key claimed HOLDOUT was 'entirely unspent, which is what bounds the risk of accepting this pass'. That is FALSE. constants.PRIOR_EVALUATION_WINDOWS records the HOLDOUT range 2026-01-01..2026-07-20 as read on 2026-08-09 by the holdout backtest and AGAIN on 2026-08-11 for the scoring rescore. It selects nothing and no parameter was fitted against it, but it is not pristine and the risk of accepting the TEST pass is NOT bounded the way that claim asserted. Whether totals_under_low is genuinely broken is best answered by the forward paper run, which is the only uncontaminated evaluation left.",
+  "no_pristine_window_remains": "Every window in the project has now been read: TUNE by selection, TEST once on 2026-08-12, the 2025-07..12 'spent' window on 2026-08-08, and HOLDOUT twice (2026-08-09, 2026-08-11). Vendor data ends 2026-07-20, so no unread range exists to carve. The forward paper run is the only evaluation surface that is genuinely clean, and unlike these it renews daily."
+ },
+ "fatigue": {
+  "rest_days": -0.01164709979964922,
+  "load7": 0.00902246691289101,
+  "is_qualifier": -0.02180651078681072,
+  "enabled": false,
+  "tune_logloss_baseline": 0.6620158873643232,
+  "tune_logloss": 0.6622516532475498,
+  "tune_spw_mae_baseline": 0.05964217459942603,
+  "tune_spw_mae": 0.05964854356148488,
+  "gate_passed": false
+ }
+}

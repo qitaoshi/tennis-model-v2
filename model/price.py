@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from datetime import date
+from pathlib import Path
 from functools import lru_cache
 from typing import Any
 
@@ -100,7 +101,8 @@ class Pricer:
 
     def __init__(self, as_of_date: date, fitted: dict | None = None,
                  allow_holdout: bool = False,
-                 history_parquet: str = "matches.parquet") -> None:
+                 history_parquet: str = "matches.parquet",
+                 maps_path: "Path | None" = None) -> None:
         """``history_parquet`` names the match table to replay history from.
 
         The default stops at the holdout cutoff, which is what every
@@ -108,6 +110,11 @@ class Pricer:
         been played — needs history right up to today, so the paper-trading
         job passes the holdout-inclusive table. It is a source-of-history
         switch, not a change to any fitted parameter or pricing step.
+
+        ``maps_path`` names the calibration maps to apply. It exists so a
+        second model variant can be priced alongside the shipped one without
+        either overwriting the other's files — ``fitted`` already covers the
+        parameters, and the maps are the other half of a model's identity.
         """
         import json
 
@@ -130,11 +137,7 @@ class Pricer:
         self.rate_state = PR.state_at(self.history, self.rate_params)
 
         s3 = self.fitted["stage_3"]
-        self.elo_params = E.EloParams(
-            k=s3["k"], k_chall_mult=s3["k_chall_mult"],
-            surface_weight=s3["surface_weight"],
-            inactivity_half_life=s3["inactivity_half_life"],
-            level_gap=s3["level_gap"], level_offset=s3["level_offset"])
+        self.elo_params = E.params_from_fitted(s3)
         self.elo_state = E.ratings_at(self.history, self.elo_params)
 
         s4 = self.fitted["stage_4"]
@@ -175,7 +178,8 @@ class Pricer:
         self.corrections_applied = bool(s7)
 
         try:
-            self.maps = RC.CalibrationMaps.load()
+            self.maps = (RC.CalibrationMaps.load(maps_path) if maps_path
+                         else RC.CalibrationMaps.load())
         except (FileNotFoundError, OSError):
             self.maps = None
 

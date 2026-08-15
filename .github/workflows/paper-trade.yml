@@ -29,6 +29,14 @@ on:
         description: "Run the full path without writing the ledger or posting"
         type: boolean
         default: false
+      preview:
+        # Re-posts the last committed day from the ledger. Prices nothing and
+        # writes nothing, so it does not count as a second writer under the
+        # "run one or the other, never both" rule in deploy/routine_prompt.md
+        # — which is what makes it safe to fire mid-run just to read the post.
+        description: "Re-post the latest day's summary to check formatting"
+        type: boolean
+        default: false
 
 # The ledger is append-only and committed back to this repo. Two runs writing
 # at once would race on that commit.
@@ -78,14 +86,22 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ inputs.preview }}" = "true" ]; then
+            python -m scripts.paper_trade --preview
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
             python -m scripts.paper_trade --dry-run
+            python -m scripts.paper_trade --dry-run --variant cascade
           else
+            # Both variants, same fixtures, separate ledgers. The incumbent
+            # runs first: a day with cascade rows and no incumbent rows is
+            # worse than a day with neither, so a failure in the first must
+            # stop the second. `set -e` is on by default, which gives that.
             python -m scripts.paper_trade
+            python -m scripts.paper_trade --variant cascade
           fi
 
       - name: Commit the ledger
-        if: ${{ inputs.dry_run != true }}
+        if: ${{ inputs.dry_run != true && inputs.preview != true }}
         run: |
           if [ -z "$(git status --porcelain paper/)" ]; then
             echo "no ledger change today"

@@ -3,7 +3,9 @@
 Paste this as the Instructions of a cloud routine at
 https://claude.ai/code/routines. It is the alternative to
 `.github/workflows/paper-trade.yml` — run one or the other, never both, or the
-ledger gets two rows for the same pick.
+ledger gets two rows for the same pick. (That rule is about the two DEPLOYMENT
+paths. It is not about the two model variants in step 2, which write separate
+ledgers and are both meant to run every day.)
 
 Environment: variables `SLACK_BOT_TOKEN` and `SLACK_CHANNEL`. Remove every
 connector — this routine needs none.
@@ -55,13 +57,28 @@ unclear.
    known final score. The live path uses PointsBet, and
    `fetch_pointsbet --self-check` is what covers the parsing of that source.
 
-2. Run the job:
+2. Run the job, both variants, in this order:
 
        /root/venv/bin/python -m scripts.paper_trade
+       /root/venv/bin/python -m scripts.paper_trade --variant cascade
 
    The script scrapes fixtures, settles yesterday's open positions, prices
-   today's, sizes both staking schemes, appends to `paper/ledger.csv` and
-   posts its own summary to Slack.
+   today's, sizes both staking schemes, appends to its ledger and posts its
+   own summary to Slack.
+
+   The two runs price the SAME fixtures under two different models. The
+   default variant is the incumbent and writes `paper/ledger.csv`; the
+   cascade variant writes `paper/ledger-cascade.csv` and reads its model from
+   `paper/model-cascade/`. Neither touches the other's ledger or run state.
+
+   Run BOTH every day, or the comparison is broken: a day the cascade misses
+   is a day the two ledgers no longer cover the same fixtures, and the
+   difference between them stops being the model. If the second command
+   fails, say so explicitly in Slack — do not quietly ship a day of
+   incumbent-only rows as though nothing were missing.
+
+   If the first command fails, do not run the second. A day with cascade rows
+   and no incumbent rows is worse than a day with neither.
 
 3. Resolve names, so the same fixture is not skipped again tomorrow.
 
@@ -119,6 +136,7 @@ unclear.
    Flag it; do not correct it.
 
 5. Commit `paper/ledger.csv`, `paper/run_state.json`,
+   `paper/ledger-cascade.csv`, `paper/run_state-cascade.json`,
    `paper/player_aliases.json`, `paper/tournament_aliases.json` and
    `paper/unresolved_names.json` to the
    default branch, message "paper trading: <today's date in YYYY-MM-DD>".

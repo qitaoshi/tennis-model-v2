@@ -67,6 +67,67 @@ RUN_DAYS = 14
 PAPER_DIR = C.REPO_ROOT / "paper"
 LEDGER = PAPER_DIR / "ledger.csv"
 STATE = PAPER_DIR / "run_state.json"
+
+# --------------------------------------------------------------------------
+# Model variants
+# --------------------------------------------------------------------------
+# A variant is a (parameters, calibration maps) pair with its own ledger and
+# its own run state. Two of them run over the SAME fixtures and the SAME
+# quotes on the same day, so the only thing that differs between the ledgers
+# is the model — which is what makes them comparable at all.
+#
+# Why this exists: every historical window in this project has been read, so
+# the cascade refit on `claude/tennis-calibration-validation-la21r5` can only
+# be judged on matches nobody has seen. Switching the live run onto it would
+# have thrown away the run already in flight and restarted the clock; running
+# both keeps the incumbent's record intact and starts the challenger's beside
+# it. See reports/cascade_confirmation_theirs.md for what is being tested.
+#
+# The primary variant's paths are the originals, so its fingerprint does not
+# move and its ledger is appended to exactly as before.
+VARIANTS = {
+    "primary": {
+        "params": C.FITTED_PARAMS_PATH,
+        "maps": RC.MAPS_PATH,
+        "ledger": PAPER_DIR / "ledger.csv",
+        "state": PAPER_DIR / "run_state.json",
+        "label": "incumbent",
+    },
+    "cascade": {
+        "params": PAPER_DIR / "model-cascade" / "fitted_params.json",
+        "maps": PAPER_DIR / "model-cascade" / "calibration_maps.pkl",
+        "ledger": PAPER_DIR / "ledger-cascade.csv",
+        "state": PAPER_DIR / "run_state-cascade.json",
+        "label": "cascade",
+    },
+}
+
+#: Which variant this process is running. Set once by select_variant() before
+#: any work happens; never read before that.
+VARIANT = "primary"
+MODEL_PARAMS = VARIANTS["primary"]["params"]
+MODEL_MAPS = VARIANTS["primary"]["maps"]
+
+
+def select_variant(name: str) -> None:
+    """Point the module's ledger, state and model files at one variant.
+
+    Rebinding module globals rather than threading a config object through
+    thirty call sites: the variant is fixed for the whole process and every
+    one of those sites wants the same answer.
+    """
+    global VARIANT, LEDGER, STATE, MODEL_PARAMS, MODEL_MAPS
+    if name not in VARIANTS:
+        raise SystemExit(f"unknown variant {name!r}; "
+                         f"expected one of {sorted(VARIANTS)}")
+    v = VARIANTS[name]
+    VARIANT = name
+    LEDGER, STATE = v["ledger"], v["state"]
+    MODEL_PARAMS, MODEL_MAPS = v["params"], v["maps"]
+    if not MODEL_PARAMS.exists() or not MODEL_MAPS.exists():
+        raise SystemExit(
+            f"variant {name!r} is missing its model files: "
+            f"{MODEL_PARAMS} / {MODEL_MAPS}")
 # Curated OddsPortal display name -> model player id. Reviewed and committed,
 # so every entry is visible in a diff. Only ever affects FUTURE picks: a past
 # ledger row is never revisited because a name was resolved later.
@@ -967,8 +1028,8 @@ def model_fingerprint() -> dict:
     would look different.
     """
     out = {}
-    for label, path in (("fitted_params", C.FITTED_PARAMS_PATH),
-                        ("calibration_maps", RC.MAPS_PATH)):
+    for label, path in (("fitted_params", MODEL_PARAMS),
+                        ("calibration_maps", MODEL_MAPS)):
         out[label] = (hashlib.sha256(path.read_bytes()).hexdigest()[:16]
                       if path.exists() else "absent")
     out["staking"] = (f"flat={FLAT_STAKE} scale={KELLY_SCALE} "
@@ -1185,6 +1246,45 @@ def _market_label(market: object) -> str:
         str(market), str(market))
 
 
+def _last_name(name: object) -> str:
+    """`Davidovich Fokina A.` -> `Davidovich Fokina`. Feed names, not ids."""
+    parts = str(name).split()
+    if len(parts) > 1 and parts[-1].endswith(".") and len(parts[-1]) <= 2:
+        parts = parts[:-1]
+    return " ".join(parts) or str(name)
+
+
+def _selection_label(row: dict) -> str:
+    """The bet as a human would say it.
+
+    Handicaps read as `Sinner -4.5`: the sign comes straight off
+    `model_selection`, which is the one place the book's home-quoted line has
+    already been flipped to the bettor's side. Deriving it again here would be
+    a second convention to keep in step with that one.
+
+    Totals read as `o24.5` / `u24.5`. The market name is dropped with the word
+    — an o/u prefix on a games line is not mistakable for anything else.
+    """
+    sel = str(row["model_selection"])
+    if str(row["market"]) == "total_games":
+        side, _, line = sel.partition(" ")
+        short = {"over": "o", "under": "u"}.get(side)
+        return f"{short}{line}" if short else f"{_market_label('total_games')} {sel}"
+    if str(row["market"]) != "games_handicap":
+        return f"{_market_label(row['market'])} {sel}"
+    who, _, hcap = sel.partition(" ")
+    player = row["player_a"] if who == "A" else row["player_b"]
+    return f"{_last_name(player)} {hcap}"
+
+
+def _by_tournament(rows: list[dict]) -> dict[str, list[dict]]:
+    """Group rows under their tournament, first-seen order."""
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        out.setdefault(str(r.get("tournament") or "—"), []).append(r)
+    return out
+
+
 def summary(day: date, bets: list[dict], settlements: list[dict],
             skips: dict[str, list[str]], totals: dict, run_day: int,
             board: list[dict] | None = None,
@@ -1224,48 +1324,47 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
 
     if settlements:
         lines.append(f"*Settled ({len(settlements)})*")
-        for s in settlements:
-            mark = {"win": "✅", "loss": "❌", "push": "➖",
-                    "void": "⬜"}.get(str(s["result"]), "•")
-            lines.append(
-                f"{mark} {s['player_a']} v {s['player_b']} · "
-                f"{_market_label(s['market'])} {s['book_side']} {s['line']} · "
-                f"{float(s['pnl_flat']):+.2f}u")
+        for tourney, rows in _by_tournament(settlements).items():
+            lines.append(f"_{tourney}_")
+            for s in rows:
+                mark = {"win": "✅", "loss": "❌", "push": "➖",
+                        "void": "⬜"}.get(str(s["result"]), "•")
+                lines.append(
+                    f"{mark} {s['player_a']} v {s['player_b']} · "
+                    f"{_selection_label(s)} · "
+                    f"{float(s['pnl_flat']):+.2f}u")
         lines.append("")
 
     if bets:
         lines.append(f"*New bets ({len(bets)})*")
-        for b in bets:
-            capped = " _(capped)_" if b["stake_kelly"] >= KELLY_CAP else ""
-            lines.append(
-                f"• {b['player_a']} v {b['player_b']} · "
-                f"{_market_label(b['market'])} {b['book_side']} {b['line']} "
-                f"@ {b['decimal_odds']:.2f}")
-            lines.append(
-                f"    edge *{b['edge_raw']:+.1%}* "
-                f"(model {b['model_p']:.0%} vs {1 / b['decimal_odds']:.0%}) · "
-                f"{b['stake_flat']:.0f}u flat / "
-                f"{b['stake_kelly']:.2f}u kelly{capped}")
+        for tourney, rows in _by_tournament(bets).items():
+            lines.append(f"_{tourney}_")
+            for b in rows:
+                capped = " _(capped)_" if b["stake_kelly"] >= KELLY_CAP else ""
+                lines.append(
+                    f"• {b['player_a']} v {b['player_b']} · "
+                    f"{_selection_label(b)} "
+                    f"@ {b['decimal_odds']:.2f}")
+                lines.append(
+                    f"    edge *{b['edge_raw']:+.1%}* "
+                    f"(model {b['model_p']:.0%} vs "
+                    f"{1 / b['decimal_odds']:.0%}) · "
+                    f"{b['stake_flat']:.0f}u flat / "
+                    f"{b['stake_kelly']:.2f}u kelly{capped}")
     else:
         lines.append("*No bets today.*")
     lines.append("")
 
-    # Every match priced, bet or not. This is the calibration denominator, so
-    # it is reported as a count with the detail folded to one line per match —
-    # the per-line breakdown lives in the ledger, which is the durable record.
+    # Every match priced, bet or not, is still WRITTEN to the ledger as a board
+    # row and still scored — that is the calibration denominator and it has not
+    # changed. Only the Slack rendering is gone, by request: the post lists
+    # positions taken, not everything looked at. Read `reports`/the ledger for
+    # the full board.
     if board:
-        word = "match" if len(board) == 1 else "matches"
-        lines.append(f"*Board — {len(board)} {word} priced*")
-        for m in board:
-            if not m["lines"]:
-                continue
-            # The lines shown are the ones nearest the model's own median, not
-            # the ones it likes best — saying "best" here would advertise the
-            # edge-selected view the scoring deliberately stopped using.
-            shown = " · ".join(
-                f"{_market_label(x['market'])} {x['side']} {x['line']} "
-                f"{x['edge']:+.1%}" for x in m["lines"])
-            lines.append(f"• {m['label']} · {shown}")
+        priced_n = sum(1 for m in board if m["lines"])
+        word = "match" if priced_n == 1 else "matches"
+        lines.append(f"_{priced_n} {word} priced and scored; "
+                     f"board detail in the ledger._")
         lines.append("")
 
     if closes:
@@ -1370,7 +1469,9 @@ def run(today: date, dry_run: bool) -> str:
 
     ref = Reference.build(today)
     pricer = PZ.Pricer(today, allow_holdout=True,
-                       history_parquet="matches_with_holdout.parquet")
+                       history_parquet="matches_with_holdout.parquet",
+                       fitted=json.loads(MODEL_PARAMS.read_text()),
+                       maps_path=MODEL_MAPS)
 
     skips: dict[str, list[str]] = {}
     unresolved: dict[str, dict] = {}
@@ -1526,6 +1627,7 @@ def run(today: date, dry_run: bool) -> str:
                                      "kelly_scale": KELLY_SCALE,
                                      "kelly_cap": KELLY_CAP,
                                      "markets": list(MARKETS),
+                                     "variant": VARIANT,
                                      "fingerprint": model_fingerprint()},
                                     indent=2))
     return text
@@ -1579,7 +1681,9 @@ def rehearse() -> None:
     book = "bet365" if "bet365" in books.index else books.index[0]
     q = q[q["bookmaker"] == book]
 
-    priced = PZ.Pricer(as_of).price(id_a, id_b, code, played.year, surface)
+    priced = PZ.Pricer(as_of, fitted=json.loads(MODEL_PARAMS.read_text()),
+                       maps_path=MODEL_MAPS).price(
+        id_a, id_b, code, played.year, surface)
     best_of = priced.metadata["format"]["best_of"]
     bets = pick_bets(priced, q)
     print(f"  {len(bets)} bet(s) at {book}, best_of {best_of}")
@@ -1648,6 +1752,30 @@ def demo() -> None:
     assert model_selection("total_games", "over", 21.5) == "over 21.5"
     assert model_selection("games_handicap", "home", -4.5) == "A +4.5"
     assert model_selection("games_handicap", "away", -4.5) == "B -4.5"
+
+    # Slack labels. The handicap must name the player the stake is on and carry
+    # the sign from `model_selection`, not from the book's home-quoted line —
+    # naming the wrong player is the failure that would read as a real bet.
+    hcap = {"market": "games_handicap", "model_selection": "A -4.5",
+            "player_a": "Darderi L.", "player_b": "Nakashima B."}
+    assert _selection_label(hcap) == "Darderi -4.5", _selection_label(hcap)
+    assert _selection_label({**hcap, "model_selection": "B +4.5"}) \
+        == "Nakashima +4.5"
+    assert _selection_label(
+        {"market": "total_games", "model_selection": "over 21.5"}) == "o21.5"
+    assert _selection_label(
+        {"market": "total_games", "model_selection": "under 24.5"}) == "u24.5"
+    # An unrecognised side must stay legible rather than render as a bare line.
+    assert _selection_label(
+        {"market": "total_games", "model_selection": "sideways 9"}
+    ) == "games sideways 9"
+    assert _last_name("Davidovich Fokina A.") == "Davidovich Fokina"
+    assert _last_name("Alcaraz C.") == "Alcaraz"
+    grouped = _by_tournament([{"tournament": "ATP Cincinnati"},
+                              {"tournament": "ATP Montreal"},
+                              {"tournament": "ATP Cincinnati"}])
+    assert list(grouped) == ["ATP Cincinnati", "ATP Montreal"], list(grouped)
+    assert len(grouped["ATP Cincinnati"]) == 2
 
     row = pd.Series({"market": "total_games", "line": "21.5",
                      "model_selection": "over 21.5", "decimal_odds": "1.90"})
@@ -1892,6 +2020,46 @@ def demo() -> None:
     print("paper_trade self-check passed")
 
 
+def preview(dry_run: bool) -> str:
+    """Re-render the most recent day's Slack post from the ledger alone.
+
+    For checking how the post READS. It prices nothing, fetches nothing and
+    writes nothing — it re-reads rows already committed, so it is safe to run
+    against a live run and cannot produce the duplicate ledger rows that
+    `deploy/routine_prompt.md` forbids. `--dry-run` prints instead of posting.
+    """
+    ledger = _load_ledger()
+    picks = ledger[ledger["row_type"] == "pick"]
+    if picks.empty:
+        raise SystemExit("no pick rows in the ledger; nothing to preview")
+
+    day = str(picks["run_date"].max())
+    bets = picks[picks["run_date"] == day].to_dict("records")
+    for b in bets:
+        for k in ("decimal_odds", "model_p", "edge_raw",
+                  "stake_flat", "stake_kelly"):
+            b[k] = float(b[k] or 0)
+
+    settled = ledger[ledger["row_type"] == "settle"]
+    settlements = ([] if settled.empty else
+                   settled[settled["run_date"]
+                           == settled["run_date"].max()].to_dict("records"))
+
+    board = ledger[(ledger["row_type"] == "board")
+                   & (ledger["run_date"] == day)]
+    state = json.loads(STATE.read_text()) if STATE.exists() else {}
+    start = state.get("start_date", day)
+    run_day = (date.fromisoformat(day) - date.fromisoformat(start)).days + 1
+
+    text = summary(
+        date.fromisoformat(day), bets, settlements, {}, pnl(ledger), run_day,
+        [{"label": k, "lines": [1]} for k in board["match_key"].unique()],
+        calibration_scores(ledger))
+    text = f":test_tube: *Format preview — a drill, not today's run*\n{text}"
+    post_slack(text, dry_run)
+    return text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
@@ -1904,9 +2072,19 @@ def main() -> None:
     parser.add_argument("--rehearse", action="store_true",
                         help="drive the whole chain on a cached historic "
                              "match; writes nothing, posts nothing")
+    parser.add_argument("--preview", action="store_true",
+                        help="re-post the latest day's summary from the "
+                             "ledger to check formatting; writes nothing")
+    parser.add_argument("--variant", default="primary", choices=sorted(VARIANTS),
+                        help="which model to price with, and therefore which "
+                             "ledger to write (default: primary)")
     args = parser.parse_args()
+    select_variant(args.variant)
     if args.self_check:
         demo()
+        return
+    if args.preview:
+        print(preview(args.dry_run))
         return
     if args.rehearse:
         rehearse()
