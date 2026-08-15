@@ -57,12 +57,17 @@ from scripts.multi_market_clv import _keys
 from scripts.odds_portal_table import _rows
 
 # --- decided, not tunable ---------------------------------------------------
-BANKROLL_START = 100.0
-# Kelly only, from run 2 (2026-08-15). Flat staking is off rather than removed:
-# the ledger columns stay so run 1's rows still parse, but every new row carries
-# 0.0 flat and a 0.0 flat PnL. Reading `flat_roi` across the two runs would be
-# comparing a staking rule against its own absence.
-FLAT_STAKE = 0.0
+# Sized so the Kelly cap binds sometimes rather than always. Half-Kelly on a
+# 4% edge stakes ~0.5u here and an 8% edge reaches the 1u cap; against the
+# previous 100u every bet clearing the 2% floor exceeded 1u, so `stake_kelly`
+# was a byte-for-byte copy of `stake_flat` and tracking both recorded the same
+# number twice. This is a scale for the Kelly fraction, not money at risk.
+BANKROLL_START = 25.0
+# Both staking rules are tracked, on the same bets: flat weights every bet
+# equally, which is what the projection-accuracy goal wants, while Kelly weights
+# by the model's own confidence. Neither is the objective — they answer
+# different questions about the same picks.
+FLAT_STAKE = 1.0
 KELLY_SCALE = 0.5          # half-Kelly
 KELLY_CAP = 1.0            # hard cap, units, per bet
 #: Minimum raw-price edge for a bet. Measured against the RAW price, the same
@@ -1328,11 +1333,15 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
         # Voids are excluded from the won/played count on purpose — the stake
         # came back, so there was no wager to win. Naming them keeps that
         # count from looking like it lost track of a row in the list below.
+        day_flat = sum(float(s["pnl_flat"] or 0) for s in settlements)
         voided = len(settlements) - len(settled_today)
         note = f" · {voided} void" if voided else ""
-        lines.append(f"*Yesterday:* {day_kelly:+.2f}u · "
+        lines.append(f"*Yesterday:* {day_flat:+.2f}u flat · "
+                     f"{day_kelly:+.2f}u kelly · "
                      f"{won}/{len(settled_today)} won{note}")
-    lines.append(f"*Running:* {totals['kelly_pnl']:+.2f}u "
+    lines.append(f"*Running:* {totals['flat_pnl']:+.2f}u flat "
+                 f"({totals['flat_roi']:+.1%}) · "
+                 f"{totals['kelly_pnl']:+.2f}u kelly "
                  f"({totals['kelly_roi']:+.1%}) · "
                  f"{totals['n_settled']} settled, {totals['n_open']} open")
     lines.append("")
@@ -1347,7 +1356,8 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 lines.append(
                     f"{mark} {s['player_a']} v {s['player_b']} · "
                     f"{_selection_label(s)} · "
-                    f"{float(s['pnl_kelly'] or 0):+.2f}u")
+                    f"{float(s['pnl_flat'] or 0):+.2f}u flat / "
+                    f"{float(s['pnl_kelly'] or 0):+.2f}u kelly")
         lines.append("")
 
     if bets:
@@ -1364,7 +1374,8 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                     f"    edge *{b['edge_raw']:+.1%}* "
                     f"(model {b['model_p']:.0%} vs "
                     f"{1 / b['decimal_odds']:.0%}) · "
-                    f"{b['stake_kelly']:.2f}u{capped}")
+                    f"{b['stake_flat']:.2f}u flat / "
+                    f"{b['stake_kelly']:.2f}u kelly{capped}")
     else:
         lines.append("*No bets today.*")
     lines.append("")
@@ -1433,9 +1444,11 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     lines.append("───")
     if totals["n_settled"]:
         lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV on the "
-                     f"settled bets; realised {totals['kelly_roi']:+.1%}._")
+                     f"settled bets; realised {totals['flat_roi']:+.1%} flat, "
+                     f"{totals['kelly_roi']:+.1%} kelly._")
     lines.append(
-        "_Staking: half-Kelly, 1u cap, bets only above a 2% raw edge. "
+        "_Staking: 1u flat and half-Kelly capped at 1u on a 25u bankroll, "
+        "tracked side by side; bets only above a 2% raw edge. "
         "14 days on 2 markets is dominated by variance — this cannot show "
         "an edge either way, and flat-to-negative is the expected outcome. "
         "Odds: PointsBet AU only, one book, not comparable to the "
@@ -1975,8 +1988,10 @@ def demo() -> None:
 
     totals = pnl(book)
     assert totals["n_settled"] == 2 and totals["n_open"] == 0, totals
-    assert abs(totals["flat_bankroll"] - 101.8) < 1e-9, totals
-    assert abs(totals["kelly_bankroll"] - 102.7) < 1e-9, totals
+    # Relative to BANKROLL_START so the check follows the constant rather
+    # than pinning a number that changes whenever the scale is retuned.
+    assert abs(totals["flat_bankroll"] - (BANKROLL_START + 1.8)) < 1e-9, totals
+    assert abs(totals["kelly_bankroll"] - (BANKROLL_START + 2.7)) < 1e-9, totals
     # ROI is over the one resolved bet, not the void: 1.8/2, not 1.8/4. The
     # void's absurd 99% edge must not reach EV either — it would be the
     # loudest number in the Slack post and it would be meaningless.
