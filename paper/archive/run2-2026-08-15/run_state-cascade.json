@@ -1,5 +1,5 @@
 {
-  "start_date": "2026-08-19",
+  "start_date": "2026-08-15",
   "run_days": 14,
   "bankroll_start": 25.0,
   "flat_stake": 1.0,
@@ -15,5 +15,7 @@
     "fitted_params": "a96b5f5259e9333a",
     "calibration_maps": "a4a086a5078e92f4",
     "staking": "flat=1.0 scale=0.5 cap=1.0 min_edge=0.02 markets=games_handicap,total_games"
-  }
+  },
+  "restated_on": "2026-08-16",
+  "restated_why": "Flat staking restored alongside Kelly and the Kelly scale moved to a 25u bankroll so the 1u cap stops binding on every bet. Day-1 picks were recomputed from kelly_full before anything settled; no result informed the change."
 }
