@@ -24,21 +24,53 @@ headless-Chromium connection from the routine's datacentre IP
 fetch_pointsbet.py` replaced it. If you restore the OddsPortal path, restore
 full network access with it.
 
-Setup script — no Playwright, no `oddsharvester`, no standalone interpreter:
+Setup script — no Playwright, no `oddsharvester`, no standalone interpreter.
+It installs from `requirements.txt` and never names a package inline, because
+a hand-written copy of the list is exactly what drifted before (see below):
 
     pip install uv
     uv venv /root/venv
-    uv pip install --python /root/venv/bin/python pandas numpy pyarrow scipy \
-        scikit-learn beautifulsoup4 lxml tabulate
+    uv pip install --python /root/venv/bin/python -r requirements.txt
     /root/venv/bin/python -c "import sklearn, pandas; print('deps ok')"
 
+**Re-paste this setup script whenever `requirements.txt` gains a dependency
+that the deployed one cannot satisfy.** The `import sklearn` line is not
+decoration: on 2026-08-19 the deployed routine was still running a setup script
+from 2026-08-10 14:06 that installed Playwright and `oddsharvester` and no
+scikit-learn, so `model/recalibrate.py` failed at import and the day was lost.
+Installing from `requirements.txt` means the list can no longer drift; it does
+not help if the setup script itself is never re-pasted.
+
+Everything below the line is the prompt. Paste it whole, version line included.
+
 ---
+
+PROMPT VERSION: 2026-08-19
 
 Run today's tennis paper-trading job in this repository.
 
 This is a PAPER measurement. Nothing you do places a real bet, and no code
 here can. Read `reports/paper_trading_setup.md` first if anything below is
 unclear.
+
+0. Check you are not running a stale copy of these instructions. Read the
+   `PROMPT VERSION` line near the top of `deploy/routine_prompt.md` in the
+   repository and compare it to the one above.
+
+   If they differ, the prompt pasted into this routine is older than the
+   repository's. STOP. Post to Slack that the deployed routine prompt is
+   stale, quoting both versions, and run nothing else — not even step 1.
+
+   This is not a formality. A stale prompt does not fail loudly; it quietly
+   does an older job. From 2026-08-16 to 2026-08-18 the deployed prompt
+   predated the cascade variant, so every day ran the incumbent alone and
+   `paper/ledger-cascade.csv` stopped tracking the same fixtures, while every
+   Slack summary and every watchdog check reported a healthy day. Three days
+   of the paired comparison were lost before anyone looked.
+
+   Re-paste from `deploy/routine_prompt.md` to fix it. Re-paste the setup
+   script at the same time — the two drift together, and the same incident
+   left the environment without `scikit-learn`.
 
 1. Verify before trusting the run with money:
 

@@ -1,0 +1,37 @@
+# Runtime dependencies for the pricer and the paper-trading job.
+#
+# This file exists because the dependency list used to be written out twice —
+# once in .github/workflows/paper-trade.yml and once in the setup script
+# pasted into the cloud routine at claude.ai/code/routines — and the two
+# drifted. scikit-learn was added to the workflow and to deploy/
+# routine_prompt.md on 2026-08-10 but never reached the deployed routine, so
+# `model/recalibrate.py`'s `from sklearn.isotonic import IsotonicRegression`
+# failed at import and the 2026-08-19 run could not start. Both consumers now
+# install from here, so a dependency can only be added in one place.
+#
+# Versions are pinned, not floored. A fourteen-day forward run is supposed to
+# price every day with the same model, and an unpinned minor bump mid-run is a
+# silent parameter change.
+#
+# scikit-learn is the pin that matters most: data/processed/calibration_maps.pkl
+# and paper/model-cascade/calibration_maps.pkl are pickled IsotonicRegression
+# estimators, and unpickling those across an sklearn version boundary is not
+# guaranteed to work or to warn. Verified loading under 1.9.0 by
+# `paper_trade --self-check` and `--rehearse`, both variants, on 2026-08-19.
+numpy==2.5.2
+pandas==3.0.5
+scipy==1.18.0
+scikit-learn==1.9.0
+pyarrow==25.0.1
+beautifulsoup4==4.15.0
+lxml==6.1.1
+tabulate==0.10.0
+
+# Deliberately absent: playwright and oddsharvester. They were needed by the
+# OddsPortal scrape, which Cloudflare blocked on 2026-08-10 and which
+# scripts/fetch_pointsbet.py replaced. Both odds and results are now plain
+# JSON over urllib. Reinstate them only alongside the OddsPortal path itself.
+#
+# Also absent: anything for .github/workflows/paper-trade-watchdog.yml. The
+# watchdog is stdlib-only on purpose, so it can still report a day that went
+# missing *because* these dependencies failed to install.

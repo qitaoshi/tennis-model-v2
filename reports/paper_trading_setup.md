@@ -363,6 +363,63 @@ the same OddsPortal page and reports which of block / challenge / success it
 got. Even a green result is not on its own a reason to move pricing back — a
 source that can begin challenging mid-run is what cost day 1.
 
+## What broke on 2026-08-19: the deployed routine drifted from the repo
+
+The routine at claude.ai/code/routines holds its own copy of two things — the
+prompt and the setup script — and neither updates when this repository does.
+Both copies were stale, and the two failures they caused are different in kind.
+
+**The loud one.** The 2026-08-19 run died before pricing anything:
+`model/recalibrate.py` does `from sklearn.isotonic import IsotonicRegression`,
+and scikit-learn was not installed. The environment's `/root/venv` carried
+Playwright and `oddsharvester` and no scikit-learn — which is not any current
+recipe, but is exactly the setup script from commit `d93b926` (2026-08-10
+14:06), superseded 34 minutes later by `dcc356d` ("sandbox needs sklearn") and
+again by `d96beed` when PointsBet replaced the OddsPortal scrape. The deployed
+setup script had been frozen at the 14:06 version ever since. This failure was
+at least honest: nothing ran, nothing was written, and the day was reported.
+
+**The quiet one, which is worse.** The deployed *prompt* was frozen at roughly
+the same date — it used bare `python`, described OddsPortal and Cloudflare in
+its failure handling, and had no `--variant cascade` step. The cascade variant
+was added on 2026-08-15. So on 08-16 and 08-17 the routine ran, priced, posted
+a summary and committed — the incumbent only. `paper/ledger-cascade.csv` still
+ends at 2026-08-15 with 43 rows while `paper/ledger.csv` has 08-16 and 08-17.
+
+Three days of the paired comparison are gone and cannot be reconstructed: a
+pick has to be timestamped before its match. What makes this the more serious
+failure is that **every alarm reported those days healthy.** The watchdog read
+`paper/ledger.csv`, found rows, and said so. The routine's own Slack summary
+described a normal day, because from inside the incumbent run it was one.
+
+The repo now defends against both:
+
+- **`requirements.txt` is the only dependency list.** The workflow and the
+  routine's setup script both install from it. The list can no longer drift;
+  a setup script that is never re-pasted still can, which is why the prompt
+  now says so in bold next to it.
+- **The watchdog checks every variant**, discovered by globbing
+  `paper/run_state*.json` rather than hardcoding the incumbent, so a variant
+  added later is covered from its first state file. A day where some variants
+  wrote and others did not now alerts as **PARTIAL** with its own message,
+  pointing at the deployed prompt rather than at the schedule — a partial day
+  means the routine fired and did part of its job, which is a different bug
+  from a routine that never fired. Replayed against the real ledgers, it
+  flags 08-16 and 08-17 and names `cascade`; the old check passed both.
+- **The prompt carries a `PROMPT VERSION` line**, and its step 0 compares that
+  line against `deploy/routine_prompt.md` in the repo and stops if they
+  differ. The deployed copy cannot know it is old; it can be told to look.
+
+The versions are pinned in `requirements.txt` rather than floored, for a
+reason beyond tidiness: both `calibration_maps.pkl` files are pickled
+`IsotonicRegression` estimators, and unpickling across an sklearn version
+boundary is not guaranteed to work or to warn. Verified under scikit-learn
+1.9.0 — all four verification commands, both variants, on 2026-08-19.
+
+Two consequences are not repairable and are recorded rather than fixed:
+2026-08-18 produced no rows in either ledger, and 08-16 through 08-18 have no
+cascade rows. Both are permanent gaps.
+
 ## Reading the result at the end
 
 **A fortnight of bets on two markets cannot establish the presence or absence
