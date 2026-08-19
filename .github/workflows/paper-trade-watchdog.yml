@@ -7,10 +7,17 @@
 # instruction inside a prompt can cover the prompt never being read.
 #
 # So the check lives outside the thing it is checking. It never prices, never
-# scrapes, never commits, and never touches paper/ — it reads one CSV and posts
-# if a day is absent. That is what keeps it safe to run alongside the routine
-# despite the "run one or the other, never both" rule in
-# deploy/routine_prompt.md: that rule is about two things WRITING the ledger.
+# scrapes, never commits, and never touches paper/ — it reads the two ledger
+# CSVs and posts if a day is absent from either. That is what keeps it safe to
+# run alongside the routine despite the "run one or the other, never both" rule
+# in deploy/routine_prompt.md: that rule is about two things WRITING a ledger.
+#
+# Both variants are checked, not just the incumbent. On 2026-08-16 and again on
+# 2026-08-17 the routine ran step 2's first command and not its second, and
+# committed incumbent-only days; a watchdog reading only paper/ledger.csv
+# called both of them healthy. A day the cascade misses is a day the two
+# ledgers no longer cover the same fixtures, so the difference between them
+# stops being the model — the same permanent gap, and it was invisible.
 name: paper trade watchdog
 
 on:
@@ -50,76 +57,44 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import csv, datetime, json, pathlib
 
-          # EVERY variant's ledger, not just the incumbent's. Checking only
-          # paper/ledger.csv is how the cascade variant went missing without a
-          # word: it was added on 2026-08-15 and the deployed routine — running
-          # an older copy of deploy/routine_prompt.md that has no `--variant
-          # cascade` step — wrote incumbent rows on 08-16 and 08-17 while
-          # ledger-cascade.csv stayed frozen at day 1. Both days looked healthy
-          # here. A day where one variant writes and the other does not is
-          # worse than a day where neither does: the two ledgers stop covering
-          # the same fixtures, so the difference between them stops being the
-          # model, and nothing in the numbers says so afterwards.
-          paper = pathlib.Path("paper")
+          VARIANTS = [
+              ("incumbent", "paper/ledger.csv", "paper/run_state.json"),
+              ("cascade", "paper/ledger-cascade.csv",
+               "paper/run_state-cascade.json"),
+          ]
           day = (datetime.datetime.now(datetime.timezone.utc).date()
                  - datetime.timedelta(days=1))
 
-          def out(missing, partial, why):
-              print(f"missing={'true' if missing else 'false'}")
-              print(f"partial={'true' if partial else 'false'}")
-              print(f"day={day}")
-              print(f"why={why}")
-              raise SystemExit(0)
-
-          # Variants are discovered from the run_state files, not imported from
-          # scripts.paper_trade: this job installs nothing, which is what lets
-          # it still report a day that went missing *because* the run's
-          # dependencies failed to install. A new variant is picked up here for
-          # free, the moment it writes its first state file.
-          states = sorted(paper.glob("run_state*.json"))
-          if not states:
-              out(False, False, "no run_state file; the run has not started")
-
-          wrote, absent, outside = [], [], []
-          for st in states:
-              suffix = st.stem[len("run_state"):]        # "" or "-cascade"
-              led = paper / f"ledger{suffix}.csv"
+          def status(name, ledger, state):
+              """(missing, why) for one variant's ledger on `day`."""
+              led, st = pathlib.Path(ledger), pathlib.Path(state)
+              if not st.exists():
+                  return False, f"{name}: no run state; the run has not started"
               s = json.loads(st.read_text())
-              name = s.get("variant") or suffix.lstrip("-") or "primary"
               start = datetime.date.fromisoformat(s["start_date"])
               end = start + datetime.timedelta(days=int(s.get("run_days", 14)) - 1)
-              # Silence outside the window: the run being over is not a
-              # failure, and an alarm that keeps firing after the finish gets
-              # muted. Each variant carries its own window.
+              # Silence outside the window: the run being over is not a failure,
+              # and an alarm that keeps firing after the finish gets muted.
               if not start <= day <= end:
-                  outside.append(f"{name} (window {start}..{end})")
-                  continue
+                  return False, f"{name}: outside the run window {start}..{end}"
               if not led.exists():
-                  absent.append(f"{name} ({led} does not exist)")
-                  continue
+                  return True, f"{name}: {ledger} does not exist"
               # Parsed as CSV, not grepped: a bare date string also appears in
-              # match_date and ts_utc, and matching those would report a
-              # healthy day for one that wrote nothing.
+              # match_date and ts_utc, and matching those would report a healthy
+              # day for one that wrote nothing.
               with led.open(newline="") as fh:
-                  n = sum(1 for r in csv.DictReader(fh)
-                          if r.get("run_date") == day.isoformat())
-              (wrote if n else absent).append(
-                  f"{name} ({n} row(s))" if n else name)
+                  rows = [r for r in csv.DictReader(fh)
+                          if r.get("run_date") == day.isoformat()]
+              if rows:
+                  return False, f"{name}: {len(rows)} row(s) written"
+              return True, f"{name}: no ledger row has run_date {day}"
 
-          if not absent:
-              if not wrote:
-                  out(False, False, f"{day} is outside every run window: "
-                                    + ", ".join(outside))
-              out(False, False, "wrote rows: " + ", ".join(wrote))
-
-          why = "no rows for: " + ", ".join(absent)
-          if wrote:
-              why += " — but " + ", ".join(wrote) + " did write"
-          if outside:
-              why += "; not due: " + ", ".join(outside)
-          # Partial means the routine fired and did only part of its job, which
-          # points at the deployed prompt rather than at the schedule.
-          out(True, bool(wrote), why)
+          results = [status(*v) for v in VARIANTS]
+          # One line: GITHUB_OUTPUT takes a newline in a value only with a
+          # heredoc delimiter, and a stray one would truncate the value.
+          print(f"missing={'true' if any(m for m, _ in results) else 'false'}")
+          print(f"day={day}")
+          print("why=" + " · ".join(w for _, w in results))
           PY
 
       - name: Report
@@ -132,7 +107,6 @@ jobs:
         env:
           FORCED: ${{ inputs.force_alert }}
           MISSING: ${{ steps.check.outputs.missing }}
-          PARTIAL: ${{ steps.check.outputs.partial }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
           DAY: ${{ steps.check.outputs.day }}
@@ -147,25 +121,10 @@ jobs:
             text=":test_tube: *Watchdog test — no day is missing, this is a drill*"$'\n'
             text="${text}${DAY}: ${WHY}"$'\n'
             text="${text}Slack credentials work. Watchdog: ${RUN_URL}"
-          elif [ "$PARTIAL" = "true" ]; then
-            # Some variants wrote and some did not. The routine fired, so this
-            # is not a missed schedule — it is the job doing only part of its
-            # work, which in practice means the prompt deployed at
-            # claude.ai/code/routines is behind deploy/routine_prompt.md.
-            text=":rotating_light: *Tennis paper trading — a PARTIAL day*"$'\n'
-            text="${text}${DAY:-unknown}: ${WHY:-the watchdog itself failed}"$'\n'
-            text="${text}The routine ran but did not write every variant, so the"
-            text="${text} ledgers no longer cover the same fixtures and the"
-            text="${text} difference between them is no longer just the model."
-            text="${text} Check the routine's prompt matches"
-            text="${text} deploy/routine_prompt.md — a variant added to the repo"
-            text="${text} does not reach a routine whose prompt was pasted"
-            text="${text} before it."$'\n'
-            text="${text}Watchdog: ${RUN_URL}"
           else
             text=":rotating_light: *Tennis paper trading — a day is missing*"$'\n'
             text="${text}${DAY:-unknown}: ${WHY:-the watchdog itself failed}"$'\n'
-            text="${text}The routine did not write to the ledger for that date."
+            text="${text}That variant wrote no ledger row for that date."
             text="${text} A missing day is a permanent gap — a pick has to be"
             text="${text} timestamped before its match, so it cannot be"
             text="${text} backfilled. Check the routine ran."$'\n'

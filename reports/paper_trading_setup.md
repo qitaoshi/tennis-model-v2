@@ -398,14 +398,9 @@ The repo now defends against both:
   routine's setup script both install from it. The list can no longer drift;
   a setup script that is never re-pasted still can, which is why the prompt
   now says so in bold next to it.
-- **The watchdog checks every variant**, discovered by globbing
-  `paper/run_state*.json` rather than hardcoding the incumbent, so a variant
-  added later is covered from its first state file. A day where some variants
-  wrote and others did not now alerts as **PARTIAL** with its own message,
-  pointing at the deployed prompt rather than at the schedule — a partial day
-  means the routine fired and did part of its job, which is a different bug
-  from a routine that never fired. Replayed against the real ledgers, it
-  flags 08-16 and 08-17 and names `cascade`; the old check passed both.
+- **The watchdog checks both variants**, not just the incumbent, so an
+  incumbent-only day is reported instead of passing as healthy — `0a3b85f`,
+  landed separately on the default branch.
 - **The prompt carries a `PROMPT VERSION` line**, and its step 0 compares that
   line against `deploy/routine_prompt.md` in the repo and stops if they
   differ. The deployed copy cannot know it is old; it can be told to look.
