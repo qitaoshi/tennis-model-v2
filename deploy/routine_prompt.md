@@ -29,9 +29,18 @@ It installs from `requirements.txt` and never names a package inline, because
 a hand-written copy of the list is exactly what drifted before (see below):
 
     pip install uv
-    uv venv /root/venv
+    uv venv --python 3.12 /root/venv
     uv pip install --python /root/venv/bin/python -r requirements.txt
     /root/venv/bin/python -c "import sklearn, pandas; print('deps ok')"
+
+`--python 3.12` is load-bearing and must not be dropped. The sandbox's default
+interpreter is 3.11, and the pinned `numpy` requires 3.12 or newer, so
+`uv venv` without it fails the install outright with "requirements are
+unsatisfiable" — no dependencies, no run. It was dropped once already, on
+2026-08-10, when `oddsharvester` (the other thing needing 3.12) was removed;
+that was harmless while the package list was unpinned and became fatal the
+moment it was pinned. The GitHub workflow pins the same 3.12 via
+`actions/setup-python`.
 
 **Re-paste this setup script whenever `requirements.txt` gains a dependency
 that the deployed one cannot satisfy.** The `import sklearn` line is not

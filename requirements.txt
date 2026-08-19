@@ -13,6 +13,13 @@
 # price every day with the same model, and an unpinned minor bump mid-run is a
 # silent parameter change.
 #
+# REQUIRES PYTHON 3.12 OR NEWER. numpy 2.5.2 declares Python>=3.12, so
+# installing this file into a 3.11 environment fails resolution outright
+# ("requirements are unsatisfiable") rather than degrading. The cloud
+# sandbox's default interpreter is 3.11, which is why the setup script in
+# deploy/routine_prompt.md says `uv venv --python 3.12` and the GitHub
+# workflow pins python-version "3.12". Do not drop either.
+#
 # scikit-learn is the pin that matters most: data/processed/calibration_maps.pkl
 # and paper/model-cascade/calibration_maps.pkl are pickled IsotonicRegression
 # estimators, and unpickling those across an sklearn version boundary is not
