@@ -1353,8 +1353,11 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                  f"{totals['n_settled']} settled, {totals['n_open']} open")
     lines.append("")
 
+    # One line per bet, and "flat / kelly" said once in the section heading
+    # rather than on every row. The per-row model-vs-implied breakdown is gone
+    # from the post and still written to every ledger row.
     if settlements:
-        lines.append(f"*Settled ({len(settlements)})*")
+        lines.append(f"*Settled ({len(settlements)})* _flat / kelly_")
         for tourney, rows in _by_tournament(settlements).items():
             lines.append(f"_{tourney}_")
             for s in rows:
@@ -1363,26 +1366,25 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
                 lines.append(
                     f"{mark} {s['player_a']} v {s['player_b']} · "
                     f"{_selection_label(s)} · "
-                    f"{float(s['pnl_flat'] or 0):+.2f}u flat / "
-                    f"{float(s['pnl_kelly'] or 0):+.2f}u kelly")
+                    f"{float(s['pnl_flat'] or 0):+.2f} / "
+                    f"{float(s['pnl_kelly'] or 0):+.2f}u")
         lines.append("")
 
     if bets:
-        lines.append(f"*New bets ({len(bets)})*")
+        lines.append(f"*New bets ({len(bets)})* _flat / kelly_")
         for tourney, rows in _by_tournament(bets).items():
             lines.append(f"_{tourney}_")
             for b in rows:
-                capped = " _(capped)_" if b["stake_kelly"] >= KELLY_CAP else ""
+                # Not "*": the line already carries a bold *edge* pair, and a
+                # lone trailing asterisk makes an odd number on the line,
+                # which Slack renders as stray bold rather than a marker.
+                capped = " (cap)" if b["stake_kelly"] >= KELLY_CAP else ""
                 lines.append(
                     f"• {b['player_a']} v {b['player_b']} · "
-                    f"{_selection_label(b)} "
-                    f"@ {b['decimal_odds']:.2f}")
-                lines.append(
-                    f"    edge *{b['edge_raw']:+.1%}* "
-                    f"(model {b['model_p']:.0%} vs "
-                    f"{1 / b['decimal_odds']:.0%}) · "
-                    f"{b['stake_flat']:.2f}u flat / "
-                    f"{b['stake_kelly']:.2f}u kelly{capped}")
+                    f"{_selection_label(b)} @ {b['decimal_odds']:.2f} · "
+                    f"edge *{b['edge_raw']:+.1%}* · "
+                    f"{b['stake_flat']:.2f} / "
+                    f"{b['stake_kelly']:.2f}u{capped}")
     else:
         lines.append("*No bets today.*")
     lines.append("")
@@ -1394,46 +1396,42 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     # the full board.
     if board:
         priced_n = sum(1 for m in board if m["lines"])
-        word = "match" if priced_n == 1 else "matches"
-        lines.append(f"_{priced_n} {word} priced and scored; "
-                     f"board detail in the ledger._")
+        lines.append(f"_{priced_n} priced · board in ledger._")
         lines.append("")
 
     if closes:
-        # Same book, not a sharp one, so this is line movement and explicitly
-        # not CLV — there is no Pinnacle in this run to compute CLV against.
+        # "not CLV" stays, shortened but never dropped: same book, no sharp
+        # reference in this run, so calling it CLV would be wrong.
         moves = [float(c["decimal_odds"]) / float(c["open_decimal_odds"]) - 1.0
                  for c in closes]
         toward = sum(1 for m in moves if m < 0)
-        lines.append(f"*Closing prices ({len(closes)})* — "
-                     f"{toward} shortened, {len(moves) - toward} drifted · "
-                     f"mean {sum(moves) / len(moves):+.1%} _(PointsBet vs "
-                     f"itself, not CLV)_")
+        lines.append(f"*Closes ({len(closes)})* {toward} shortened, "
+                     f"{len(moves) - toward} drifted · "
+                     f"mean {sum(moves) / len(moves):+.1%} "
+                     f"_(same book, not CLV)_")
         lines.append("")
 
+    # Both score blocks on one line each. Lower is better throughout; the
+    # distribution block has no book column because a bookmaker quotes lines,
+    # not a distribution — which is why it carries no ✅/❌ either.
     if scores and scores.get("dist"):
-        # No book column: a bookmaker quotes lines, not a distribution, so
-        # there is nothing to compare these against. They are the model
-        # against itself over time, and lower is better.
-        lines.append("*Distribution accuracy* _(model only, no book "
-                     "counterpart)_")
-        for market, d in sorted(scores["dist"].items()):
-            lines.append(f"• {_market_label(market)} CRPS {d['crps']:.2f} · "
-                         f"log-score {d['log_score']:.2f} _({d['n']})_")
+        parts = [f"{_market_label(m)} CRPS {d['crps']:.2f} "
+                 f"log {d['log_score']:.2f} _({d['n']})_"
+                 for m, d in sorted(scores["dist"].items())]
+        lines.append("*Distribution* " + " · ".join(parts))
         lines.append("")
 
     if scores and scores.get("n"):
         def verdict(model: float, book: float) -> str:
-            return "✅ model" if model < book else "❌ book"
-        lines.append(f"*Projection accuracy* _({scores['n']} scored)_")
-        lines.append(f"• Brier {scores['brier']:.3f} vs "
-                     f"{scores['brier_book']:.3f} "
-                     f"{verdict(scores['brier'], scores['brier_book'])}")
-        lines.append(f"• Log-loss {scores['log_loss']:.3f} vs "
-                     f"{scores['log_loss_book']:.3f} "
-                     f"{verdict(scores['log_loss'], scores['log_loss_book'])}")
-        lines.append(f"• ECE {scores['ece']:.3f} vs {scores['ece_book']:.3f} "
-                     f"{verdict(scores['ece'], scores['ece_book'])}")
+            return "✅" if model < book else "❌"
+        lines.append(
+            f"*Accuracy vs book* _({scores['n']})_ · "
+            f"Brier {scores['brier']:.3f}/{scores['brier_book']:.3f} "
+            f"{verdict(scores['brier'], scores['brier_book'])} · "
+            f"Log-loss {scores['log_loss']:.3f}/{scores['log_loss_book']:.3f} "
+            f"{verdict(scores['log_loss'], scores['log_loss_book'])} · "
+            f"ECE {scores['ece']:.3f}/{scores['ece_book']:.3f} "
+            f"{verdict(scores['ece'], scores['ece_book'])}")
         lines.append("")
 
     n_skip = sum(len(v) for v in skips.values())
@@ -1444,24 +1442,27 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
             lines.append(f"• {reason}: {len(names)} — {shown}")
         lines.append("")
 
-    # Standing caveats. Identical every day and deliberately last, but never
-    # dropped: each one blocks a specific wrong reading of the numbers above.
-    # The EV line is the exception that changes daily — it is the model's own
-    # claim scored against what happened, which is the point of the exercise.
+    # The EV line changes daily — the model's own claim scored against what
+    # happened — so it stays.
+    #
+    # The standing caveat is one sentence now instead of five. What was cut is
+    # static configuration (staking rule, bankroll, edge floor, which book,
+    # which results source, which direction each metric runs) that never
+    # changed between posts and is documented in
+    # reports/paper_trading_setup.md. What is KEPT is the only sentence that
+    # blocks a wrong reading rather than describing the setup: that this
+    # sample cannot show an edge in either direction. That one is not
+    # shortened away — a +2u day read as evidence is the specific failure
+    # every version of this footer has existed to prevent.
     lines.append("───")
     if totals["n_settled"]:
-        lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV on the "
-                     f"settled bets; realised {totals['flat_roi']:+.1%} flat, "
+        lines.append(f"_Model claimed {totals['ev_roi']:+.1%} EV; realised "
+                     f"{totals['flat_roi']:+.1%} flat, "
                      f"{totals['kelly_roi']:+.1%} kelly._")
     lines.append(
-        "_Staking: 1u flat and half-Kelly capped at 1u on a 25u bankroll, "
-        "tracked side by side; bets only above a 2% raw edge. "
-        "14 days on 2 markets is dominated by variance — this cannot show "
-        "an edge either way, and flat-to-negative is the expected outcome. "
-        "Odds: PointsBet AU only, one book, not comparable to the "
-        "Bet365-based 2024 reports. Results: ESPN. Lower is better on Brier, "
-        "log-loss and ECE; the book is scored on its de-vigged price, so the "
-        "comparison no longer hands us its margin._")
+        "_Paper only. 14 days on 2 markets cannot show an edge either way, "
+        "and flat-to-negative is expected — setup and caveats in "
+        "reports/paper_trading_setup.md._")
     return "\n".join(lines)
 
 
