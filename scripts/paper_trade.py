@@ -1325,7 +1325,14 @@ def summary(day: date, bets: list[dict], settlements: list[dict],
     won = sum(1 for s in settled_today if s["result"] == "win")
     day_kelly = sum(float(s["pnl_kelly"] or 0) for s in settlements)
 
-    lines = [f"*Tennis paper trading — day {run_day}/{RUN_DAYS}* "
+    # The variant is named in the header because both variants post to the same
+    # Slack channel, one after the other, and until now their messages were
+    # identical down to the header — the only way to tell them apart was to
+    # know that the incumbent runs first. Two unlabelled summaries a day is a
+    # misreading waiting to happen, and the two ledgers are not comparable on
+    # any day one of them missed.
+    lines = [f"*Tennis paper trading — {VARIANTS[VARIANT]['label']} — "
+             f"day {run_day}/{RUN_DAYS}* "
              f"· {day.isoformat()} · _paper only_"]
 
     # The one line to read if you read nothing else.
