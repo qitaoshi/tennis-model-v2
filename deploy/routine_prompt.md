@@ -24,37 +24,42 @@ headless-Chromium connection from the routine's datacentre IP
 fetch_pointsbet.py` replaced it. If you restore the OddsPortal path, restore
 full network access with it.
 
-Setup script — no Playwright, no `oddsharvester`, no standalone interpreter.
-It installs from `requirements.txt` and never names a package inline, because
-a hand-written copy of the list is exactly what drifted before (see below):
+Setup script — it builds an empty interpreter and nothing else. No
+Playwright, no `oddsharvester`, no package names:
 
     pip install uv
     uv venv --python 3.12 /root/venv
-    uv pip install --python /root/venv/bin/python -r requirements.txt
-    /root/venv/bin/python -c "import sklearn, pandas; print('deps ok')"
+
+The dependency install is deliberately NOT here. It lives in step 1 of the
+prompt below. The setup script runs before the repository is checked out, so
+its working directory has no `requirements.txt` in it and never will: on
+2026-08-20 a setup script ending in
+`uv pip install --python /root/venv/bin/python -r requirements.txt` created the
+venv and then died with `error: File not found: requirements.txt`, exit 2, and
+the session never started. Re-pasting cannot fix that — the file is not missing
+from the repo, it is missing from the sandbox at the moment setup runs.
 
 `--python 3.12` is load-bearing and must not be dropped. The sandbox's default
 interpreter is 3.11, and the pinned `numpy` requires 3.12 or newer, so
-`uv venv` without it fails the install outright with "requirements are
-unsatisfiable" — no dependencies, no run. It was dropped once already, on
+`uv venv` without it fails the install in step 1 outright with "requirements
+are unsatisfiable" — no dependencies, no run. It was dropped once already, on
 2026-08-10, when `oddsharvester` (the other thing needing 3.12) was removed;
 that was harmless while the package list was unpinned and became fatal the
 moment it was pinned. The GitHub workflow pins the same 3.12 via
 `actions/setup-python`.
 
-**Re-paste this setup script whenever `requirements.txt` gains a dependency
-that the deployed one cannot satisfy.** The `import sklearn` line is not
-decoration: on 2026-08-19 the deployed routine was still running a setup script
-from 2026-08-10 14:06 that installed Playwright and `oddsharvester` and no
-scikit-learn, so `model/recalibrate.py` failed at import and the day was lost.
-Installing from `requirements.txt` means the list can no longer drift; it does
-not help if the setup script itself is never re-pasted.
+Because the setup script now names no packages at all, it no longer goes stale
+when `requirements.txt` changes, and re-pasting it is only needed if these two
+lines themselves change. That closes the drift that cost 2026-08-19: the
+deployed setup script was still the one from 2026-08-10 14:06, installing
+Playwright and `oddsharvester` and no scikit-learn, so `model/recalibrate.py`
+failed at import and the day was lost.
 
 Everything below the line is the prompt. Paste it whole, version line included.
 
 ---
 
-PROMPT VERSION: 2026-08-19
+PROMPT VERSION: 2026-08-20
 
 Run today's tennis paper-trading job in this repository.
 
@@ -77,11 +82,22 @@ unclear.
    Slack summary and every watchdog check reported a healthy day. Three days
    of the paired comparison were lost before anyone looked.
 
-   Re-paste from `deploy/routine_prompt.md` to fix it. Re-paste the setup
-   script at the same time — the two drift together, and the same incident
-   left the environment without `scikit-learn`.
+   Re-paste from `deploy/routine_prompt.md` to fix it. The setup script no
+   longer names any package, so it does not drift with the prompt any more;
+   re-paste it too only if `deploy/routine_prompt.md` shows it changed.
 
-1. Verify before trusting the run with money:
+1. Install the dependencies, then verify before trusting the run with money.
+   The install runs here, not in the setup script, because this is the first
+   point at which the repository exists:
+
+       uv pip install --python /root/venv/bin/python -r requirements.txt
+       /root/venv/bin/python -c "import sklearn, pandas; print('deps ok')"
+
+   If the install fails, post the failure to Slack and stop. The `import
+   sklearn` line is not decoration — `model/recalibrate.py` needs it, and a
+   day was lost in 2026-08-19 to an environment that silently lacked it.
+
+   Then:
 
        /root/venv/bin/python -m scripts.fetch_pointsbet --self-check
        /root/venv/bin/python -m scripts.fetch_results --self-check

@@ -394,10 +394,14 @@ described a normal day, because from inside the incumbent run it was one.
 
 The repo now defends against both:
 
-- **`requirements.txt` is the only dependency list.** The workflow and the
-  routine's setup script both install from it. The list can no longer drift;
-  a setup script that is never re-pasted still can, which is why the prompt
-  now says so in bold next to it.
+- **`requirements.txt` is the only dependency list.** The workflow installs
+  from it, and so does step 1 of the routine prompt. The install sits in the
+  prompt rather than the setup script because the setup script runs before the
+  repository is checked out: the 2026-08-20 setup script tried
+  `uv pip install ... -r requirements.txt` there and died with
+  `error: File not found: requirements.txt`, exit 2, before the session
+  started. The setup script now only builds the 3.12 venv, names no package,
+  and so cannot go stale against this list.
 - **The watchdog checks both variants**, not just the incumbent, so an
   incumbent-only day is reported instead of passing as healthy — `0a3b85f`,
   landed separately on the default branch.

@@ -18,7 +18,9 @@
 # ("requirements are unsatisfiable") rather than degrading. The cloud
 # sandbox's default interpreter is 3.11, which is why the setup script in
 # deploy/routine_prompt.md says `uv venv --python 3.12` and the GitHub
-# workflow pins python-version "3.12". Do not drop either.
+# workflow pins python-version "3.12". Do not drop either. The routine
+# installs this file in step 1 of the prompt, not in its setup script — setup
+# runs before the repository is checked out, where this file does not exist.
 #
 # scikit-learn is the pin that matters most: data/processed/calibration_maps.pkl
 # and paper/model-cascade/calibration_maps.pkl are pickled IsotonicRegression
