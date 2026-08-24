@@ -1,71 +1,11 @@
 {
-  "run_date": "2026-08-23",
+  "run_date": "2026-08-24",
   "names": [
     {
-      "odds_name": "de Jong J.",
+      "odds_name": "Balshaw F.",
       "seen_on": "2026-08-24",
-      "example_match": "Walton A. v de Jong J.",
-      "candidates": [
-        {
-          "player_id": "DH58",
-          "initial": "a",
-          "shared_surname_tokens": [
-            "de"
-          ],
-          "model_name_tokens": [
-            "de",
-            "minaur"
-          ]
-        },
-        {
-          "player_id": "D0C1",
-          "initial": "j",
-          "shared_surname_tokens": [
-            "de",
-            "jong"
-          ],
-          "model_name_tokens": [
-            "de",
-            "jong"
-          ]
-        },
-        {
-          "player_id": "nan",
-          "initial": "j",
-          "shared_surname_tokens": [
-            "de",
-            "jong"
-          ],
-          "model_name_tokens": [
-            "de",
-            "jong"
-          ]
-        },
-        {
-          "player_id": "V812",
-          "initial": "b",
-          "shared_surname_tokens": [
-            "de"
-          ],
-          "model_name_tokens": [
-            "de",
-            "van",
-            "zandschulp"
-          ]
-        },
-        {
-          "player_id": "MW18",
-          "initial": "n",
-          "shared_surname_tokens": [
-            "de"
-          ],
-          "model_name_tokens": [
-            "alboran",
-            "de",
-            "moreno"
-          ]
-        }
-      ]
+      "example_match": "Balshaw F. v Kovacevic A.",
+      "candidates": []
     }
   ]
 }
