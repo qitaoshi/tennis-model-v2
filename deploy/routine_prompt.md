@@ -59,7 +59,7 @@ Everything below the line is the prompt. Paste it whole, version line included.
 
 ---
 
-PROMPT VERSION: 2026-08-20
+PROMPT VERSION: 2026-08-25
 
 Run today's tennis paper-trading job in this repository.
 
@@ -138,12 +138,12 @@ unclear.
 
    Run ALL THREE every day, or the comparison is broken: a day a variant
    misses is a day the ledgers no longer cover the same fixtures, and the
-   difference between them stops being the model. If the second command
-   fails, say so explicitly in Slack — do not quietly ship a day of
+   difference between them stops being the model. If any command after the
+   first fails, say so explicitly in Slack — do not quietly ship a day of
    incumbent-only rows as though nothing were missing.
 
-   If the first command fails, do not run the second. A day with cascade rows
-   and no incumbent rows is worse than a day with neither.
+   If the first command fails, do not run the others. A day with challenger
+   rows and no incumbent rows is worse than a day with neither.
 
 3. Resolve names, so the same fixture is not skipped again tomorrow.
 
@@ -202,6 +202,7 @@ unclear.
 
 5. Commit `paper/ledger.csv`, `paper/run_state.json`,
    `paper/ledger-cascade.csv`, `paper/run_state-cascade.json`,
+   `paper/ledger-nocohort.csv`, `paper/run_state-nocohort.json`,
    `paper/player_aliases.json`, `paper/tournament_aliases.json` and
    `paper/unresolved_names.json` to the
    default branch, message "paper trading: <today's date in YYYY-MM-DD>".
