@@ -46,11 +46,19 @@ def load_fitted() -> dict:
 
 
 def build(splits: tuple[str, ...] = ("fit", "tune"),
-          venue_params: V.VenueParams | None = None) -> pd.DataFrame:
+          venue_params: V.VenueParams | None = None,
+          combine_params: "CB.CombineParams | None" = None,
+          cohort: bool = True) -> pd.DataFrame:
     """Blended (pa, pb) per match with outcomes attached.
 
     ``venue_params`` applies the Stage 6 multiplier to the level. Passing None
     leaves the level untouched, which is the pre-Stage-6 baseline.
+
+    ``combine_params`` overrides Stage 4's blend weight, and ``cohort=False``
+    skips Stage 5's prior for thinly-sampled players. Both default to the
+    shipped behaviour and exist so an ablation can knock one layer out at a
+    time without a second copy of the pipeline. Nothing in the normal path
+    passes either.
     """
     fitted = load_fitted()
     from model.data_audit import HOLDOUT_PARQUET
@@ -72,7 +80,7 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
 
     priors = None
     s5 = fitted.get("stage_5")
-    if s5 and s5.get("enabled"):
+    if cohort and s5 and s5.get("enabled"):
         cp = CH.CohortParams(k=s5["k"], thin_n=s5["thin_n"],
                              well_sampled_n=s5["well_sampled_n"],
                              opponent_vs_cohort_n0=s5["opponent_vs_cohort_n0"],
@@ -126,9 +134,10 @@ def build(splits: tuple[str, ...] = ("fit", "tune"),
                               in zip(p["tourney_code"], p["season_file"])]
 
     s4 = fitted["stage_4"]
-    cbp = CB.CombineParams(w=s4["w"], w_both_well=s4["w_both_well"],
-                           w_one_thin=s4["w_one_thin"],
-                           w_both_thin=s4["w_both_thin"], thin_n=s4["thin_n"])
+    cbp = combine_params or CB.CombineParams(
+        w=s4["w"], w_both_well=s4["w_both_well"],
+        w_one_thin=s4["w_one_thin"],
+        w_both_thin=s4["w_both_thin"], thin_n=s4["thin_n"])
     blended = CB.combine_many(p["serve_pa"].to_numpy(), p["serve_pb"].to_numpy(),
                               p["p_winner"].to_numpy(), p["spec_key"].tolist(),
                               cbp, p["w_n"].to_numpy(), p["l_n"].to_numpy())

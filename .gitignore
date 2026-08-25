@@ -18,3 +18,4 @@ data/raw/mcp/*.csv
 
 # Scratch run logs, never part of the record.
 scratch_*.log
+data/processed/layer_ablation_preds.parquet
