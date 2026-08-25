@@ -53,7 +53,14 @@ def _scores(p: np.ndarray, y: np.ndarray) -> dict:
             "logloss": RC.log_loss(p, y), "ece": RC.calibration_error(p, y)}
 
 
-def main() -> None:
+def build_joined() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Join the TUNE panel to the match_winner quotes on the actual winner.
+
+    Split out of ``main`` so a second script can score a different forecast
+    against the same rows without a second copy of the join, which is the
+    fiddly part (name aliasing, tournament-start date span, one quote per
+    book per side).
+    """
     fitted = json.loads(C.FITTED_PARAMS_PATH.read_text())
     s6, s7 = fitted["stage_6"], fitted["stage_7"]
     vp = V.VenueParams(shrink_n0=s6["shrink_n0"], use_indoor=s6["use_indoor"],
@@ -117,6 +124,19 @@ def main() -> None:
     mg = mg[side_key == mg["winner_key"]].copy()
     mg = mg[np.isfinite(mg["market_p"]) & mg["market_p"].between(0.01, 0.99)]
     print(f"quotes on the actual winner: {len(mg):,}")
+    return mg, pan
+
+
+def consensus(mg: pd.DataFrame) -> pd.DataFrame:
+    """One row per match: median de-vigged price across books, model prob."""
+    return mg.groupby("match_id").agg(
+        market_p=("market_p", "median"),
+        p_model_cal=("p_model_cal", "first"),
+        p_model_raw=("p_model_raw", "first"), n_books=("bookmaker", "nunique"))
+
+
+def main() -> None:
+    mg, pan = build_joined()
 
     rows = []
     for book, g in mg.groupby("bookmaker"):
@@ -138,11 +158,7 @@ def main() -> None:
     tab = pd.DataFrame(rows).sort_values("n_matches", ascending=False)
     print("\n" + tab.to_string(index=False))
 
-    # Consensus: median de-vigged probability across books for each match.
-    cons = mg.groupby("match_id").agg(
-        market_p=("market_p", "median"),
-        p_model_cal=("p_model_cal", "first"),
-        p_model_raw=("p_model_raw", "first"), n_books=("bookmaker", "nunique"))
+    cons = consensus(mg)
     y = np.concatenate([np.ones(len(cons)), np.zeros(len(cons))])
     mk = np.concatenate([cons.market_p, 1 - cons.market_p])
     mc = np.concatenate([cons.p_model_cal, 1 - cons.p_model_cal])

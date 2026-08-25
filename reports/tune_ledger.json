@@ -1,1030 +1,1066 @@
 [
- {
-  "stage": "stage_2",
-  "run_id": "20260730T043147Z-6e4cd36",
-  "metric": "spw_per_point_logloss",
-  "baseline": "career_average",
-  "selected": {
-   "half_life_days": 730.0,
-   "surface_pool": 300.0,
-   "shrink_n0": 500.0
-  },
-  "tune_gain": 0.0007072222720528876,
-  "tune_metric_value": 0.662607869243928,
-  "fit_rolling_origin_gain_folds": [
-   0.001114886333883236,
-   0.0010667557614082446,
-   0.000975457893063636,
-   0.0010233868099370769,
-   0.0012361033585023273
-  ],
-  "fit_rolling_origin_gain_mean": 0.0010833180313589042,
-  "fit_rolling_origin_gain_std": 9.97995283489551e-05,
-  "baselines": {
-   "career_average_mae": 0.06833663259765997,
-   "last_10_mae": 0.07003579115092594,
-   "career_average_logloss": 0.6633150915159809,
-   "last_10_logloss": 0.6642880854617585,
-   "career_average_match_logloss": 0.717063777245705,
-   "last_10_match_logloss": 0.7471139176298963
-  },
-  "frozen": false,
-  "notes": "grid over 4x4x4 settings; TUNE MAE 0.06595, match-winner log-loss 0.67106",
-  "tune_mae": 0.06595348606572711,
-  "tune_match_logloss": 0.6710618190785423
- },
- {
-  "stage": "stage_2",
-  "run_id": "20260730T043147Z-6e4cd36",
-  "metric": "spw_per_point_logloss",
-  "baseline": "career_average",
-  "selected": {
-   "half_life_days": 730.0,
-   "surface_pool": 300.0,
-   "shrink_n0": 500.0
-  },
-  "tune_gain": 0.0007072222720528876,
-  "tune_metric_value": 0.662607869243928,
-  "fit_rolling_origin_gain_folds": [
-   0.001114886333883236,
-   0.0010667557614082446,
-   0.000975457893063636,
-   0.0010233868099370769,
-   0.0012361033585023273
-  ],
-  "fit_rolling_origin_gain_mean": 0.0010833180313589042,
-  "fit_rolling_origin_gain_std": 9.97995283489551e-05,
-  "baselines": {
-   "career_average_mae": 0.06833663259765997,
-   "last_10_mae": 0.07003579115092594,
-   "career_average_logloss": 0.6633150915159809,
-   "last_10_logloss": 0.6642880854617585,
-   "career_average_match_logloss": 0.717063777245705,
-   "last_10_match_logloss": 0.7471139176298963
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen for downstream stages",
-  "tune_mae": 0.06595348606572711,
-  "tune_match_logloss": 0.6710618190785423
- },
- {
-  "stage": "stage_3",
-  "run_id": "20260730T043822Z-dcc00e5",
-  "metric": "match_winner_logloss",
-  "baseline": "ranking_logistic",
-  "selected": {
-   "k": 48.0,
-   "k_chall_mult": 0.75,
-   "surface_weight": 0.3,
-   "inactivity_half_life": 1095.0,
-   "level_gap": 100.0,
-   "level_offset": 0.0
-  },
-  "tune_gain": 0.01130471711524772,
-  "tune_metric_value": 0.6397655752495135,
-  "fit_rolling_origin_gain_folds": [
-   0.004522955626450664,
-   0.006822304572080995,
-   0.011072544566648856,
-   0.010368636955051969,
-   0.00884325603240177
-  ],
-  "fit_rolling_origin_gain_mean": 0.00832593955052685,
-  "fit_rolling_origin_gain_std": 0.0026789770911043375,
-  "baselines": {
-   "ranking_logloss": 0.6510702923647612,
-   "ranking_brier": 0.2299326430522944
-  },
-  "frozen": false,
-  "notes": "grid of 144 settings; gap -0.0112 is 1.2 SE \u2014 within noise, no offset fitted",
-  "tune_brier": 0.22482763863774108
- },
- {
-  "stage": "stage_3",
-  "run_id": "20260730T043823Z-dcc00e5",
-  "metric": "match_winner_logloss",
-  "baseline": "ranking_logistic",
-  "selected": {
-   "k": 48.0,
-   "k_chall_mult": 0.75,
-   "surface_weight": 0.3,
-   "inactivity_half_life": 1095.0,
-   "level_gap": 100.0,
-   "level_offset": 0.0
-  },
-  "tune_gain": 0.01130471711524772,
-  "tune_metric_value": 0.6397655752495135,
-  "fit_rolling_origin_gain_folds": [
-   0.004522955626450664,
-   0.006822304572080995,
-   0.011072544566648856,
-   0.010368636955051969,
-   0.00884325603240177
-  ],
-  "fit_rolling_origin_gain_mean": 0.00832593955052685,
-  "fit_rolling_origin_gain_std": 0.0026789770911043375,
-  "baselines": {
-   "ranking_logloss": 0.6510702923647612,
-   "ranking_brier": 0.2299326430522944
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen for downstream stages",
-  "tune_brier": 0.22482763863774108
- },
- {
-  "stage": "stage_4",
-  "run_id": "20260730T044326Z-de377db",
-  "metric": "match_winner_logloss",
-  "baseline": "w=1",
-  "selected": {
-   "w": 0.8,
-   "w_both_well": 0.8,
-   "w_one_thin": 0.85,
-   "w_both_thin": 0.9,
-   "thin_n": 1000.0,
-   "w_fitted_on_fit": 0.85
-  },
-  "tune_gain": 0.0018544769395998362,
-  "tune_metric_value": 0.6346958806089784,
-  "fit_rolling_origin_gain_folds": [
-   0.0012231550432203475,
-   0.0016518803018371608,
-   0.003598871143315696,
-   0.0027739732812182005,
-   0.0029164130367872465
-  ],
-  "fit_rolling_origin_gain_mean": 0.0024328585612757303,
-  "fit_rolling_origin_gain_std": 0.000972506962408936,
-  "baselines": {
-   "w0_logloss": 0.6710661760377138,
-   "w1_logloss": 0.6365503575485782,
-   "overall_w_logloss": 0.634746779501643
-  },
-  "frozen": false,
-  "notes": "blend weight, overall and per sample-size bucket"
- },
- {
-  "stage": "stage_4",
-  "run_id": "20260730T044326Z-de377db",
-  "metric": "match_winner_logloss",
-  "baseline": "w=1",
-  "selected": {
-   "w": 0.8,
-   "w_both_well": 0.8,
-   "w_one_thin": 0.85,
-   "w_both_thin": 0.9,
-   "thin_n": 1000.0,
-   "w_fitted_on_fit": 0.85
-  },
-  "tune_gain": 0.0018544769395998362,
-  "tune_metric_value": 0.6346958806089784,
-  "fit_rolling_origin_gain_folds": [
-   0.0012231550432203475,
-   0.0016518803018371608,
-   0.003598871143315696,
-   0.0027739732812182005,
-   0.0029164130367872465
-  ],
-  "fit_rolling_origin_gain_mean": 0.0024328585612757303,
-  "fit_rolling_origin_gain_std": 0.000972506962408936,
-  "baselines": {
-   "w0_logloss": 0.6710661760377138,
-   "w1_logloss": 0.6365503575485782
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen for downstream stages"
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045030Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": false,
-  "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045030Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045411Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": false,
-  "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045412Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045722Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": false,
-  "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_5",
-  "run_id": "20260730T045723Z-5cfcf5e",
-  "metric": "thin_match_winner_logloss",
-  "baseline": "tour_average_prior",
-  "selected": {
-   "k": 5,
-   "opponent_vs_cohort_n0": 0.0,
-   "thin_n": 1000.0,
-   "well_sampled_n": 3000.0,
-   "snapshot_days": 91,
-   "enabled": true
-  },
-  "tune_gain": 0.0005619303200474768,
-  "tune_metric_value": 0.6388255290499125,
-  "fit_rolling_origin_gain_folds": [
-   0.0006953929405419945,
-   0.0009606542626812153,
-   0.001612858863793254,
-   0.0015308182208476628,
-   0.0011829944406577253
-  ],
-  "fit_rolling_origin_gain_mean": 0.0011965437457043704,
-  "fit_rolling_origin_gain_std": 0.0003847197888284279,
-  "baselines": {
-   "tour_average_logloss": 0.63938745936996,
-   "tour_average_crps": 3.7191313112955338
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen",
-  "tune_crps": 3.7112666560712846
- },
- {
-  "stage": "stage_6",
-  "run_id": "20260730T050324Z-20558fa",
-  "metric": "total_games_crps_well_measured_venues",
-  "baseline": "no_venue_multiplier",
-  "selected": {
-   "shrink_n0": 150000.0,
-   "use_indoor": false,
-   "enabled": false
-  },
-  "tune_gain": -0.008132950744706324,
-  "tune_metric_value": 3.8499439061660747,
-  "fit_rolling_origin_gain_folds": [
-   -0.0003788057718558946,
-   -0.004038012161827531,
-   -0.00024010008199049082,
-   -0.008967222912603212,
-   -0.009417366357349355
-  ],
-  "fit_rolling_origin_gain_mean": -0.004608301457125296,
-  "fit_rolling_origin_gain_std": 0.004455960849114534,
-  "baselines": {
-   "no_venue_crps_well_measured": 3.8418109554213684,
-   "no_venue_crps_unmeasured": 3.588000524659584,
-   "no_venue_crps_overall": 3.6815418392116546
-  },
-  "frozen": false,
-  "notes": "grid of 8 settings; median venue history 144 matches"
- },
- {
-  "stage": "stage_6",
-  "run_id": "20260730T050324Z-20558fa",
-  "metric": "total_games_crps_well_measured_venues",
-  "baseline": "no_venue_multiplier",
-  "selected": {
-   "shrink_n0": 150000.0,
-   "use_indoor": false,
-   "enabled": false
-  },
-  "tune_gain": -0.008132950744706324,
-  "tune_metric_value": 3.8499439061660747,
-  "fit_rolling_origin_gain_folds": [
-   -0.0003788057718558946,
-   -0.004038012161827531,
-   -0.00024010008199049082,
-   -0.008967222912603212,
-   -0.009417366357349355
-  ],
-  "fit_rolling_origin_gain_mean": -0.004608301457125296,
-  "fit_rolling_origin_gain_std": 0.004455960849114534,
-  "baselines": {
-   "no_venue_crps_well_measured": 3.8418109554213684
-  },
-  "frozen": true,
-  "notes": "gate failed; frozen as DISABLED so the lineage records it is unused"
- },
- {
-  "stage": "stage_6",
-  "run_id": "20260730T051007Z-20558fa",
-  "metric": "total_games_crps_well_measured_venues",
-  "baseline": "no_venue_multiplier",
-  "selected": {
-   "shrink_n0": 20000.0,
-   "use_indoor": false,
-   "enabled": true
-  },
-  "tune_gain": 0.001440386020229667,
-  "tune_metric_value": 3.8403705694011387,
-  "fit_rolling_origin_gain_folds": [
-   0.004681612273672364,
-   -0.0019406551814817874,
-   0.003069986711833561,
-   0.0008076335617732688,
-   0.0008517344710123886
-  ],
-  "fit_rolling_origin_gain_mean": 0.001494062367361959,
-  "fit_rolling_origin_gain_std": 0.0025162008175334343,
-  "baselines": {
-   "no_venue_crps_well_measured": 3.8418109554213684,
-   "no_venue_crps_unmeasured": 3.588000524659584,
-   "no_venue_crps_overall": 3.6815418392116546
-  },
-  "frozen": false,
-  "notes": "grid of 8 settings; median venue history 144 matches"
- },
- {
-  "stage": "stage_6",
-  "run_id": "20260730T051007Z-20558fa",
-  "metric": "total_games_crps_well_measured_venues",
-  "baseline": "no_venue_multiplier",
-  "selected": {
-   "shrink_n0": 20000.0,
-   "use_indoor": false,
-   "enabled": true
-  },
-  "tune_gain": 0.001440386020229667,
-  "tune_metric_value": 3.8403705694011387,
-  "fit_rolling_origin_gain_folds": [
-   0.004681612273672364,
-   -0.0019406551814817874,
-   0.003069986711833561,
-   0.0008076335617732688,
-   0.0008517344710123886
-  ],
-  "fit_rolling_origin_gain_mean": 0.001494062367361959,
-  "fit_rolling_origin_gain_std": 0.0025162008175334343,
-  "baselines": {
-   "no_venue_crps_well_measured": 3.8418109554213684
-  },
-  "frozen": true,
-  "notes": "gate passed; frozen"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T052043Z-287b98f",
-  "metric": "tiebreak_occurrence_gap",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "tiebreak_inflation": 0.0,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.0,
-  "tune_metric_value": 0.0819467139199066,
-  "fit_rolling_origin_gain_folds": [
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": 0.0,
-  "baselines": {
-   "uncorrected_gap": -0.0819467139199066
-  },
-  "frozen": false,
-  "notes": "tiebreak-frequency correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T052043Z-287b98f",
-  "metric": "total_games_pit_deviation",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "level_sigma": 0.0,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.0,
-  "tune_metric_value": 0.028600000000000004,
-  "fit_rolling_origin_gain_folds": [
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": 0.0,
-  "baselines": {
-   "uncorrected_pit_dev": 0.028600000000000004,
-   "uncorrected_coverage80": 0.7331666666666666
-  },
-  "frozen": false,
-  "notes": "total-games variance correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T053330Z-287b98f",
-  "metric": "tiebreak_occurrence_gap",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "tiebreak_inflation": -0.06,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.03069750364187418,
-  "tune_metric_value": 0.05124921027803242,
-  "fit_rolling_origin_gain_folds": [
-   0.03074743145527642,
-   0.03197649338936198,
-   0.03235198542662132,
-   0.032289813932082634,
-   0.03263595400871144
-  ],
-  "fit_rolling_origin_gain_mean": 0.03200033564241076,
-  "fit_rolling_origin_gain_std": 0.0007385464294265191,
-  "baselines": {
-   "uncorrected_gap": -0.0819467139199066
-  },
-  "frozen": false,
-  "notes": "tiebreak-frequency correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T053330Z-287b98f",
-  "metric": "total_games_pit_deviation",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "level_sigma": 0.0,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.0005000000000000074,
-  "tune_metric_value": 0.028099999999999997,
-  "fit_rolling_origin_gain_folds": [
-   0.00023850085178874977,
-   0.0003262642740619985,
-   0.0009950248756218846,
-   0.0005733558178752096,
-   0.0013201320132013201
-  ],
-  "fit_rolling_origin_gain_mean": 0.0006906555665098325,
-  "fit_rolling_origin_gain_std": 0.00045822085405259044,
-  "baselines": {
-   "uncorrected_pit_dev": 0.028600000000000004,
-   "uncorrected_coverage80": 0.7331666666666666
-  },
-  "frozen": false,
-  "notes": "total-games variance correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T061819Z-0341b95",
-  "metric": "tiebreak_occurrence_gap",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "tiebreak_inflation": -0.02,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.08116718592116523,
-  "tune_metric_value": 0.0005759914819247758,
-  "fit_rolling_origin_gain_folds": [
-   0.060506994750814225,
-   0.08105133714765617,
-   0.08086286360309924,
-   0.08172017698898149,
-   0.0810771255982678
-  ],
-  "fit_rolling_origin_gain_mean": 0.07704369961776378,
-  "fit_rolling_origin_gain_std": 0.009249969536682197,
-  "baselines": {
-   "uncorrected_gap": -0.08174317740309
-  },
-  "frozen": false,
-  "notes": "tiebreak-frequency correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T061819Z-0341b95",
-  "metric": "total_games_pit_deviation",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "split_sigma": 0.08,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.0217,
-  "tune_metric_value": 0.007033333333333333,
-  "fit_rolling_origin_gain_folds": [
-   0.01989778534923339,
-   0.019608482871125606,
-   0.023515754560530684,
-   0.016188870151770653,
-   0.008580858085808583
-  ],
-  "fit_rolling_origin_gain_mean": 0.017558350203693777,
-  "fit_rolling_origin_gain_std": 0.0056488385479765355,
-  "baselines": {
-   "uncorrected_pit_dev": 0.028733333333333333,
-   "uncorrected_coverage80": 0.7325
-  },
-  "frozen": false,
-  "notes": "total-games variance correction"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T061819Z-0341b95",
-  "metric": "tiebreak_occurrence_gap",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "tiebreak_inflation": -0.02,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.08116718592116523,
-  "tune_metric_value": 0.0005759914819247758,
-  "fit_rolling_origin_gain_folds": [
-   0.060506994750814225,
-   0.08105133714765617,
-   0.08086286360309924,
-   0.08172017698898149,
-   0.0810771255982678
-  ],
-  "fit_rolling_origin_gain_mean": 0.07704369961776378,
-  "fit_rolling_origin_gain_std": 0.009249969536682197,
-  "baselines": {},
-  "frozen": true,
-  "notes": "gate passed; frozen"
- },
- {
-  "stage": "stage_7",
-  "run_id": "20260730T061819Z-0341b95",
-  "metric": "total_games_pit_deviation",
-  "baseline": "uncorrected_engine",
-  "selected": {
-   "split_sigma": 0.08,
-   "scheme": "pooled"
-  },
-  "tune_gain": 0.0217,
-  "tune_metric_value": 0.007033333333333333,
-  "fit_rolling_origin_gain_folds": [
-   0.01989778534923339,
-   0.019608482871125606,
-   0.023515754560530684,
-   0.016188870151770653,
-   0.008580858085808583
-  ],
-  "fit_rolling_origin_gain_mean": 0.017558350203693777,
-  "fit_rolling_origin_gain_std": 0.0056488385479765355,
-  "baselines": {},
-  "frozen": true,
-  "notes": "gate passed; frozen"
- },
- {
-  "stage": "stage_8",
-  "run_id": "20260730T064837Z-128682d",
-  "metric": "test_expected_calibration_error",
-  "baseline": "uncalibrated",
-  "selected": {
-   "families": [
-    "match_winner",
-    "set_score",
-    "totals_under_high",
-    "totals_under_low",
-    "totals_under_mid"
-   ]
-  },
-  "tune_gain": 0.005942757657514487,
-  "tune_metric_value": 0.010863624760288675,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "test_ece_before": 0.016806382417803162
-  },
-  "frozen": false,
-  "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
- },
- {
-  "stage": "stage_8",
-  "run_id": "20260730T070041Z-128682d",
-  "metric": "test_expected_calibration_error",
-  "baseline": "uncalibrated",
-  "selected": {
-   "families": [
-    "totals_under_high"
-   ]
-  },
-  "tune_gain": 0.005649581877500514,
-  "tune_metric_value": 0.011156800540302648,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "test_ece_before": 0.016806382417803162
-  },
-  "frozen": true,
-  "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
- },
- {
-  "stage": "stage_8",
-  "run_id": "20260730T071036Z-128682d",
-  "metric": "test_expected_calibration_error",
-  "baseline": "uncalibrated",
-  "selected": {
-   "families": [
-    "match_winner",
-    "totals_under_high"
-   ]
-  },
-  "tune_gain": 0.005040490278100683,
-  "tune_metric_value": 0.01709514596123842,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "test_ece_before": 0.022135636239339104
-  },
-  "frozen": false,
-  "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
- },
- {
-  "stage": "stage_8",
-  "run_id": "20260730T141750Z-105ade8",
-  "metric": "test_expected_calibration_error",
-  "baseline": "uncalibrated",
-  "selected": {
-   "families": [
-    "match_winner",
-    "totals_under_high"
-   ]
-  },
-  "tune_gain": 0.005040490278100683,
-  "tune_metric_value": 0.01709514596123842,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "test_ece_before": 0.022135636239339104
-  },
-  "frozen": false,
-  "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
- },
- {
-  "stage": "fatigue",
-  "run_id": "20260808T125510Z-3a3a549",
-  "metric": "tune_match_logloss",
-  "baseline": "no context adjustment",
-  "selected": {
-   "rest_days": -0.008664826625106443,
-   "load7": 0.005736848601187937,
-   "is_qualifier": -0.022357978637552206,
-   "enabled": false
-  },
-  "tune_gain": -0.00022323340667262936,
-  "tune_metric_value": 0.6622391207709958,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_logloss": 0.6620158873643232,
-   "tune_spw_mae": 0.05964217459942603
-  },
-  "frozen": false,
-  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
- },
- {
-  "stage": "fatigue",
-  "run_id": "20260808T125936Z-3a3a549",
-  "metric": "tune_match_logloss",
-  "baseline": "no context adjustment",
-  "selected": {
-   "rest_days": -0.01164709979964922,
-   "load7": 0.00902246691289101,
-   "is_qualifier": -0.02180651078681072,
-   "enabled": false
-  },
-  "tune_gain": -0.00023576588322660186,
-  "tune_metric_value": 0.6622516532475498,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_logloss": 0.6620158873643232,
-   "tune_spw_mae": 0.05964217459942603
-  },
-  "frozen": false,
-  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
- },
- {
-  "stage": "calibration_refit",
-  "run_id": "20260808T131728Z-3a3a549",
-  "metric": "tune_expected_calibration_error",
-  "baseline": "isotonic on all history (the shipped incumbent)",
-  "selected": {
-   "method": "blended",
-   "window_years": 8
-  },
-  "tune_gain": 0.0019327761957201178,
-  "tune_metric_value": 0.010823311225337705,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_ece": 0.018806781966026167,
-   "tune_logloss": 0.5633081137222561,
-   "tune_brier": 0.19193658982123232
-  },
-  "frozen": true,
-  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
- },
- {
-  "stage": "fatigue",
-  "run_id": "20260808T133656Z-3a3a549",
-  "metric": "tune_match_logloss",
-  "baseline": "no context adjustment",
-  "selected": {
-   "rest_days": -0.01164709979964922,
-   "load7": 0.00902246691289101,
-   "is_qualifier": -0.02180651078681072,
-   "enabled": false
-  },
-  "tune_gain": -0.00023576588322660186,
-  "tune_metric_value": 0.6622516532475498,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_logloss": 0.6620158873643232,
-   "tune_spw_mae": 0.05964217459942603
-  },
-  "frozen": false,
-  "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
- },
- {
-  "stage": "unknown_players",
-  "run_id": "20260808T163108Z-3a3a549",
-  "metric": "tune_match_winner_ece",
-  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
-  "selected": {
-   "inactivity_half_life": 540.0,
-   "rank_seed_scale": 120.0
-  },
-  "tune_gain": 0.012586415698457625,
-  "tune_metric_value": 0.0061660383176909165,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_ece": 0.018752454016148543,
-   "ece_known": 0.021386321880389567,
-   "ece_debut": 0.12680259190856613,
-   "ece_stale": 0.031068961424343396
-  },
-  "frozen": true,
-  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched"
- },
- {
-  "stage": "unknown_players",
-  "run_id": "20260808T163323Z-3a3a549",
-  "metric": "tune_size_weighted_group_ece",
-  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
-  "selected": {
-   "inactivity_half_life": 270.0,
-   "rank_seed_scale": 160.0
-  },
-  "tune_gain": 0.011894458191953679,
-  "tune_metric_value": 0.012225573659986711,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "grouped_ece": 0.02412003185194039,
-   "pooled_ece": 0.018752454016148543,
-   "ece_known": 0.021386321880389567,
-   "ece_debut": 0.12680259190856613,
-   "ece_stale": 0.031068961424343396
-  },
-  "frozen": false,
-  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
- },
- {
-  "stage": "unknown_players",
-  "run_id": "20260808T163537Z-3a3a549",
-  "metric": "tune_size_weighted_group_ece",
-  "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
-  "selected": {
-   "inactivity_half_life": 540.0,
-   "rank_seed_scale": 160.0
-  },
-  "tune_gain": 0.010619459109438439,
-  "tune_metric_value": 0.013500572742501951,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "grouped_ece": 0.02412003185194039,
-   "pooled_ece": 0.018752454016148543,
-   "ece_known": 0.021386321880389567,
-   "ece_debut": 0.12680259190856613,
-   "ece_stale": 0.031068961424343396
-  },
-  "frozen": true,
-  "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
- },
- {
-  "stage": "calibration_refit",
-  "run_id": "20260810T054645Z-52c7113",
-  "metric": "tune_expected_calibration_error",
-  "baseline": "isotonic on all history (the shipped incumbent)",
-  "selected": {
-   "method": "isotonic",
-   "window_years": 8
-  },
-  "tune_gain": 0.00119273795496873,
-  "tune_metric_value": 0.01078372887224066,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_ece": 0.01949644834546446,
-   "tune_logloss": 0.5413801556616393,
-   "tune_brier": 0.18421738836567278
-  },
-  "frozen": true,
-  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
- },
- {
-  "stage": "calibration_refit",
-  "run_id": "20260810T084737Z-b41e484",
-  "metric": "tune_expected_calibration_error",
-  "baseline": "isotonic on all history (the shipped incumbent)",
-  "selected": {
-   "method": "platt",
-   "window_years": 8
-  },
-  "tune_gain": -0.0023892221687823335,
-  "tune_metric_value": 0.014365688995991723,
-  "fit_rolling_origin_gain_folds": [
-   0.0
-  ],
-  "fit_rolling_origin_gain_mean": 0.0,
-  "fit_rolling_origin_gain_std": null,
-  "baselines": {
-   "tune_ece": 0.01949644834546446,
-   "tune_logloss": 0.5413801556616393,
-   "tune_brier": 0.18421738836567278
-  },
-  "frozen": true,
-  "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
- }
+  {
+    "stage": "stage_2",
+    "run_id": "20260730T043147Z-6e4cd36",
+    "metric": "spw_per_point_logloss",
+    "baseline": "career_average",
+    "selected": {
+      "half_life_days": 730.0,
+      "surface_pool": 300.0,
+      "shrink_n0": 500.0
+    },
+    "tune_gain": 0.0007072222720528876,
+    "tune_metric_value": 0.662607869243928,
+    "fit_rolling_origin_gain_folds": [
+      0.001114886333883236,
+      0.0010667557614082446,
+      0.000975457893063636,
+      0.0010233868099370769,
+      0.0012361033585023273
+    ],
+    "fit_rolling_origin_gain_mean": 0.0010833180313589042,
+    "fit_rolling_origin_gain_std": 9.97995283489551e-05,
+    "baselines": {
+      "career_average_mae": 0.06833663259765997,
+      "last_10_mae": 0.07003579115092594,
+      "career_average_logloss": 0.6633150915159809,
+      "last_10_logloss": 0.6642880854617585,
+      "career_average_match_logloss": 0.717063777245705,
+      "last_10_match_logloss": 0.7471139176298963
+    },
+    "frozen": false,
+    "notes": "grid over 4x4x4 settings; TUNE MAE 0.06595, match-winner log-loss 0.67106",
+    "tune_mae": 0.06595348606572711,
+    "tune_match_logloss": 0.6710618190785423
+  },
+  {
+    "stage": "stage_2",
+    "run_id": "20260730T043147Z-6e4cd36",
+    "metric": "spw_per_point_logloss",
+    "baseline": "career_average",
+    "selected": {
+      "half_life_days": 730.0,
+      "surface_pool": 300.0,
+      "shrink_n0": 500.0
+    },
+    "tune_gain": 0.0007072222720528876,
+    "tune_metric_value": 0.662607869243928,
+    "fit_rolling_origin_gain_folds": [
+      0.001114886333883236,
+      0.0010667557614082446,
+      0.000975457893063636,
+      0.0010233868099370769,
+      0.0012361033585023273
+    ],
+    "fit_rolling_origin_gain_mean": 0.0010833180313589042,
+    "fit_rolling_origin_gain_std": 9.97995283489551e-05,
+    "baselines": {
+      "career_average_mae": 0.06833663259765997,
+      "last_10_mae": 0.07003579115092594,
+      "career_average_logloss": 0.6633150915159809,
+      "last_10_logloss": 0.6642880854617585,
+      "career_average_match_logloss": 0.717063777245705,
+      "last_10_match_logloss": 0.7471139176298963
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen for downstream stages",
+    "tune_mae": 0.06595348606572711,
+    "tune_match_logloss": 0.6710618190785423
+  },
+  {
+    "stage": "stage_3",
+    "run_id": "20260730T043822Z-dcc00e5",
+    "metric": "match_winner_logloss",
+    "baseline": "ranking_logistic",
+    "selected": {
+      "k": 48.0,
+      "k_chall_mult": 0.75,
+      "surface_weight": 0.3,
+      "inactivity_half_life": 1095.0,
+      "level_gap": 100.0,
+      "level_offset": 0.0
+    },
+    "tune_gain": 0.01130471711524772,
+    "tune_metric_value": 0.6397655752495135,
+    "fit_rolling_origin_gain_folds": [
+      0.004522955626450664,
+      0.006822304572080995,
+      0.011072544566648856,
+      0.010368636955051969,
+      0.00884325603240177
+    ],
+    "fit_rolling_origin_gain_mean": 0.00832593955052685,
+    "fit_rolling_origin_gain_std": 0.0026789770911043375,
+    "baselines": {
+      "ranking_logloss": 0.6510702923647612,
+      "ranking_brier": 0.2299326430522944
+    },
+    "frozen": false,
+    "notes": "grid of 144 settings; gap -0.0112 is 1.2 SE \u2014 within noise, no offset fitted",
+    "tune_brier": 0.22482763863774108
+  },
+  {
+    "stage": "stage_3",
+    "run_id": "20260730T043823Z-dcc00e5",
+    "metric": "match_winner_logloss",
+    "baseline": "ranking_logistic",
+    "selected": {
+      "k": 48.0,
+      "k_chall_mult": 0.75,
+      "surface_weight": 0.3,
+      "inactivity_half_life": 1095.0,
+      "level_gap": 100.0,
+      "level_offset": 0.0
+    },
+    "tune_gain": 0.01130471711524772,
+    "tune_metric_value": 0.6397655752495135,
+    "fit_rolling_origin_gain_folds": [
+      0.004522955626450664,
+      0.006822304572080995,
+      0.011072544566648856,
+      0.010368636955051969,
+      0.00884325603240177
+    ],
+    "fit_rolling_origin_gain_mean": 0.00832593955052685,
+    "fit_rolling_origin_gain_std": 0.0026789770911043375,
+    "baselines": {
+      "ranking_logloss": 0.6510702923647612,
+      "ranking_brier": 0.2299326430522944
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen for downstream stages",
+    "tune_brier": 0.22482763863774108
+  },
+  {
+    "stage": "stage_4",
+    "run_id": "20260730T044326Z-de377db",
+    "metric": "match_winner_logloss",
+    "baseline": "w=1",
+    "selected": {
+      "w": 0.8,
+      "w_both_well": 0.8,
+      "w_one_thin": 0.85,
+      "w_both_thin": 0.9,
+      "thin_n": 1000.0,
+      "w_fitted_on_fit": 0.85
+    },
+    "tune_gain": 0.0018544769395998362,
+    "tune_metric_value": 0.6346958806089784,
+    "fit_rolling_origin_gain_folds": [
+      0.0012231550432203475,
+      0.0016518803018371608,
+      0.003598871143315696,
+      0.0027739732812182005,
+      0.0029164130367872465
+    ],
+    "fit_rolling_origin_gain_mean": 0.0024328585612757303,
+    "fit_rolling_origin_gain_std": 0.000972506962408936,
+    "baselines": {
+      "w0_logloss": 0.6710661760377138,
+      "w1_logloss": 0.6365503575485782,
+      "overall_w_logloss": 0.634746779501643
+    },
+    "frozen": false,
+    "notes": "blend weight, overall and per sample-size bucket"
+  },
+  {
+    "stage": "stage_4",
+    "run_id": "20260730T044326Z-de377db",
+    "metric": "match_winner_logloss",
+    "baseline": "w=1",
+    "selected": {
+      "w": 0.8,
+      "w_both_well": 0.8,
+      "w_one_thin": 0.85,
+      "w_both_thin": 0.9,
+      "thin_n": 1000.0,
+      "w_fitted_on_fit": 0.85
+    },
+    "tune_gain": 0.0018544769395998362,
+    "tune_metric_value": 0.6346958806089784,
+    "fit_rolling_origin_gain_folds": [
+      0.0012231550432203475,
+      0.0016518803018371608,
+      0.003598871143315696,
+      0.0027739732812182005,
+      0.0029164130367872465
+    ],
+    "fit_rolling_origin_gain_mean": 0.0024328585612757303,
+    "fit_rolling_origin_gain_std": 0.000972506962408936,
+    "baselines": {
+      "w0_logloss": 0.6710661760377138,
+      "w1_logloss": 0.6365503575485782
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen for downstream stages"
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045030Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": false,
+    "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045030Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045411Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": false,
+    "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045412Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045722Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": false,
+    "notes": "k grid [5, 10, 20, 40]; evaluated on thin-data TUNE matches only",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_5",
+    "run_id": "20260730T045723Z-5cfcf5e",
+    "metric": "thin_match_winner_logloss",
+    "baseline": "tour_average_prior",
+    "selected": {
+      "k": 5,
+      "opponent_vs_cohort_n0": 0.0,
+      "thin_n": 1000.0,
+      "well_sampled_n": 3000.0,
+      "snapshot_days": 91,
+      "enabled": true
+    },
+    "tune_gain": 0.0005619303200474768,
+    "tune_metric_value": 0.6388255290499125,
+    "fit_rolling_origin_gain_folds": [
+      0.0006953929405419945,
+      0.0009606542626812153,
+      0.001612858863793254,
+      0.0015308182208476628,
+      0.0011829944406577253
+    ],
+    "fit_rolling_origin_gain_mean": 0.0011965437457043704,
+    "fit_rolling_origin_gain_std": 0.0003847197888284279,
+    "baselines": {
+      "tour_average_logloss": 0.63938745936996,
+      "tour_average_crps": 3.7191313112955338
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen",
+    "tune_crps": 3.7112666560712846
+  },
+  {
+    "stage": "stage_6",
+    "run_id": "20260730T050324Z-20558fa",
+    "metric": "total_games_crps_well_measured_venues",
+    "baseline": "no_venue_multiplier",
+    "selected": {
+      "shrink_n0": 150000.0,
+      "use_indoor": false,
+      "enabled": false
+    },
+    "tune_gain": -0.008132950744706324,
+    "tune_metric_value": 3.8499439061660747,
+    "fit_rolling_origin_gain_folds": [
+      -0.0003788057718558946,
+      -0.004038012161827531,
+      -0.00024010008199049082,
+      -0.008967222912603212,
+      -0.009417366357349355
+    ],
+    "fit_rolling_origin_gain_mean": -0.004608301457125296,
+    "fit_rolling_origin_gain_std": 0.004455960849114534,
+    "baselines": {
+      "no_venue_crps_well_measured": 3.8418109554213684,
+      "no_venue_crps_unmeasured": 3.588000524659584,
+      "no_venue_crps_overall": 3.6815418392116546
+    },
+    "frozen": false,
+    "notes": "grid of 8 settings; median venue history 144 matches"
+  },
+  {
+    "stage": "stage_6",
+    "run_id": "20260730T050324Z-20558fa",
+    "metric": "total_games_crps_well_measured_venues",
+    "baseline": "no_venue_multiplier",
+    "selected": {
+      "shrink_n0": 150000.0,
+      "use_indoor": false,
+      "enabled": false
+    },
+    "tune_gain": -0.008132950744706324,
+    "tune_metric_value": 3.8499439061660747,
+    "fit_rolling_origin_gain_folds": [
+      -0.0003788057718558946,
+      -0.004038012161827531,
+      -0.00024010008199049082,
+      -0.008967222912603212,
+      -0.009417366357349355
+    ],
+    "fit_rolling_origin_gain_mean": -0.004608301457125296,
+    "fit_rolling_origin_gain_std": 0.004455960849114534,
+    "baselines": {
+      "no_venue_crps_well_measured": 3.8418109554213684
+    },
+    "frozen": true,
+    "notes": "gate failed; frozen as DISABLED so the lineage records it is unused"
+  },
+  {
+    "stage": "stage_6",
+    "run_id": "20260730T051007Z-20558fa",
+    "metric": "total_games_crps_well_measured_venues",
+    "baseline": "no_venue_multiplier",
+    "selected": {
+      "shrink_n0": 20000.0,
+      "use_indoor": false,
+      "enabled": true
+    },
+    "tune_gain": 0.001440386020229667,
+    "tune_metric_value": 3.8403705694011387,
+    "fit_rolling_origin_gain_folds": [
+      0.004681612273672364,
+      -0.0019406551814817874,
+      0.003069986711833561,
+      0.0008076335617732688,
+      0.0008517344710123886
+    ],
+    "fit_rolling_origin_gain_mean": 0.001494062367361959,
+    "fit_rolling_origin_gain_std": 0.0025162008175334343,
+    "baselines": {
+      "no_venue_crps_well_measured": 3.8418109554213684,
+      "no_venue_crps_unmeasured": 3.588000524659584,
+      "no_venue_crps_overall": 3.6815418392116546
+    },
+    "frozen": false,
+    "notes": "grid of 8 settings; median venue history 144 matches"
+  },
+  {
+    "stage": "stage_6",
+    "run_id": "20260730T051007Z-20558fa",
+    "metric": "total_games_crps_well_measured_venues",
+    "baseline": "no_venue_multiplier",
+    "selected": {
+      "shrink_n0": 20000.0,
+      "use_indoor": false,
+      "enabled": true
+    },
+    "tune_gain": 0.001440386020229667,
+    "tune_metric_value": 3.8403705694011387,
+    "fit_rolling_origin_gain_folds": [
+      0.004681612273672364,
+      -0.0019406551814817874,
+      0.003069986711833561,
+      0.0008076335617732688,
+      0.0008517344710123886
+    ],
+    "fit_rolling_origin_gain_mean": 0.001494062367361959,
+    "fit_rolling_origin_gain_std": 0.0025162008175334343,
+    "baselines": {
+      "no_venue_crps_well_measured": 3.8418109554213684
+    },
+    "frozen": true,
+    "notes": "gate passed; frozen"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T052043Z-287b98f",
+    "metric": "tiebreak_occurrence_gap",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "tiebreak_inflation": 0.0,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.0,
+    "tune_metric_value": 0.0819467139199066,
+    "fit_rolling_origin_gain_folds": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": 0.0,
+    "baselines": {
+      "uncorrected_gap": -0.0819467139199066
+    },
+    "frozen": false,
+    "notes": "tiebreak-frequency correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T052043Z-287b98f",
+    "metric": "total_games_pit_deviation",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "level_sigma": 0.0,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.0,
+    "tune_metric_value": 0.028600000000000004,
+    "fit_rolling_origin_gain_folds": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": 0.0,
+    "baselines": {
+      "uncorrected_pit_dev": 0.028600000000000004,
+      "uncorrected_coverage80": 0.7331666666666666
+    },
+    "frozen": false,
+    "notes": "total-games variance correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T053330Z-287b98f",
+    "metric": "tiebreak_occurrence_gap",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "tiebreak_inflation": -0.06,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.03069750364187418,
+    "tune_metric_value": 0.05124921027803242,
+    "fit_rolling_origin_gain_folds": [
+      0.03074743145527642,
+      0.03197649338936198,
+      0.03235198542662132,
+      0.032289813932082634,
+      0.03263595400871144
+    ],
+    "fit_rolling_origin_gain_mean": 0.03200033564241076,
+    "fit_rolling_origin_gain_std": 0.0007385464294265191,
+    "baselines": {
+      "uncorrected_gap": -0.0819467139199066
+    },
+    "frozen": false,
+    "notes": "tiebreak-frequency correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T053330Z-287b98f",
+    "metric": "total_games_pit_deviation",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "level_sigma": 0.0,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.0005000000000000074,
+    "tune_metric_value": 0.028099999999999997,
+    "fit_rolling_origin_gain_folds": [
+      0.00023850085178874977,
+      0.0003262642740619985,
+      0.0009950248756218846,
+      0.0005733558178752096,
+      0.0013201320132013201
+    ],
+    "fit_rolling_origin_gain_mean": 0.0006906555665098325,
+    "fit_rolling_origin_gain_std": 0.00045822085405259044,
+    "baselines": {
+      "uncorrected_pit_dev": 0.028600000000000004,
+      "uncorrected_coverage80": 0.7331666666666666
+    },
+    "frozen": false,
+    "notes": "total-games variance correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T061819Z-0341b95",
+    "metric": "tiebreak_occurrence_gap",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "tiebreak_inflation": -0.02,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.08116718592116523,
+    "tune_metric_value": 0.0005759914819247758,
+    "fit_rolling_origin_gain_folds": [
+      0.060506994750814225,
+      0.08105133714765617,
+      0.08086286360309924,
+      0.08172017698898149,
+      0.0810771255982678
+    ],
+    "fit_rolling_origin_gain_mean": 0.07704369961776378,
+    "fit_rolling_origin_gain_std": 0.009249969536682197,
+    "baselines": {
+      "uncorrected_gap": -0.08174317740309
+    },
+    "frozen": false,
+    "notes": "tiebreak-frequency correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T061819Z-0341b95",
+    "metric": "total_games_pit_deviation",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "split_sigma": 0.08,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.0217,
+    "tune_metric_value": 0.007033333333333333,
+    "fit_rolling_origin_gain_folds": [
+      0.01989778534923339,
+      0.019608482871125606,
+      0.023515754560530684,
+      0.016188870151770653,
+      0.008580858085808583
+    ],
+    "fit_rolling_origin_gain_mean": 0.017558350203693777,
+    "fit_rolling_origin_gain_std": 0.0056488385479765355,
+    "baselines": {
+      "uncorrected_pit_dev": 0.028733333333333333,
+      "uncorrected_coverage80": 0.7325
+    },
+    "frozen": false,
+    "notes": "total-games variance correction"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T061819Z-0341b95",
+    "metric": "tiebreak_occurrence_gap",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "tiebreak_inflation": -0.02,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.08116718592116523,
+    "tune_metric_value": 0.0005759914819247758,
+    "fit_rolling_origin_gain_folds": [
+      0.060506994750814225,
+      0.08105133714765617,
+      0.08086286360309924,
+      0.08172017698898149,
+      0.0810771255982678
+    ],
+    "fit_rolling_origin_gain_mean": 0.07704369961776378,
+    "fit_rolling_origin_gain_std": 0.009249969536682197,
+    "baselines": {},
+    "frozen": true,
+    "notes": "gate passed; frozen"
+  },
+  {
+    "stage": "stage_7",
+    "run_id": "20260730T061819Z-0341b95",
+    "metric": "total_games_pit_deviation",
+    "baseline": "uncorrected_engine",
+    "selected": {
+      "split_sigma": 0.08,
+      "scheme": "pooled"
+    },
+    "tune_gain": 0.0217,
+    "tune_metric_value": 0.007033333333333333,
+    "fit_rolling_origin_gain_folds": [
+      0.01989778534923339,
+      0.019608482871125606,
+      0.023515754560530684,
+      0.016188870151770653,
+      0.008580858085808583
+    ],
+    "fit_rolling_origin_gain_mean": 0.017558350203693777,
+    "fit_rolling_origin_gain_std": 0.0056488385479765355,
+    "baselines": {},
+    "frozen": true,
+    "notes": "gate passed; frozen"
+  },
+  {
+    "stage": "stage_8",
+    "run_id": "20260730T064837Z-128682d",
+    "metric": "test_expected_calibration_error",
+    "baseline": "uncalibrated",
+    "selected": {
+      "families": [
+        "match_winner",
+        "set_score",
+        "totals_under_high",
+        "totals_under_low",
+        "totals_under_mid"
+      ]
+    },
+    "tune_gain": 0.005942757657514487,
+    "tune_metric_value": 0.010863624760288675,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "test_ece_before": 0.016806382417803162
+    },
+    "frozen": false,
+    "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+  },
+  {
+    "stage": "stage_8",
+    "run_id": "20260730T070041Z-128682d",
+    "metric": "test_expected_calibration_error",
+    "baseline": "uncalibrated",
+    "selected": {
+      "families": [
+        "totals_under_high"
+      ]
+    },
+    "tune_gain": 0.005649581877500514,
+    "tune_metric_value": 0.011156800540302648,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "test_ece_before": 0.016806382417803162
+    },
+    "frozen": true,
+    "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+  },
+  {
+    "stage": "stage_8",
+    "run_id": "20260730T071036Z-128682d",
+    "metric": "test_expected_calibration_error",
+    "baseline": "uncalibrated",
+    "selected": {
+      "families": [
+        "match_winner",
+        "totals_under_high"
+      ]
+    },
+    "tune_gain": 0.005040490278100683,
+    "tune_metric_value": 0.01709514596123842,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "test_ece_before": 0.022135636239339104
+    },
+    "frozen": false,
+    "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+  },
+  {
+    "stage": "stage_8",
+    "run_id": "20260730T141750Z-105ade8",
+    "metric": "test_expected_calibration_error",
+    "baseline": "uncalibrated",
+    "selected": {
+      "families": [
+        "match_winner",
+        "totals_under_high"
+      ]
+    },
+    "tune_gain": 0.005040490278100683,
+    "tune_metric_value": 0.01709514596123842,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "test_ece_before": 0.022135636239339104
+    },
+    "frozen": false,
+    "notes": "evaluated on the pre-cutoff TEST set, once; maps fitted on FIT+TUNE only"
+  },
+  {
+    "stage": "fatigue",
+    "run_id": "20260808T125510Z-3a3a549",
+    "metric": "tune_match_logloss",
+    "baseline": "no context adjustment",
+    "selected": {
+      "rest_days": -0.008664826625106443,
+      "load7": 0.005736848601187937,
+      "is_qualifier": -0.022357978637552206,
+      "enabled": false
+    },
+    "tune_gain": -0.00022323340667262936,
+    "tune_metric_value": 0.6622391207709958,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_logloss": 0.6620158873643232,
+      "tune_spw_mae": 0.05964217459942603
+    },
+    "frozen": false,
+    "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+  },
+  {
+    "stage": "fatigue",
+    "run_id": "20260808T125936Z-3a3a549",
+    "metric": "tune_match_logloss",
+    "baseline": "no context adjustment",
+    "selected": {
+      "rest_days": -0.01164709979964922,
+      "load7": 0.00902246691289101,
+      "is_qualifier": -0.02180651078681072,
+      "enabled": false
+    },
+    "tune_gain": -0.00023576588322660186,
+    "tune_metric_value": 0.6622516532475498,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_logloss": 0.6620158873643232,
+      "tune_spw_mae": 0.05964217459942603
+    },
+    "frozen": false,
+    "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+  },
+  {
+    "stage": "calibration_refit",
+    "run_id": "20260808T131728Z-3a3a549",
+    "metric": "tune_expected_calibration_error",
+    "baseline": "isotonic on all history (the shipped incumbent)",
+    "selected": {
+      "method": "blended",
+      "window_years": 8
+    },
+    "tune_gain": 0.0019327761957201178,
+    "tune_metric_value": 0.010823311225337705,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_ece": 0.018806781966026167,
+      "tune_logloss": 0.5633081137222561,
+      "tune_brier": 0.19193658982123232
+    },
+    "frozen": true,
+    "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
+  },
+  {
+    "stage": "fatigue",
+    "run_id": "20260808T133656Z-3a3a549",
+    "metric": "tune_match_logloss",
+    "baseline": "no context adjustment",
+    "selected": {
+      "rest_days": -0.01164709979964922,
+      "load7": 0.00902246691289101,
+      "is_qualifier": -0.02180651078681072,
+      "enabled": false
+    },
+    "tune_gain": -0.00023576588322660186,
+    "tune_metric_value": 0.6622516532475498,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_logloss": 0.6620158873643232,
+      "tune_spw_mae": 0.05964217459942603
+    },
+    "frozen": false,
+    "notes": "coefficients fitted on FIT, gated on TUNE; TEST and HOLDOUT untouched"
+  },
+  {
+    "stage": "unknown_players",
+    "run_id": "20260808T163108Z-3a3a549",
+    "metric": "tune_match_winner_ece",
+    "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+    "selected": {
+      "inactivity_half_life": 540.0,
+      "rank_seed_scale": 120.0
+    },
+    "tune_gain": 0.012586415698457625,
+    "tune_metric_value": 0.0061660383176909165,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_ece": 0.018752454016148543,
+      "ece_known": 0.021386321880389567,
+      "ece_debut": 0.12680259190856613,
+      "ece_stale": 0.031068961424343396
+    },
+    "frozen": true,
+    "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched"
+  },
+  {
+    "stage": "unknown_players",
+    "run_id": "20260808T163323Z-3a3a549",
+    "metric": "tune_size_weighted_group_ece",
+    "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+    "selected": {
+      "inactivity_half_life": 270.0,
+      "rank_seed_scale": 160.0
+    },
+    "tune_gain": 0.011894458191953679,
+    "tune_metric_value": 0.012225573659986711,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "grouped_ece": 0.02412003185194039,
+      "pooled_ece": 0.018752454016148543,
+      "ece_known": 0.021386321880389567,
+      "ece_debut": 0.12680259190856613,
+      "ece_stale": 0.031068961424343396
+    },
+    "frozen": false,
+    "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
+  },
+  {
+    "stage": "unknown_players",
+    "run_id": "20260808T163537Z-3a3a549",
+    "metric": "tune_size_weighted_group_ece",
+    "baseline": "incumbent Stage 3 (half-life 1095, flat debut seed)",
+    "selected": {
+      "inactivity_half_life": 540.0,
+      "rank_seed_scale": 160.0
+    },
+    "tune_gain": 0.010619459109438439,
+    "tune_metric_value": 0.013500572742501951,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "grouped_ece": 0.02412003185194039,
+      "pooled_ece": 0.018752454016148543,
+      "ece_known": 0.021386321880389567,
+      "ece_debut": 0.12680259190856613,
+      "ece_stale": 0.031068961424343396
+    },
+    "frozen": true,
+    "notes": "Elo-layer screen on TUNE; TEST and HOLDOUT both already spent and not touched. Metric is the SIZE-WEIGHTED MEAN OF SUBGROUP ECEs, not pooled ECE: pooled rewards one group's bias cancelling another's. Debut group has only 239 TUNE matches, so rank_seed_scale is reported, not established."
+  },
+  {
+    "stage": "calibration_refit",
+    "run_id": "20260810T054645Z-52c7113",
+    "metric": "tune_expected_calibration_error",
+    "baseline": "isotonic on all history (the shipped incumbent)",
+    "selected": {
+      "method": "isotonic",
+      "window_years": 8
+    },
+    "tune_gain": 0.00119273795496873,
+    "tune_metric_value": 0.01078372887224066,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_ece": 0.01949644834546446,
+      "tune_logloss": 0.5413801556616393,
+      "tune_brier": 0.18421738836567278
+    },
+    "frozen": true,
+    "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted"
+  },
+  {
+    "stage": "calibration_refit",
+    "run_id": "20260810T084737Z-b41e484",
+    "metric": "tune_expected_calibration_error",
+    "baseline": "isotonic on all history (the shipped incumbent)",
+    "selected": {
+      "method": "platt",
+      "window_years": 8
+    },
+    "tune_gain": -0.0023892221687823335,
+    "tune_metric_value": 0.014365688995991723,
+    "fit_rolling_origin_gain_folds": [
+      0.0
+    ],
+    "fit_rolling_origin_gain_mean": 0.0,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_ece": 0.01949644834546446,
+      "tune_logloss": 0.5413801556616393,
+      "tune_brier": 0.18421738836567278
+    },
+    "frozen": true,
+    "notes": "selected on the post-re-split TUNE (2024-01-01..2025-06-30); TEST and HOLDOUT not consulted. 8 of 12 candidates were rejected as degenerate (saturated or flat) before ranking, the incumbent among them, so `tune_gain` compares against a baseline that is not itself shippable"
+  },
+  {
+    "stage": "market_blend",
+    "run_id": "20260825T063239Z-2ed4602",
+    "metric": "tune_logloss_out_of_fold",
+    "baseline": "market consensus alone (median de-vigged across books)",
+    "selected": {
+      "w_model": 5.9608609865491405e-06,
+      "free_model": -0.2827803343496113,
+      "free_market": 1.3191460870531388
+    },
+    "tune_gain": -1.388438525262714e-07,
+    "tune_metric_value": 0.5437973900071983,
+    "fit_rolling_origin_gain_folds": [
+      5.9608609865491405e-06,
+      5.9608609865491405e-06,
+      5.9608609865491405e-06,
+      5.9608609865491405e-06,
+      5.9608609865491405e-06
+    ],
+    "fit_rolling_origin_gain_mean": 5.9608609865491405e-06,
+    "fit_rolling_origin_gain_std": 0.0,
+    "baselines": {
+      "tune_logloss": 0.5437972511633458,
+      "tune_brier": 0.18353653721088825,
+      "tune_ece": 0.029700634528641346,
+      "model_alone_logloss": 0.6166723801950523,
+      "model_alone_brier": 0.21498414489803447,
+      "market_scaled_oof_logloss": 0.5420891367785624,
+      "market_scaled_oof_brier": 0.18319739405114835,
+      "free_stack_oof_logloss": 0.5418564532658036,
+      "free_stack_oof_brier": 0.1828481303330343,
+      "market_scale": 1.161791840454459
+    },
+    "frozen": false,
+    "notes": "exploratory: 1,103 TUNE ATP matches with match_winner quotes. NOT shipped \u2014 a blend consumes the bookmaker's price, and whether that is admissible under the 2026-08-08 projection goal is an open human decision. `fit_rolling_origin_gain_folds` holds the per-fold fitted w, not a gain, because the fold structure here is 5-fold on TUNE matches rather than a rolling origin on FIT."
+  }
 ]
