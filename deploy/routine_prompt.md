@@ -114,22 +114,30 @@ unclear.
    known final score. The live path uses PointsBet, and
    `fetch_pointsbet --self-check` is what covers the parsing of that source.
 
-2. Run the job, both variants, in this order:
+2. Run the job, all three variants, in this order:
 
        /root/venv/bin/python -m scripts.paper_trade
        /root/venv/bin/python -m scripts.paper_trade --variant cascade
+       /root/venv/bin/python -m scripts.paper_trade --variant nocohort
 
    The script scrapes fixtures, settles yesterday's open positions, prices
    today's, sizes both staking schemes, appends to its ledger and posts its
    own summary to Slack.
 
-   The two runs price the SAME fixtures under two different models. The
+   The three runs price the SAME fixtures under three different models. The
    default variant is the incumbent and writes `paper/ledger.csv`; the
    cascade variant writes `paper/ledger-cascade.csv` and reads its model from
-   `paper/model-cascade/`. Neither touches the other's ledger or run state.
+   `paper/model-cascade/`; the nocohort variant writes
+   `paper/ledger-nocohort.csv` and reads from `paper/model-nocohort/`. None
+   touches another's ledger or run state.
 
-   Run BOTH every day, or the comparison is broken: a day the cascade misses
-   is a day the two ledgers no longer cover the same fixtures, and the
+   nocohort is the incumbent with Stage 5 switched off and nothing else
+   changed, added 2026-08-25 — see `paper/model-nocohort/PROVENANCE.md`. Its
+   window starts later than the other two, so its ledger is shorter and its
+   day count is its own; do not compare its bankroll to theirs by date.
+
+   Run ALL THREE every day, or the comparison is broken: a day a variant
+   misses is a day the ledgers no longer cover the same fixtures, and the
    difference between them stops being the model. If the second command
    fails, say so explicitly in Slack — do not quietly ship a day of
    incumbent-only rows as though nothing were missing.

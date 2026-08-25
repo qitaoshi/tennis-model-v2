@@ -115,6 +115,19 @@ VARIANTS = {
         "state": PAPER_DIR / "run_state-cascade.json",
         "label": "cascade",
     },
+    # The incumbent with Stage 5 switched off, added 2026-08-25 after
+    # reports/layer_ablation.md found the cohort prior was the one layer whose
+    # removal beat the paired-bootstrap interval. It is a variant rather than
+    # an edit to fitted_params.json because run 3 is mid-flight: moving the
+    # primary's fingerprint would make check_unchanged refuse to write, which
+    # is exactly what that check is for. See paper/model-nocohort/PROVENANCE.md.
+    "nocohort": {
+        "params": PAPER_DIR / "model-nocohort" / "fitted_params.json",
+        "maps": PAPER_DIR / "model-nocohort" / "calibration_maps.pkl",
+        "ledger": PAPER_DIR / "ledger-nocohort.csv",
+        "state": PAPER_DIR / "run_state-nocohort.json",
+        "label": "nocohort",
+    },
 }
 
 #: Which variant this process is running. Set once by select_variant() before

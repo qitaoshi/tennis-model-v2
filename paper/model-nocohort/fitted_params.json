@@ -1,0 +1,139 @@
+{
+  "stage_2": {
+    "half_life_days": 730.0,
+    "surface_pool": 300.0,
+    "shrink_n0": 500.0,
+    "recency": true,
+    "surface_split": true,
+    "opponent_adjust": true,
+    "selected_on": "tune",
+    "tune_logloss": 0.662607869243928,
+    "tune_mae": 0.06595348606572711,
+    "tune_match_logloss": 0.6710618190785423
+  },
+  "stage_3": {
+    "k": 48.0,
+    "k_chall_mult": 0.75,
+    "surface_weight": 0.3,
+    "inactivity_half_life": 1095.0,
+    "level_gap": 100.0,
+    "level_offset": 0.0,
+    "selected_on": "tune",
+    "tune_logloss": 0.6397655752495135,
+    "tune_brier": 0.22482763863774108,
+    "cross_level": {
+      "n": 2883,
+      "predicted_chall_winrate": 0.4242939685708152,
+      "observed_chall_winrate": 0.413111342351717,
+      "gap": -0.011182626219098213,
+      "logloss": 0.6401216382032197
+    }
+  },
+  "stage_4": {
+    "w": 0.8,
+    "w_both_well": 0.8,
+    "w_one_thin": 0.85,
+    "w_both_thin": 0.9,
+    "thin_n": 1000.0,
+    "w_fitted_on_fit": 0.85,
+    "selected_on": "tune",
+    "tune_logloss": 0.6346958806089784,
+    "disagreement_pp_mean_abs": 11.642862561020682
+  },
+  "stage_5": {
+    "k": 5,
+    "opponent_vs_cohort_n0": 0.0,
+    "thin_n": 1000.0,
+    "well_sampled_n": 3000.0,
+    "snapshot_days": 91,
+    "enabled": false,
+    "selected_on": "tune",
+    "tune_logloss": 0.6388255290499125,
+    "tune_crps": 3.7112666560712846,
+    "baseline_logloss": 0.63938745936996,
+    "baseline_crps": 3.7191313112955338,
+    "disabled_by": "reports/layer_ablation.md",
+    "disabled_note": "Stage 5 switched off for the nocohort paper variant. The layer ablation found its removal improves TUNE Brier by 0.00033 (95% CI -0.00044 to -0.00021, paired bootstrap over matches) and total-games CRPS by 0.0043. Uncalibrated scores; the calibration map in this directory is the incumbent's and was NOT refit against this arm."
+  },
+  "stage_6": {
+    "shrink_n0": 20000.0,
+    "use_indoor": false,
+    "enabled": true,
+    "selected_on": "tune",
+    "median_venue_history": 144.0,
+    "tune_crps_well_measured": 3.8403705694011387,
+    "baseline_crps_well_measured": 3.8418109554213684
+  },
+  "stage_7": {
+    "tiebreak_inflation": -0.02,
+    "split_sigma": 0.08,
+    "level_sigma": 0.0,
+    "recenter": true,
+    "n_mix": 5,
+    "provenance_scheme": "pooled",
+    "inferred_weight": 1.0,
+    "selected_on": "tune",
+    "tune_tb_gap_before": -0.08174317740309,
+    "tune_tb_gap_after": -0.0005759914819247758,
+    "tune_pit_dev_before": 0.028733333333333333,
+    "tune_pit_dev_after": 0.007033333333333333,
+    "tune_coverage80_after": 0.807
+  },
+  "stage_8": {
+    "families": [
+      "match_winner",
+      "totals_under_high"
+    ],
+    "n_fitted": {
+      "match_winner": 40000,
+      "totals_under_high": 40000
+    },
+    "maps_path": "data/processed/calibration_maps.pkl",
+    "test_ece_before": 0.022135636239339104,
+    "test_ece_after": 0.01709514596123842,
+    "test_window": [
+      "2023-07-03",
+      "2023-11-27"
+    ],
+    "test_touched_once": true,
+    "gate_strictly_passed": false,
+    "shipped_by_human_acceptance": true,
+    "superseded_by": "calibration_refit (2026-08-08)",
+    "superseded_note": "The maps this entry describes (isotonic, families [match_winner, totals_under_high], fitted through 2022-06) are NO LONGER the maps at maps_path. calibration_refit overwrote that pickle with a blended map covering five families, fitted on an 8-year window through 2025-06. The metrics recorded here still describe the original run on the original TEST window and are kept as history, not as a description of what ships."
+  },
+  "calibration_refit": {
+    "method": "platt",
+    "window_years": 8,
+    "selected_on": "TUNE 2024-01-01..2025-06-30",
+    "tune_ece": 0.014365688995991723,
+    "tune_logloss": 0.539769242740622,
+    "n_fitted": {
+      "match_winner": 52000,
+      "totals_under_low": 52000,
+      "totals_under_mid": 78000,
+      "totals_under_high": 52000,
+      "set_score": 107322,
+      "games_handicap": 364000
+    },
+    "families": [
+      "games_handicap",
+      "match_winner",
+      "set_score",
+      "totals_under_high",
+      "totals_under_low",
+      "totals_under_mid"
+    ],
+    "test_evaluated": false
+  },
+  "fatigue": {
+    "rest_days": -0.01164709979964922,
+    "load7": 0.00902246691289101,
+    "is_qualifier": -0.02180651078681072,
+    "enabled": false,
+    "tune_logloss_baseline": 0.6620158873643232,
+    "tune_logloss": 0.6622516532475498,
+    "tune_spw_mae_baseline": 0.05964217459942603,
+    "tune_spw_mae": 0.05964854356148488,
+    "gate_passed": false
+  }
+}

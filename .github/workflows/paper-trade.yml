@@ -96,13 +96,17 @@ jobs:
           elif [ "${{ inputs.dry_run }}" = "true" ]; then
             python -m scripts.paper_trade --dry-run
             python -m scripts.paper_trade --dry-run --variant cascade
+            python -m scripts.paper_trade --dry-run --variant nocohort
           else
-            # Both variants, same fixtures, separate ledgers. The incumbent
-            # runs first: a day with cascade rows and no incumbent rows is
-            # worse than a day with neither, so a failure in the first must
-            # stop the second. `set -e` is on by default, which gives that.
+            # All three variants, same fixtures, separate ledgers. The
+            # incumbent runs first: a day with challenger rows and no
+            # incumbent rows is worse than a day with neither, so a failure in
+            # the first must stop the rest. `set -e` is on by default, which
+            # gives that. nocohort runs last because it started latest and its
+            # window is the one that can be restarted most cheaply.
             python -m scripts.paper_trade
             python -m scripts.paper_trade --variant cascade
+            python -m scripts.paper_trade --variant nocohort
           fi
 
       - name: Commit the ledger

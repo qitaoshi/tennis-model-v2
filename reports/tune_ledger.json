@@ -1062,5 +1062,34 @@
     },
     "frozen": false,
     "notes": "exploratory: 1,103 TUNE ATP matches with match_winner quotes. NOT shipped \u2014 a blend consumes the bookmaker's price, and whether that is admissible under the 2026-08-08 projection goal is an open human decision. `fit_rolling_origin_gain_folds` holds the per-fold fitted w, not a gain, because the fold structure here is 5-fold on TUNE matches rather than a rolling origin on FIT."
+  },
+  {
+    "stage": "stage_5_disable",
+    "run_id": "20260825T071638Z-4222f7c",
+    "metric": "tune_brier",
+    "baseline": "incumbent with Stage 5 cohort prior enabled",
+    "selected": {
+      "stage_5_enabled": false
+    },
+    "tune_gain": 0.000327,
+    "tune_metric_value": 0.234822,
+    "fit_rolling_origin_gain_folds": [],
+    "fit_rolling_origin_gain_mean": null,
+    "fit_rolling_origin_gain_std": null,
+    "baselines": {
+      "tune_brier": 0.235149,
+      "tune_logloss": 0.661983,
+      "tune_ece": 0.014614,
+      "tune_crps_games": 3.40436,
+      "arm_logloss": 0.661309,
+      "arm_ece": 0.015797,
+      "arm_crps_games": 3.400094,
+      "paired_bootstrap_ci": [
+        -0.000444,
+        -0.00021
+      ]
+    },
+    "frozen": false,
+    "notes": "reports/layer_ablation.md, TUNE 2024-01-01..2025-06-30, 12,766 matches, both tours, UNCALIBRATED. Brier improves 0.00033 with a paired-bootstrap 95% CI of -0.00044..-0.00021 (2,000 resamples over matches, both orientations kept together), and total-games CRPS improves 0.0043. The only ablation arm to clear the interval; Elo-only, no-venue and no-corrections all straddled zero. NOT shipped into fitted_params.json: forward run 3 started 2026-08-19 and check_unchanged would refuse further rows if the primary's fingerprint moved. Running instead as the `nocohort` paper variant from 2026-08-25. Two caveats: the calibration map was NOT refit against this arm, and Stage 5 was originally selected on this same TUNE window, so TUNE has now answered the same question twice in opposite directions."
   }
 ]
