@@ -205,13 +205,27 @@ def event_record(detail: dict, competition: str) -> dict:
 # name`, which OddsPortal's naming happened to satisfy — PointsBet's does not.
 # 'ATP Montreal Doubles' and 'ATP Montreal Futures' both pass that test and
 # would be priced by a singles model as though two players had walked on
-# court. Outrights are not a match at all.
-NON_SINGLES = ("challenger", "doubles", "futures", "outright", "wta", "itf")
+# court. Outrights are not a match at all. 'women', 'boys', 'girls',
+# 'wheelchair' and 'legends' guard the men's-singles-only Grand Slam names
+# below, none of which carry 'wta' or 'junior'.
+NON_SINGLES = ("challenger", "doubles", "futures", "outright", "wta", "itf",
+              "women", "boys", "girls", "wheelchair", "legends")
+
+# The four majors, as men's main-tour singles, priced by the same model
+# (`model/rules.py` has best-of-5 FormatSpecs for all four). PointsBet
+# branded the 2026 US Open 'US Open Men's' / 'US Open Women's' — no 'atp'
+# substring — so the plain ATP filter silently excluded the entire
+# tournament for its whole fortnight (first caught 2026-09-01, four
+# fixture-less days after the last ATP 250 of the summer swing ended).
+GRAND_SLAMS = ("us open", "australian open", "french open", "roland garros",
+              "wimbledon")
 
 
 def is_main_tour_singles(name: object) -> bool:
     lowered = str(name).casefold()
-    return "atp" in lowered and not any(w in lowered for w in NON_SINGLES)
+    if any(w in lowered for w in NON_SINGLES):
+        return False
+    return "atp" in lowered or any(s in lowered for s in GRAND_SLAMS)
 
 
 def is_doubles(event_name: object) -> bool:
@@ -381,6 +395,12 @@ def demo() -> None:
     assert not is_main_tour_singles("ATP Montreal Futures")
     assert not is_main_tour_singles("ATP Challenger Hamburg")
     assert not is_main_tour_singles("WTA Cincinnati")
+    # Grand Slams carry no 'atp' substring on PointsBet and were missed
+    # entirely until 2026-09-01 — see the GRAND_SLAMS comment above.
+    assert is_main_tour_singles("US Open Men's")
+    assert not is_main_tour_singles("US Open Women's")
+    assert not is_main_tour_singles("US Open Futures")
+    assert not is_main_tour_singles("Wimbledon Boys")
     assert is_doubles("Arribage T / Olivetti A v Marozsan F / Medvedev D")
     assert not is_doubles("Jodar, Rafael v Fils, Arthur")
     print("fetch_pointsbet self-check passed")
