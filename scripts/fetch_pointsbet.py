@@ -206,12 +206,37 @@ def event_record(detail: dict, competition: str) -> dict:
 # 'ATP Montreal Doubles' and 'ATP Montreal Futures' both pass that test and
 # would be priced by a singles model as though two players had walked on
 # court. Outrights are not a match at all.
-NON_SINGLES = ("challenger", "doubles", "futures", "outright", "wta", "itf")
+NON_SINGLES = ("challenger", "doubles", "futures", "outright", "wta", "itf",
+               "wheelchair", "legends", "exhibition", "junior", "boys", "girls")
+
+# The four majors. PointsBet does not brand these "ATP" — they are combined
+# ATP/WTA competitions, so `"atp" in lowered` never sees them and every one
+# was silently excluded. Confirmed live on 2026-09-02: the open competition is
+# named "US Open Men's" (with a matching "US Open Women's" alongside it), and
+# the men's singles event list underneath is 36 ordinary main-draw matches
+# (Cerundolo v Gea, Alcaraz v Faria, ...), not futures/qualifying/wheelchair
+# noise. Wimbledon and the Australian Open list "Wimbledon Futures" and
+# "Australian Open Futures" today, so their draws are presumed to open under
+# the same "<Slam> Men's" pattern; unconfirmed until one is actually live.
+# Roland Garros is the exception: PointsBet brands it "French Open" (see
+# "French Open Futures"), which is why `paper/tournament_aliases.json` maps
+# "French Open Men's" to the match history's "Roland Garros".
+GRAND_SLAMS = ("australian open", "french open", "wimbledon", "us open")
+
+
+def is_grand_slam_singles(name: object) -> bool:
+    lowered = str(name).casefold()
+    if "women" in lowered:
+        return False
+    return (any(slam in lowered for slam in GRAND_SLAMS) and "men" in lowered
+            and not any(w in lowered for w in NON_SINGLES))
 
 
 def is_main_tour_singles(name: object) -> bool:
     lowered = str(name).casefold()
-    return "atp" in lowered and not any(w in lowered for w in NON_SINGLES)
+    if "atp" in lowered and not any(w in lowered for w in NON_SINGLES):
+        return True
+    return is_grand_slam_singles(name)
 
 
 def is_doubles(event_name: object) -> bool:
@@ -239,7 +264,8 @@ def competitions() -> list[dict]:
 
 def fetch_records(days: set[date] | None = None,
                   verbose: bool = True) -> list[dict]:
-    """Every open ATP event starting on ``days``, as OddsPortal records.
+    """Every open ATP tour or Grand Slam men's singles event starting on
+    ``days``, as OddsPortal records.
 
     ``days`` is matched against the event's UTC start date. A match already
     under way is excluded by the endpoint itself (`includeLive=false`), so
@@ -381,6 +407,14 @@ def demo() -> None:
     assert not is_main_tour_singles("ATP Montreal Futures")
     assert not is_main_tour_singles("ATP Challenger Hamburg")
     assert not is_main_tour_singles("WTA Cincinnati")
+    assert is_main_tour_singles("US Open Men's")
+    assert is_main_tour_singles("Wimbledon Men's")
+    assert is_main_tour_singles("Australian Open Men's")
+    assert is_main_tour_singles("French Open Men's")
+    assert not is_main_tour_singles("US Open Women's")
+    assert not is_main_tour_singles("US Open Futures")
+    assert not is_main_tour_singles("US Open Wheelchair Men's")
+    assert not is_main_tour_singles("US Open Legends Men's")
     assert is_doubles("Arribage T / Olivetti A v Marozsan F / Medvedev D")
     assert not is_doubles("Jodar, Rafael v Fils, Arthur")
     print("fetch_pointsbet self-check passed")
